@@ -62,6 +62,8 @@
 #### Kimi / Qwen / iFlow
 - 完整命令集：`*ask`、`*ping`、`*pend`
 - 与其他 provider 行为一致
+- **Kimi**：CLI 启动较慢，建议设置 `CCB_KASKD_STARTUP_WAIT_S=25`
+- **iFlow (GLM)**：模型响应较慢，建议设置 `CCB_IASKD_STARTUP_WAIT_S=30`
 
 ### 5. 统一命令接口
 所有 provider 现在支持相同的命令模式：
@@ -117,6 +119,7 @@ cd ~/.local/share/codex-dual
 export CCB_SIDECAR_AUTOSTART=1
 export CCB_SIDECAR_DIRECTION=right
 export CCB_CLI_READY_WAIT_S=20
+export CCB_SIDECAR_SESSION_WAIT_S=15
 
 # DeepSeek（稳定回复 + 可选 sidecar）
 export CCB_DSKASKD_QUICK_MODE=1
@@ -129,9 +132,39 @@ export DEEPSEEK_BIN=/path/to/deepseek
 export CCB_OASKD_SESSION_WAIT_S=12
 export CCB_OASKD_SIDECAR_MIN_OPEN_S=5
 
+# Kimi - CLI 启动较慢，增加等待时间
+export CCB_KASKD_STARTUP_WAIT_S=25
+export CCB_KASKD_SIDECAR_MIN_OPEN_S=10
+
+# iFlow (GLM) - 模型响应较慢，增加等待时间
+export CCB_IASKD_STARTUP_WAIT_S=30
+export CCB_IASKD_SIDECAR_MIN_OPEN_S=15
+
 # Gemini
 export CCB_GASKD_READY_WAIT_S=15
 ```
+
+### Claude Code 启动 Hook（可选）
+将 `config/ccb-startup-hook.sh` 复制到 `~/.claude/hooks/` 并配置 Claude Code 的 `settings.json`：
+```json
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/ccb-startup-hook.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+这将在 Claude Code 启动时自动检查 CCB provider 状态。
 
 ---
 

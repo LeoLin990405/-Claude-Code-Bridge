@@ -62,6 +62,8 @@ We focused on improving **reliability**, **stability**, and **ease of use** for 
 #### Kimi / Qwen / iFlow
 - Full command set: `*ask`, `*ping`, `*pend`
 - Consistent behavior with other providers
+- **Kimi**: CLI starts slowly, recommend `CCB_KASKD_STARTUP_WAIT_S=25`
+- **iFlow (GLM)**: Model responds slowly, recommend `CCB_IASKD_STARTUP_WAIT_S=30`
 
 ### 5. Unified Command Interface
 All providers now support the same command pattern:
@@ -117,6 +119,7 @@ Add to your `~/.zshrc` or `~/.bashrc`:
 export CCB_SIDECAR_AUTOSTART=1
 export CCB_SIDECAR_DIRECTION=right
 export CCB_CLI_READY_WAIT_S=20
+export CCB_SIDECAR_SESSION_WAIT_S=15
 
 # DeepSeek (stable reply + optional sidecar)
 export CCB_DSKASKD_QUICK_MODE=1
@@ -129,9 +132,39 @@ export DEEPSEEK_BIN=/path/to/deepseek
 export CCB_OASKD_SESSION_WAIT_S=12
 export CCB_OASKD_SIDECAR_MIN_OPEN_S=5
 
+# Kimi - CLI starts slowly, increase wait time
+export CCB_KASKD_STARTUP_WAIT_S=25
+export CCB_KASKD_SIDECAR_MIN_OPEN_S=10
+
+# iFlow (GLM) - Model responds slowly, increase wait time
+export CCB_IASKD_STARTUP_WAIT_S=30
+export CCB_IASKD_SIDECAR_MIN_OPEN_S=15
+
 # Gemini
 export CCB_GASKD_READY_WAIT_S=15
 ```
+
+### Claude Code Startup Hook (Optional)
+Copy `config/ccb-startup-hook.sh` to `~/.claude/hooks/` and configure Claude Code's `settings.json`:
+```json
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/ccb-startup-hook.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+This will automatically check CCB provider status when Claude Code starts.
 
 ---
 
