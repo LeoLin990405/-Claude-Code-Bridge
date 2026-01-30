@@ -279,10 +279,25 @@ class UnifiedRouter:
     ) -> Optional[RoutingDecision]:
         """Check if any custom routing rules match."""
         msg_lower = message.lower()
+        # Split message into words for whole-word matching
+        import re
+        words = set(re.findall(r'\b\w+\b', msg_lower))
 
         for rule in self.custom_rules:
-            # Check keyword match
-            keyword_match = any(kw.lower() in msg_lower for kw in rule.keywords)
+            # Check keyword match - use word boundary matching for short keywords
+            keyword_match = False
+            for kw in rule.keywords:
+                kw_lower = kw.lower()
+                # For short keywords (<=3 chars), require whole word match
+                # For longer keywords, allow substring match
+                if len(kw_lower) <= 3:
+                    if kw_lower in words:
+                        keyword_match = True
+                        break
+                else:
+                    if kw_lower in msg_lower:
+                        keyword_match = True
+                        break
 
             # Check file pattern match
             pattern_match = False
