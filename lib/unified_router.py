@@ -289,7 +289,15 @@ class UnifiedRouter:
             if files and rule.patterns:
                 for f in files:
                     for pattern in rule.patterns:
-                        if fnmatch.fnmatch(f, pattern):
+                        # Handle ** glob patterns more flexibly
+                        if '**' in pattern:
+                            # Convert ** pattern to regex-like matching
+                            # **/api/** should match api/routes.py, src/api/v1/routes.py, etc.
+                            simple_pattern = pattern.replace('**/', '').replace('/**', '')
+                            if fnmatch.fnmatch(f, simple_pattern) or simple_pattern in f:
+                                pattern_match = True
+                                break
+                        elif fnmatch.fnmatch(f, pattern):
                             pattern_match = True
                             break
                     if pattern_match:

@@ -1,6 +1,6 @@
-# CCB - Claude Code Bridge (Optimized Fork)
+# AI Router CCB - Intelligent Multi-AI Collaboration Platform
 
-> **An optimized fork of [bfly123/claude_code_bridge](https://github.com/bfly123/claude_code_bridge)**
+> **An optimized fork of [bfly123/claude_code_bridge](https://github.com/bfly123/claude_code_bridge) with intelligent task routing**
 >
 > Special thanks to the original author **bfly123** and the community for creating this amazing multi-AI collaboration framework.
 
@@ -8,89 +8,29 @@
 
 ---
 
-## About This Fork
+## About This Project
 
-This repository is a **collaborative optimization project** by:
+**AI Router CCB** is a unified AI collaboration platform that intelligently routes tasks to the optimal AI provider based on task type, keywords, and file patterns.
+
+### Core Features
+- **Intelligent Routing**: Automatically selects the best AI provider for each task
+- **9 AI Providers**: Claude, Codex, Gemini, OpenCode, DeepSeek, Droid, iFlow, Kimi, Qwen
+- **Unified Interface**: Consistent command pattern across all providers
+- **Health Monitoring**: Real-time provider status checking
+- **Configurable Rules**: YAML-based routing configuration
+
+### Contributors
 - **Leo** ([@LeoLin990405](https://github.com/LeoLin990405)) - Project lead & integration
 - **Claude** (Anthropic Claude Opus 4.5) - Architecture design & code optimization
 - **Codex** (OpenAI GPT-5.2 Codex) - Script development & debugging
 
-We focused on improving **reliability**, **stability**, and **ease of use** for single-round, on-demand AI collaboration workflows.
-
 ---
 
-## Key Optimizations & Changes
+## Intelligent Task Routing
 
-### 1. Extended Provider Support
-| Provider | Original | This Fork |
-|----------|----------|-----------|
-| Claude | ✓ | ✓ |
-| Codex | ✓ | ✓ |
-| Gemini | ✓ | ✓ (enhanced) |
-| OpenCode | ✓ | ✓ (enhanced) |
-| iFlow | ✗ | ✓ **NEW** |
-| Kimi | ✗ | ✓ **NEW** |
-| Qwen | ✗ | ✓ **NEW** |
-| DeepSeek | ✗ | ✓ **NEW** |
-| Grok | ✗ | ✓ **NEW** |
+The core innovation of AI Router CCB is its intelligent routing engine, inspired by [Nexus Router](https://github.com/grafbase/nexus).
 
-### 2. Sidecar Auto-Management
-- **Auto-open**: Panes open on-demand when you call `ask <provider>`
-- **Auto-close**: Panes close automatically after task completion
-- **Configurable timing**: `*_MIN_OPEN_S` variables control minimum open duration
-
-### 3. WezTerm Integration Improvements
-- **Explicit pane targeting**: Avoids "no split / wrong window" issues
-- **Anchor override**: Reliable pane positioning with `CCB_SIDECAR_DIRECTION`
-- **Border scripts**: Visual feedback for active AI sessions
-
-### 4. Provider-Specific Stability Fixes
-
-#### Gemini
-- Extra readiness checks to prevent "send before ready" errors
-- Improved startup gating with configurable delays
-
-#### OpenCode
-- Session file wait mechanism (`CCB_OASKD_SESSION_WAIT_S`)
-- Minimum open time to prevent instant close
-
-#### DeepSeek
-- Quick/headless mode for reliable replies (`CCB_DSKASKD_QUICK_MODE`)
-- Optional sidecar preview window
-- Force sidecar option for debugging
-
-#### Kimi / Qwen / iFlow
-- Full command set: `*ask`, `*ping`, `*pend`
-- Consistent behavior with other providers
-- **Kimi**: CLI starts slowly, recommend `CCB_KASKD_STARTUP_WAIT_S=25`
-- **iFlow (GLM)**: Model responds slowly, recommend `CCB_IASKD_STARTUP_WAIT_S=30`
-
-### 5. Unified Command Interface
-All providers now support the same command pattern:
-```bash
-# Ask a question (background, non-blocking)
-<provider>ask "your question"
-
-# Check connectivity
-<provider>ping
-
-# Get pending reply (explicit request only)
-<provider>pend
-```
-
-### 6. Configuration Improvements
-- Unified CLI delay via `CCB_CLI_READY_WAIT_S`
-- Per-provider environment variables for fine-tuning
-- Centralized config in `~/.ccb/ccb.config`
-
-### 7. CLAUDE.md Integration
-- Pre-configured collaboration rules for all providers
-- Command map with prefixes and shortcuts
-- Fast-path dispatch for minimal latency
-
-### 8. Unified Router (Intelligent Task Routing) **NEW**
-Inspired by [Nexus Router](https://github.com/grafbase/nexus), CCB now includes an intelligent routing engine that automatically selects the optimal AI provider based on task type:
-
+### Quick Start
 ```bash
 # Smart routing - auto-selects best provider
 ccb ask "添加 React 组件"        # → gemini (frontend)
@@ -102,22 +42,60 @@ ccb route "帮我审查这段代码"
 
 # Check all provider health status
 ccb health
+
+# Force specific provider
+ccb ask -p claude "任何问题"
+
+# Route based on file context
+ccb route -f src/components/Button.tsx "修改这个文件"
 ```
 
-| Task Type | Keywords | Recommended Provider |
-|-----------|----------|---------------------|
-| Frontend | react, vue, component, 前端 | gemini |
-| Backend | api, endpoint, 后端, 接口 | codex |
-| Architecture | design, architect, 设计, 架构 | claude |
-| Reasoning | analyze, reason, 分析, 推理 | deepseek |
-| Code Review | review, check, 审查, 检查 | gemini |
-| Quick Query | what, how, why, 什么, 怎么 | claude |
+### Routing Rules
 
-Configuration: `~/.ccb_config/unified-router.yaml`
+| Task Type | Keywords | File Patterns | Provider |
+|-----------|----------|---------------|----------|
+| Frontend | react, vue, component, 前端, 组件 | `*.tsx`, `*.vue`, `components/**` | gemini |
+| Backend | api, endpoint, 后端, 接口 | `api/**`, `routes/**`, `services/**` | codex |
+| Architecture | design, architect, 设计, 架构 | - | claude |
+| Reasoning | analyze, reason, 分析, 推理, 算法 | - | deepseek |
+| Code Review | review, check, 审查, 检查 | - | gemini |
+| Quick Query | what, how, why, 什么, 怎么 | - | claude |
+
+### Configuration
+Edit `~/.ccb_config/unified-router.yaml` to customize routing rules:
+```yaml
+routing_rules:
+  - name: frontend
+    priority: 10
+    patterns:
+      - "**/components/**"
+      - "**/*.tsx"
+    keywords:
+      - react
+      - vue
+      - 前端
+    provider: gemini
+```
 
 ---
 
-## Quick Start
+## Supported Providers
+
+| Provider | Command | Ping | Description |
+|----------|---------|------|-------------|
+| Claude | `lask` | `lping` | General purpose, architecture, quick queries |
+| Codex | `cask` | `cping` | Backend, API, systems programming |
+| Gemini | `gask` | `gping` | Frontend, code review, multimodal |
+| OpenCode | `oask` | `oping` | General coding assistance |
+| DeepSeek | `dskask` | `dskping` | Deep reasoning, algorithms, optimization |
+| Droid | `dask` | `dping` | Autonomous task execution |
+| iFlow | `iask` | `iping` | Workflow automation |
+| Kimi | `kask` | `kping` | Chinese language, long context |
+| Qwen | `qask` | `qping` | Multilingual, general purpose |
+
+---
+
+## Installation
 
 ### Prerequisites
 - [WezTerm](https://wezfurlong.org/wezterm/) (recommended) or tmux
@@ -125,73 +103,36 @@ Configuration: `~/.ccb_config/unified-router.yaml`
   - `claude` (Anthropic)
   - `codex` (OpenAI)
   - `gemini` (Google)
-  - `opencode` (OpenCode CLI)
-  - `deepseek` (DeepSeek CLI)
   - Others as needed
 
-### Installation
+### Install
 ```bash
 # Clone this repository
-git clone https://github.com/LeoLin990405/-Claude-Code-Bridge.git ~/.local/share/codex-dual
+git clone https://github.com/LeoLin990405/ai-router-ccb.git ~/.local/share/codex-dual
 
 # Run installer
 cd ~/.local/share/codex-dual
 ./install.sh
 ```
 
-### Environment Variables (Example)
+### Environment Variables
 Add to your `~/.zshrc` or `~/.bashrc`:
 ```bash
 # CCB Core
 export CCB_SIDECAR_AUTOSTART=1
 export CCB_SIDECAR_DIRECTION=right
 export CCB_CLI_READY_WAIT_S=20
-export CCB_SIDECAR_SESSION_WAIT_S=15
 
-# DeepSeek (stable reply + optional sidecar)
+# DeepSeek
 export CCB_DSKASKD_QUICK_MODE=1
 export CCB_DSKASKD_ALLOW_NO_SESSION=1
-export CCB_DSKASKD_FORCE_SIDECAR=1
-export CCB_DSKASKD_SIDECAR_MIN_OPEN_S=5
-export DEEPSEEK_BIN=/path/to/deepseek
 
-# OpenCode sidecar stability
-export CCB_OASKD_SESSION_WAIT_S=12
-export CCB_OASKD_SIDECAR_MIN_OPEN_S=5
-
-# Kimi - CLI starts slowly, increase wait time
+# Kimi - CLI starts slowly
 export CCB_KASKD_STARTUP_WAIT_S=25
-export CCB_KASKD_SIDECAR_MIN_OPEN_S=10
 
-# iFlow (GLM) - Model responds slowly, increase wait time
+# iFlow (GLM) - Model responds slowly
 export CCB_IASKD_STARTUP_WAIT_S=30
-export CCB_IASKD_SIDECAR_MIN_OPEN_S=15
-
-# Gemini
-export CCB_GASKD_READY_WAIT_S=15
 ```
-
-### Claude Code Startup Hook (Optional)
-Copy `config/ccb-startup-hook.sh` to `~/.claude/hooks/` and configure Claude Code's `settings.json`:
-```json
-{
-  "hooks": {
-    "SessionStart": [
-      {
-        "matcher": "startup|resume",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "$HOME/.claude/hooks/ccb-startup-hook.sh",
-            "timeout": 10
-          }
-        ]
-      }
-    ]
-  }
-}
-```
-This will automatically check CCB provider status when Claude Code starts.
 
 ---
 
@@ -221,10 +162,26 @@ cping
 gping
 dskping
 
-# Get pending replies (when explicitly needed)
+# Get pending replies
 cpend
 gpend
 dskpend
+```
+
+### CCB Commands
+```bash
+# Start providers
+ccb codex gemini opencode
+
+# Intelligent routing
+ccb ask "your question"
+ccb route "show routing only"
+ccb health
+
+# Management
+ccb kill
+ccb version
+ccb update
 ```
 
 ---
@@ -232,14 +189,20 @@ dskpend
 ## File Structure
 ```
 ~/.local/share/codex-dual/
-├── bin/           # 45 command scripts (ask/ping/pend for each provider)
-├── lib/           # 57 library scripts
-├── config/        # Configuration templates
-├── skills/        # Claude Code skills
-├── codex_skills/  # Codex skills
-├── commands/      # Custom commands
-├── ccb            # Main CCB binary
-└── install.sh     # Installer script
+├── bin/                    # Command scripts (ask/ping/pend)
+│   ├── ccb-ask            # Intelligent routing CLI
+│   ├── cask, gask, ...    # Provider ask commands
+│   └── cping, gping, ...  # Provider ping commands
+├── lib/                    # Library modules
+│   ├── unified_router.py  # Routing engine
+│   └── *_daemon.py        # Provider daemons
+├── config/                 # Configuration templates
+├── ccb                     # Main CCB binary
+└── install.sh              # Installer script
+
+~/.ccb_config/
+├── unified-router.yaml    # Routing configuration
+└── .*-session             # Provider session files
 ```
 
 ---
@@ -249,15 +212,17 @@ dskpend
 ### Provider not responding
 1. Check connectivity: `<provider>ping`
 2. Verify CLI is installed and authenticated
-3. Check environment variables are set
+3. Check environment variables
+
+### Routing not working as expected
+1. Check routing decision: `ccb route "your message"`
+2. Review `~/.ccb_config/unified-router.yaml`
+3. Use `-v` flag for verbose output: `ccb ask -v "message"`
 
 ### Sidecar not opening
 1. Ensure WezTerm is running
 2. Check `CCB_SIDECAR_AUTOSTART=1`
 3. Verify `CCB_SIDECAR_DIRECTION` is set
-
-### DeepSeek TUI mode issues
-Set `CCB_DSKASKD_QUICK_MODE=0` for TUI mode (less stable but interactive)
 
 ---
 

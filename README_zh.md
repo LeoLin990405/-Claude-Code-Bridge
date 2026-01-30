@@ -1,6 +1,6 @@
-# CCB - Claude Code Bridge (优化版)
+# AI Router CCB - 智能多 AI 协作平台
 
-> **基于 [bfly123/claude_code_bridge](https://github.com/bfly123/claude_code_bridge) 的优化分支**
+> **基于 [bfly123/claude_code_bridge](https://github.com/bfly123/claude_code_bridge) 的优化分支，新增智能任务路由功能**
 >
 > 特别感谢原作者 **bfly123** 和社区创建了这个出色的多 AI 协作框架。
 
@@ -10,87 +10,27 @@
 
 ## 关于本项目
 
-这是一个**协作优化项目**，由以下成员共同完成：
+**AI Router CCB** 是一个统一的 AI 协作平台，能够根据任务类型、关键词和文件模式智能地将任务路由到最佳 AI provider。
+
+### 核心特性
+- **智能路由**：自动为每个任务选择最佳 AI provider
+- **9 个 AI Provider**：Claude、Codex、Gemini、OpenCode、DeepSeek、Droid、iFlow、Kimi、Qwen
+- **统一接口**：所有 provider 使用一致的命令模式
+- **健康监控**：实时 provider 状态检查
+- **可配置规则**：基于 YAML 的路由配置
+
+### 贡献者
 - **Leo** ([@LeoLin990405](https://github.com/LeoLin990405)) - 项目负责人 & 集成
 - **Claude** (Anthropic Claude Opus 4.5) - 架构设计 & 代码优化
 - **Codex** (OpenAI GPT-5.2 Codex) - 脚本开发 & 调试
 
-我们专注于提升单轮次、按需 AI 协作工作流的**可靠性**、**稳定性**和**易用性**。
-
 ---
 
-## 主要优化与改进
+## 智能任务路由
 
-### 1. 扩展的 Provider 支持
-| Provider | 原版 | 本分支 |
-|----------|------|--------|
-| Claude | ✓ | ✓ |
-| Codex | ✓ | ✓ |
-| Gemini | ✓ | ✓ (增强) |
-| OpenCode | ✓ | ✓ (增强) |
-| iFlow | ✗ | ✓ **新增** |
-| Kimi | ✗ | ✓ **新增** |
-| Qwen | ✗ | ✓ **新增** |
-| DeepSeek | ✗ | ✓ **新增** |
-| Grok | ✗ | ✓ **新增** |
+AI Router CCB 的核心创新是其智能路由引擎，灵感来自 [Nexus Router](https://github.com/grafbase/nexus)。
 
-### 2. Sidecar 自动管理
-- **自动打开**：调用 `ask <provider>` 时按需打开窗格
-- **自动关闭**：任务完成后自动关闭窗格
-- **可配置时间**：`*_MIN_OPEN_S` 变量控制最小打开时长
-
-### 3. WezTerm 集成改进
-- **显式窗格定位**：避免"无分割/错误窗口"问题
-- **锚点覆盖**：通过 `CCB_SIDECAR_DIRECTION` 实现可靠的窗格定位
-- **边框脚本**：为活动 AI 会话提供视觉反馈
-
-### 4. Provider 特定稳定性修复
-
-#### Gemini
-- 额外的就绪检查，防止"发送前未就绪"错误
-- 改进的启动门控，支持可配置延迟
-
-#### OpenCode
-- 会话文件等待机制 (`CCB_OASKD_SESSION_WAIT_S`)
-- 最小打开时间，防止即时关闭
-
-#### DeepSeek
-- 快速/无头模式，确保可靠回复 (`CCB_DSKASKD_QUICK_MODE`)
-- 可选的 sidecar 预览窗口
-- 强制 sidecar 选项用于调试
-
-#### Kimi / Qwen / iFlow
-- 完整命令集：`*ask`、`*ping`、`*pend`
-- 与其他 provider 行为一致
-- **Kimi**：CLI 启动较慢，建议设置 `CCB_KASKD_STARTUP_WAIT_S=25`
-- **iFlow (GLM)**：模型响应较慢，建议设置 `CCB_IASKD_STARTUP_WAIT_S=30`
-
-### 5. 统一命令接口
-所有 provider 现在支持相同的命令模式：
-```bash
-# 提问（后台，非阻塞）
-<provider>ask "你的问题"
-
-# 检查连接
-<provider>ping
-
-# 获取待处理回复（仅在明确请求时使用）
-<provider>pend
-```
-
-### 6. 配置改进
-- 通过 `CCB_CLI_READY_WAIT_S` 统一 CLI 延迟
-- 每个 provider 的环境变量用于微调
-- 集中配置在 `~/.ccb/ccb.config`
-
-### 7. CLAUDE.md 集成
-- 为所有 provider 预配置协作规则
-- 带前缀和快捷方式的命令映射
-- 快速路径分发，最小化延迟
-
-### 8. 统一路由引擎 (Unified Router) **新增**
-受 [Nexus Router](https://github.com/grafbase/nexus) 启发，CCB 现在包含智能路由引擎，可根据任务类型自动选择最佳 AI provider：
-
+### 快速开始
 ```bash
 # 智能路由 - 自动选择最佳 provider
 ccb ask "添加 React 组件"        # → gemini (前端)
@@ -102,22 +42,60 @@ ccb route "帮我审查这段代码"
 
 # 检查所有 provider 健康状态
 ccb health
+
+# 强制指定 provider
+ccb ask -p claude "任何问题"
+
+# 基于文件上下文路由
+ccb route -f src/components/Button.tsx "修改这个文件"
 ```
 
-| 任务类型 | 关键词 | 推荐 Provider |
-|----------|--------|---------------|
-| 前端开发 | react, vue, component, 前端 | gemini |
-| 后端开发 | api, endpoint, 后端, 接口 | codex |
-| 架构设计 | design, architect, 设计, 架构 | claude |
-| 深度推理 | analyze, reason, 分析, 推理 | deepseek |
-| 代码审查 | review, check, 审查, 检查 | gemini |
-| 快速问答 | what, how, why, 什么, 怎么 | claude |
+### 路由规则
 
-配置文件：`~/.ccb_config/unified-router.yaml`
+| 任务类型 | 关键词 | 文件模式 | Provider |
+|----------|--------|----------|----------|
+| 前端开发 | react, vue, component, 前端, 组件 | `*.tsx`, `*.vue`, `components/**` | gemini |
+| 后端开发 | api, endpoint, 后端, 接口 | `api/**`, `routes/**`, `services/**` | codex |
+| 架构设计 | design, architect, 设计, 架构 | - | claude |
+| 深度推理 | analyze, reason, 分析, 推理, 算法 | - | deepseek |
+| 代码审查 | review, check, 审查, 检查 | - | gemini |
+| 快速问答 | what, how, why, 什么, 怎么 | - | claude |
+
+### 配置
+编辑 `~/.ccb_config/unified-router.yaml` 自定义路由规则：
+```yaml
+routing_rules:
+  - name: frontend
+    priority: 10
+    patterns:
+      - "**/components/**"
+      - "**/*.tsx"
+    keywords:
+      - react
+      - vue
+      - 前端
+    provider: gemini
+```
 
 ---
 
-## 快速开始
+## 支持的 Provider
+
+| Provider | 命令 | Ping | 描述 |
+|----------|------|------|------|
+| Claude | `lask` | `lping` | 通用、架构、快速问答 |
+| Codex | `cask` | `cping` | 后端、API、系统编程 |
+| Gemini | `gask` | `gping` | 前端、代码审查、多模态 |
+| OpenCode | `oask` | `oping` | 通用编码辅助 |
+| DeepSeek | `dskask` | `dskping` | 深度推理、算法、优化 |
+| Droid | `dask` | `dping` | 自动化任务执行 |
+| iFlow | `iask` | `iping` | 工作流自动化 |
+| Kimi | `kask` | `kping` | 中文、长上下文 |
+| Qwen | `qask` | `qping` | 多语言、通用 |
+
+---
+
+## 安装
 
 ### 前置条件
 - [WezTerm](https://wezfurlong.org/wezterm/)（推荐）或 tmux
@@ -125,73 +103,36 @@ ccb health
   - `claude` (Anthropic)
   - `codex` (OpenAI)
   - `gemini` (Google)
-  - `opencode` (OpenCode CLI)
-  - `deepseek` (DeepSeek CLI)
   - 其他按需安装
 
-### 安装
+### 安装步骤
 ```bash
 # 克隆此仓库
-git clone https://github.com/LeoLin990405/-Claude-Code-Bridge.git ~/.local/share/codex-dual
+git clone https://github.com/LeoLin990405/ai-router-ccb.git ~/.local/share/codex-dual
 
 # 运行安装脚本
 cd ~/.local/share/codex-dual
 ./install.sh
 ```
 
-### 环境变量（示例）
+### 环境变量
 添加到 `~/.zshrc` 或 `~/.bashrc`：
 ```bash
 # CCB 核心
 export CCB_SIDECAR_AUTOSTART=1
 export CCB_SIDECAR_DIRECTION=right
 export CCB_CLI_READY_WAIT_S=20
-export CCB_SIDECAR_SESSION_WAIT_S=15
 
-# DeepSeek（稳定回复 + 可选 sidecar）
+# DeepSeek
 export CCB_DSKASKD_QUICK_MODE=1
 export CCB_DSKASKD_ALLOW_NO_SESSION=1
-export CCB_DSKASKD_FORCE_SIDECAR=1
-export CCB_DSKASKD_SIDECAR_MIN_OPEN_S=5
-export DEEPSEEK_BIN=/path/to/deepseek
 
-# OpenCode sidecar 稳定性
-export CCB_OASKD_SESSION_WAIT_S=12
-export CCB_OASKD_SIDECAR_MIN_OPEN_S=5
-
-# Kimi - CLI 启动较慢，增加等待时间
+# Kimi - CLI 启动较慢
 export CCB_KASKD_STARTUP_WAIT_S=25
-export CCB_KASKD_SIDECAR_MIN_OPEN_S=10
 
-# iFlow (GLM) - 模型响应较慢，增加等待时间
+# iFlow (GLM) - 模型响应较慢
 export CCB_IASKD_STARTUP_WAIT_S=30
-export CCB_IASKD_SIDECAR_MIN_OPEN_S=15
-
-# Gemini
-export CCB_GASKD_READY_WAIT_S=15
 ```
-
-### Claude Code 启动 Hook（可选）
-将 `config/ccb-startup-hook.sh` 复制到 `~/.claude/hooks/` 并配置 Claude Code 的 `settings.json`：
-```json
-{
-  "hooks": {
-    "SessionStart": [
-      {
-        "matcher": "startup|resume",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "$HOME/.claude/hooks/ccb-startup-hook.sh",
-            "timeout": 10
-          }
-        ]
-      }
-    ]
-  }
-}
-```
-这将在 Claude Code 启动时自动检查 CCB provider 状态。
 
 ---
 
@@ -221,10 +162,26 @@ cping
 gping
 dskping
 
-# 获取待处理回复（需要时）
+# 获取待处理回复
 cpend
 gpend
 dskpend
+```
+
+### CCB 命令
+```bash
+# 启动 provider
+ccb codex gemini opencode
+
+# 智能路由
+ccb ask "你的问题"
+ccb route "仅显示路由"
+ccb health
+
+# 管理
+ccb kill
+ccb version
+ccb update
 ```
 
 ---
@@ -232,14 +189,20 @@ dskpend
 ## 文件结构
 ```
 ~/.local/share/codex-dual/
-├── bin/           # 45 个命令脚本（每个 provider 的 ask/ping/pend）
-├── lib/           # 57 个库脚本
-├── config/        # 配置模板
-├── skills/        # Claude Code skills
-├── codex_skills/  # Codex skills
-├── commands/      # 自定义命令
-├── ccb            # CCB 主程序
-└── install.sh     # 安装脚本
+├── bin/                    # 命令脚本 (ask/ping/pend)
+│   ├── ccb-ask            # 智能路由 CLI
+│   ├── cask, gask, ...    # Provider ask 命令
+│   └── cping, gping, ...  # Provider ping 命令
+├── lib/                    # 库模块
+│   ├── unified_router.py  # 路由引擎
+│   └── *_daemon.py        # Provider 守护进程
+├── config/                 # 配置模板
+├── ccb                     # CCB 主程序
+└── install.sh              # 安装脚本
+
+~/.ccb_config/
+├── unified-router.yaml    # 路由配置
+└── .*-session             # Provider 会话文件
 ```
 
 ---
@@ -249,15 +212,17 @@ dskpend
 ### Provider 无响应
 1. 检查连接：`<provider>ping`
 2. 验证 CLI 已安装并认证
-3. 检查环境变量是否设置
+3. 检查环境变量
+
+### 路由不符合预期
+1. 检查路由决策：`ccb route "你的消息"`
+2. 查看 `~/.ccb_config/unified-router.yaml`
+3. 使用 `-v` 标志查看详细输出：`ccb ask -v "消息"`
 
 ### Sidecar 未打开
 1. 确保 WezTerm 正在运行
 2. 检查 `CCB_SIDECAR_AUTOSTART=1`
 3. 验证 `CCB_SIDECAR_DIRECTION` 已设置
-
-### DeepSeek TUI 模式问题
-设置 `CCB_DSKASKD_QUICK_MODE=0` 启用 TUI 模式（稳定性较低但可交互）
 
 ---
 
