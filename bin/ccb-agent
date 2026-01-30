@@ -1,0 +1,211 @@
+#!/usr/bin/env python3
+"""
+CCB Agent CLI Tool
+
+Execute tasks using specialized agents.
+"""
+from __future__ import annotations
+
+import sys
+import argparse
+from pathlib import Path
+
+# Add lib to path
+script_dir = Path(__file__).resolve().parent
+lib_dir = script_dir.parent / "lib"
+sys.path.insert(0, str(lib_dir))
+
+from agent_registry import get_agent_registry
+from agent_executor import AgentExecutor, AgentContext, format_agent_result
+
+
+def cmd_list(args):
+    """List all available agents."""
+    registry = get_agent_registry()
+    agents = registry.list_agents()
+
+    print("=" * 60)
+    print("Available Agents")
+    print("=" * 60)
+    print()
+
+    for agent in agents:
+        caps = ", ".join(c.value for c in agent.capabilities)
+        providers = ", ".join(agent.preferred_providers[:2])
+
+        print(f"{agent.name}")
+        print(f"  Description: {agent.description}")
+        print(f"  Capabilities: {caps}")
+        print(f"  Providers: {providers}")
+        print()
+
+
+def cmd_info(args):
+    """Show detailed info about an agent."""
+    registry = get_agent_registry()
+    agent = registry.get_agent(args.agent)
+
+    if not agent:
+        print(f"Error: Agent '{args.agent}' not found")
+        return 1
+
+    print("=" * 60)
+    print(f"Agent: {agent.name}")
+    print("=" * 60)
+    print()
+    print(f"Description: {agent.description}")
+    print(f"Enabled: {agent.enabled}")
+    print()
+    print("Capabilities:")
+    for cap in agent.capabilities:
+        print(f"  - {cap.value}")
+    print()
+    print("Preferred Providers:")
+    for p in agent.preferred_providers:
+        print(f"  - {p}")
+    print()
+    print("Fallback Providers:")
+    for p in agent.fallback_providers:
+        print(f"  - {p}")
+    print()
+    print("Tools:")
+    for t in agent.tools:
+        print(f"  - {t}")
+    print()
+    if agent.system_prompt:
+        print("System Prompt:")
+        print("-" * 40)
+        print(agent.system_prompt[:500])
+        if len(agent.system_prompt) > 500:
+            print("...")
+
+
+def cmd_execute(args):
+    """Execute a task with a specific agent."""
+    executor = AgentExecutor()
+
+    context = AgentContext(
+        task=args.task,
+        files=args.files or [],
+        working_dir=args.dir or ".",
+        timeout_s=args.timeout,
+    )
+
+    print(f"Executing with agent: {args.agent}")
+    print("-" * 40)
+
+    result = executor.execute(args.agent, args.task, context)
+
+    print(format_agent_result(result, verbose=args.verbose))
+
+    return 0 if result.success else 1
+
+
+def cmd_auto(args):
+    """Automatically select and execute the best agent."""
+    executor = AgentExecutor()
+    registry = get_agent_registry()
+
+    # Match task to agent
+    match = registry.match_task(args.task, args.files)
+
+    print(f"Selected agent: {match.agent} (confidence: {match.confidence:.0%})")
+    print(f"Reason: {match.reason}")
+    print("-" * 40)
+
+    context = AgentContext(
+        task=args.task,
+        files=args.files or [],
+        working_dir=args.dir or ".",
+        timeout_s=args.timeout,
+    )
+
+    result = executor.execute(match.agent, args.task, context)
+
+    print(format_agent_result(result, verbose=args.verbose))
+
+    return 0 if result.success else 1
+
+
+def cmd_match(args):
+    """Show which agent would be selected for a task."""
+    registry = get_agent_registry()
+    match = registry.match_task(args.task, args.files)
+
+    print("=" * 60)
+    print("Agent Match Result")
+    print("=" * 60)
+    print()
+    print(f"Task: {args.task[:100]}{'...' if len(args.task) > 100 else ''}")
+    print()
+    print(f"Selected Agent: {match.agent}")
+    print(f"Confidence: {match.confidence:.0%}")
+    print(f"Reason: {match.reason}")
+    print()
+    print("Matched Capabilities:")
+    for cap in match.matched_capabilities:
+        print(f"  - {cap.value}")
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="CCB Agent Execution Tool",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  ccb-agent list                              # List all agents
+  ccb-agent info sisyphus                     # Show agent details
+  ccb-agent execute sisyphus "implement sort" # Execute with specific agent
+  ccb-agent auto "find all API endpoints"     # Auto-select agent
+  ccb-agent match "analyze this algorithm"    # Show which agent matches
+        """
+    )
+
+    subparsers = parser.add_subparsers(dest="command", help="Commands")
+
+    # list command
+    list_parser = subparsers.add_parser("list", help="List available agents")
+    list_parser.set_defaults(func=cmd_list)
+
+    # info command
+    info_parser = subparsers.add_parser("info", help="Show agent details")
+    info_parser.add_argument("agent", help="Agent name")
+    info_parser.set_defaults(func=cmd_info)
+
+    # execute command
+    exec_parser = subparsers.add_parser("execute", help="Execute with specific agent")
+    exec_parser.add_argument("agent", help="Agent name")
+    exec_parser.add_argument("task", help="Task to execute")
+    exec_parser.add_argument("-f", "--files", nargs="*", help="Related files")
+    exec_parser.add_argument("-d", "--dir", help="Working directory")
+    exec_parser.add_argument("-t", "--timeout", type=float, default=300, help="Timeout in seconds")
+    exec_parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
+    exec_parser.set_defaults(func=cmd_execute)
+
+    # auto command
+    auto_parser = subparsers.add_parser("auto", help="Auto-select and execute agent")
+    auto_parser.add_argument("task", help="Task to execute")
+    auto_parser.add_argument("-f", "--files", nargs="*", help="Related files")
+    auto_parser.add_argument("-d", "--dir", help="Working directory")
+    auto_parser.add_argument("-t", "--timeout", type=float, default=300, help="Timeout in seconds")
+    auto_parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
+    auto_parser.set_defaults(func=cmd_auto)
+
+    # match command
+    match_parser = subparsers.add_parser("match", help="Show agent match for task")
+    match_parser.add_argument("task", help="Task to match")
+    match_parser.add_argument("-f", "--files", nargs="*", help="Related files")
+    match_parser.set_defaults(func=cmd_match)
+
+    args = parser.parse_args()
+
+    if not args.command:
+        # Default to list
+        cmd_list(args)
+        return 0
+
+    return args.func(args) or 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

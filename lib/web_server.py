@@ -124,6 +124,7 @@ BASE_TEMPLATE = """
             <a href="/tasks" class="{nav_tasks}">Tasks</a>
             <a href="/stats" class="{nav_stats}">Performance</a>
             <a href="/cache" class="{nav_cache}">Cache</a>
+            <a href="/ratelimit" class="{nav_ratelimit}">Rate Limit</a>
             <a href="/health" class="{nav_health}">Health</a>
         </nav>
     </header>
@@ -154,6 +155,7 @@ def create_app() -> "FastAPI":
             "nav_tasks": "active" if active == "tasks" else "",
             "nav_stats": "active" if active == "stats" else "",
             "nav_cache": "active" if active == "cache" else "",
+            "nav_ratelimit": "active" if active == "ratelimit" else "",
             "nav_health": "active" if active == "health" else "",
         }
         return BASE_TEMPLATE.format(content=content, **nav_classes)
@@ -470,6 +472,94 @@ def create_app() -> "FastAPI":
         """API endpoint to clear cache."""
         count = cache.clear()
         return {"cleared": count}
+
+    # Rate limiting endpoints
+    @app.get("/api/ratelimit")
+    async def api_ratelimit_status():
+        """API endpoint for rate limit status."""
+        try:
+            from rate_limiter import get_rate_limiter
+            limiter = get_rate_limiter()
+            stats = limiter.get_all_stats()
+            return [
+                {
+                    "provider": s.provider,
+                    "current_rpm": s.current_rpm,
+                    "limit_rpm": s.limit_rpm,
+                    "available_tokens": s.available_tokens,
+                    "is_limited": s.is_limited,
+                    "wait_time_s": s.wait_time_s,
+                    "total_requests": s.total_requests,
+                    "total_limited": s.total_limited,
+                }
+                for s in stats
+            ]
+        except ImportError:
+            return {"error": "Rate limiter not available"}
+
+    @app.post("/api/ratelimit/{provider}/reset")
+    async def api_ratelimit_reset(provider: str):
+        """API endpoint to reset rate limit for a provider."""
+        try:
+            from rate_limiter import get_rate_limiter
+            limiter = get_rate_limiter()
+            limiter.reset(provider)
+            return {"status": "ok", "provider": provider}
+        except ImportError:
+            raise HTTPException(status_code=500, detail="Rate limiter not available")
+
+    @app.get("/ratelimit", response_class=HTMLResponse)
+    async def ratelimit_page():
+        """Rate limit management page."""
+        try:
+            from rate_limiter import get_rate_limiter
+            limiter = get_rate_limiter()
+            stats = limiter.get_all_stats()
+        except ImportError:
+            stats = []
+
+        content = """
+        <div class="card">
+            <h2>Rate Limit Status</h2>
+            <button class="btn refresh" hx-get="/ratelimit" hx-target="body">Refresh</button>
+            <table>
+                <tr>
+                    <th>Provider</th>
+                    <th>Status</th>
+                    <th>RPM</th>
+                    <th>Tokens</th>
+                    <th>Wait</th>
+                    <th>Limited</th>
+                    <th>Actions</th>
+                </tr>
+        """
+
+        for s in stats:
+            status_class = "status-fail" if s.is_limited else "status-ok"
+            status_text = "LIMITED" if s.is_limited else "OK"
+            rpm_str = f"{s.current_rpm}/{s.limit_rpm}"
+            wait_str = f"{s.wait_time_s:.1f}s" if s.wait_time_s > 0 else "-"
+
+            content += f"""
+                <tr>
+                    <td>{s.provider}</td>
+                    <td class="{status_class}">{status_text}</td>
+                    <td>{rpm_str}</td>
+                    <td>{s.available_tokens:.1f}</td>
+                    <td>{wait_str}</td>
+                    <td>{s.total_limited}</td>
+                    <td>
+                        <button class="btn" hx-post="/api/ratelimit/{s.provider}/reset" hx-swap="none" onclick="setTimeout(() => location.reload(), 500)">Reset</button>
+                    </td>
+                </tr>
+            """
+
+        content += """
+            </table>
+        </div>
+        """
+
+        return render_page(content, active="ratelimit")
 
     return app
 

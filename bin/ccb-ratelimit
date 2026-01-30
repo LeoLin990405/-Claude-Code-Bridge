@@ -1,0 +1,253 @@
+#!/usr/bin/env python3
+"""
+CCB Rate Limit CLI Tool
+
+Manage and monitor rate limiting for AI providers.
+"""
+from __future__ import annotations
+
+import sys
+import argparse
+from pathlib import Path
+from datetime import datetime
+
+# Add lib to path
+script_dir = Path(__file__).resolve().parent
+lib_dir = script_dir.parent / "lib"
+sys.path.insert(0, str(lib_dir))
+
+from rate_limiter import RateLimiter, get_rate_limiter
+
+
+def cmd_status(args):
+    """Show rate limit status for all or specific providers."""
+    limiter = get_rate_limiter()
+
+    if args.provider:
+        providers = [args.provider]
+    else:
+        providers = list(limiter.configs.keys())
+
+    print("=" * 70)
+    print("CCB Rate Limit Status")
+    print("=" * 70)
+    print()
+
+    # Header
+    print(f"{'Provider':<12} {'Status':<10} {'RPM':<12} {'Tokens':<10} {'Wait':<8} {'Limited':<8}")
+    print("-" * 70)
+
+    for provider in providers:
+        stats = limiter.get_stats(provider)
+        config = limiter.configs.get(provider)
+
+        if not config or not config.enabled:
+            status = "DISABLED"
+            status_color = "\033[90m"  # Gray
+        elif stats.is_limited:
+            status = "LIMITED"
+            status_color = "\033[91m"  # Red
+        else:
+            status = "OK"
+            status_color = "\033[92m"  # Green
+
+        rpm_str = f"{stats.current_rpm}/{stats.limit_rpm}"
+        tokens_str = f"{stats.available_tokens:.1f}"
+        wait_str = f"{stats.wait_time_s:.1f}s" if stats.wait_time_s > 0 else "-"
+        limited_str = str(stats.total_limited) if stats.total_limited > 0 else "-"
+
+        if sys.stdout.isatty():
+            print(f"{provider:<12} {status_color}{status:<10}\033[0m {rpm_str:<12} {tokens_str:<10} {wait_str:<8} {limited_str:<8}")
+        else:
+            print(f"{provider:<12} {status:<10} {rpm_str:<12} {tokens_str:<10} {wait_str:<8} {limited_str:<8}")
+
+    print()
+
+    if args.verbose:
+        print("Detailed Statistics:")
+        print("-" * 70)
+        for provider in providers:
+            stats = limiter.get_stats(provider)
+            config = limiter.configs.get(provider)
+
+            print(f"\n{provider.upper()}:")
+            print(f"  Enabled:        {config.enabled if config else 'N/A'}")
+            print(f"  RPM Limit:      {stats.limit_rpm}")
+            print(f"  TPM Limit:      {stats.limit_tpm}")
+            print(f"  Current RPM:    {stats.current_rpm}")
+            print(f"  Current TPM:    {stats.current_tpm}")
+            print(f"  Available:      {stats.available_tokens:.2f} tokens")
+            print(f"  Total Requests: {stats.total_requests}")
+            print(f"  Total Limited:  {stats.total_limited}")
+            if stats.last_request_at:
+                last_req = datetime.fromtimestamp(stats.last_request_at)
+                print(f"  Last Request:   {last_req.strftime('%Y-%m-%d %H:%M:%S')}")
+
+
+def cmd_set(args):
+    """Set rate limit configuration for a provider."""
+    limiter = get_rate_limiter()
+
+    if args.provider not in limiter.configs:
+        print(f"Warning: Provider '{args.provider}' not in default config, creating new entry.")
+
+    limiter.set_config(
+        provider=args.provider,
+        rpm=args.rpm,
+        tpm=args.tpm,
+        burst_size=args.burst,
+        enabled=args.enabled if args.enabled is not None else True,
+    )
+
+    print(f"Updated rate limit config for {args.provider}:")
+    config = limiter.configs[args.provider]
+    print(f"  RPM:        {config.rpm}")
+    print(f"  TPM:        {config.tpm}")
+    print(f"  Burst Size: {config.burst_size}")
+    print(f"  Enabled:    {config.enabled}")
+
+
+def cmd_reset(args):
+    """Reset rate limit counters."""
+    limiter = get_rate_limiter()
+
+    if args.all:
+        limiter.reset_all()
+        print("Reset rate limit counters for all providers.")
+    elif args.provider:
+        limiter.reset(args.provider)
+        print(f"Reset rate limit counters for {args.provider}.")
+    else:
+        print("Error: Specify --provider or --all")
+        return 1
+
+
+def cmd_enable(args):
+    """Enable rate limiting for a provider."""
+    limiter = get_rate_limiter()
+    limiter.set_config(args.provider, enabled=True)
+    print(f"Enabled rate limiting for {args.provider}.")
+
+
+def cmd_disable(args):
+    """Disable rate limiting for a provider."""
+    limiter = get_rate_limiter()
+    limiter.set_config(args.provider, enabled=False)
+    print(f"Disabled rate limiting for {args.provider}.")
+
+
+def cmd_cleanup(args):
+    """Clean up old rate limit records."""
+    limiter = get_rate_limiter()
+    deleted = limiter.cleanup_old_records(hours=args.hours)
+    print(f"Deleted {deleted} records older than {args.hours} hours.")
+
+
+def cmd_test(args):
+    """Test rate limiting by making rapid requests."""
+    limiter = get_rate_limiter()
+    provider = args.provider
+
+    print(f"Testing rate limit for {provider}...")
+    print(f"Attempting {args.count} requests...")
+    print()
+
+    acquired = 0
+    limited = 0
+
+    for i in range(args.count):
+        if limiter.acquire(provider, tokens=1, block=False):
+            acquired += 1
+            status = "OK"
+        else:
+            limited += 1
+            status = "LIMITED"
+
+        if args.verbose:
+            stats = limiter.get_stats(provider)
+            print(f"  Request {i+1}: {status} (tokens: {stats.available_tokens:.2f})")
+
+    print()
+    print(f"Results:")
+    print(f"  Acquired: {acquired}/{args.count}")
+    print(f"  Limited:  {limited}/{args.count}")
+
+    stats = limiter.get_stats(provider)
+    print(f"  Remaining tokens: {stats.available_tokens:.2f}")
+    print(f"  Wait time: {stats.wait_time_s:.2f}s")
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="CCB Rate Limit Management Tool",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  ccb-ratelimit status                    # Show all providers
+  ccb-ratelimit status -p claude          # Show specific provider
+  ccb-ratelimit set claude --rpm 50       # Set RPM limit
+  ccb-ratelimit reset --all               # Reset all counters
+  ccb-ratelimit disable deepseek          # Disable rate limiting
+  ccb-ratelimit test claude -c 20         # Test with 20 requests
+        """
+    )
+
+    subparsers = parser.add_subparsers(dest="command", help="Commands")
+
+    # status command
+    status_parser = subparsers.add_parser("status", help="Show rate limit status")
+    status_parser.add_argument("-p", "--provider", help="Specific provider to show")
+    status_parser.add_argument("-v", "--verbose", action="store_true", help="Show detailed stats")
+    status_parser.set_defaults(func=cmd_status)
+
+    # set command
+    set_parser = subparsers.add_parser("set", help="Set rate limit configuration")
+    set_parser.add_argument("provider", help="Provider to configure")
+    set_parser.add_argument("--rpm", type=int, help="Requests per minute limit")
+    set_parser.add_argument("--tpm", type=int, help="Tokens per minute limit")
+    set_parser.add_argument("--burst", type=int, help="Burst size")
+    set_parser.add_argument("--enabled", type=lambda x: x.lower() == 'true', help="Enable/disable (true/false)")
+    set_parser.set_defaults(func=cmd_set)
+
+    # reset command
+    reset_parser = subparsers.add_parser("reset", help="Reset rate limit counters")
+    reset_parser.add_argument("-p", "--provider", help="Provider to reset")
+    reset_parser.add_argument("-a", "--all", action="store_true", help="Reset all providers")
+    reset_parser.set_defaults(func=cmd_reset)
+
+    # enable command
+    enable_parser = subparsers.add_parser("enable", help="Enable rate limiting")
+    enable_parser.add_argument("provider", help="Provider to enable")
+    enable_parser.set_defaults(func=cmd_enable)
+
+    # disable command
+    disable_parser = subparsers.add_parser("disable", help="Disable rate limiting")
+    disable_parser.add_argument("provider", help="Provider to disable")
+    disable_parser.set_defaults(func=cmd_disable)
+
+    # cleanup command
+    cleanup_parser = subparsers.add_parser("cleanup", help="Clean up old records")
+    cleanup_parser.add_argument("--hours", type=int, default=24, help="Delete records older than N hours")
+    cleanup_parser.set_defaults(func=cmd_cleanup)
+
+    # test command
+    test_parser = subparsers.add_parser("test", help="Test rate limiting")
+    test_parser.add_argument("provider", help="Provider to test")
+    test_parser.add_argument("-c", "--count", type=int, default=10, help="Number of requests")
+    test_parser.add_argument("-v", "--verbose", action="store_true", help="Show each request")
+    test_parser.set_defaults(func=cmd_test)
+
+    args = parser.parse_args()
+
+    if not args.command:
+        # Default to status
+        args.provider = None
+        args.verbose = False
+        cmd_status(args)
+        return 0
+
+    return args.func(args) or 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

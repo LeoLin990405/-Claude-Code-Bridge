@@ -8,12 +8,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, TYPE_CHECKING
 from pathlib import Path
 import re
 import fnmatch
 import os
 import yaml
+
+if TYPE_CHECKING:
+    from rate_limiter import RateLimiter
 
 
 class TaskType(Enum):
@@ -50,6 +53,8 @@ class RoutingDecision:
     task_type: TaskType
     reason: str
     confidence: float = 1.0
+    rate_limited: bool = False
+    wait_time_s: float = 0.0
 
 
 @dataclass
@@ -229,16 +234,18 @@ class UnifiedRouter:
         },
     }
 
-    def __init__(self, config_path: Optional[str] = None):
+    def __init__(self, config_path: Optional[str] = None, rate_limiter: Optional["RateLimiter"] = None):
         """
         Initialize the router with optional configuration.
 
         Args:
             config_path: Path to YAML configuration file
+            rate_limiter: Optional rate limiter instance
         """
         self.config: Dict[str, Any] = {}
         self.custom_rules: List[RoutingRule] = []
         self._provider_health: Dict[str, ProviderHealth] = {}
+        self._rate_limiter = rate_limiter
 
         if config_path:
             self._load_config(config_path)
@@ -276,6 +283,7 @@ class UnifiedRouter:
         files: Optional[List[str]] = None,
         preferred_provider: Optional[str] = None,
         enable_magic_keywords: bool = True,
+        check_rate_limit: bool = True,
     ) -> RoutingDecision:
         """
         Determine the optimal provider for a given task.
@@ -285,6 +293,7 @@ class UnifiedRouter:
             files: Optional list of file paths involved
             preferred_provider: Optional user-specified provider preference
             enable_magic_keywords: Whether to check for magic keywords (default: True)
+            check_rate_limit: Whether to check rate limits (default: True)
 
         Returns:
             RoutingDecision with provider, channel, and reasoning
@@ -293,11 +302,12 @@ class UnifiedRouter:
         if enable_magic_keywords:
             magic_match = self._detect_magic_keywords(message)
             if magic_match:
-                return self._handle_magic_keyword(magic_match, message)
+                decision = self._handle_magic_keyword(magic_match, message)
+                return self._apply_rate_limit_check(decision) if check_rate_limit else decision
 
         # If user explicitly specified a provider, use it
         if preferred_provider and preferred_provider in self.ALL_PROVIDERS:
-            return RoutingDecision(
+            decision = RoutingDecision(
                 provider=preferred_provider,
                 channel=ChannelType.CCB_DAEMON,
                 fallback=ChannelType.DIRECT_CLI,
@@ -305,11 +315,12 @@ class UnifiedRouter:
                 reason=f"User specified provider: {preferred_provider}",
                 confidence=1.0,
             )
+            return self._apply_rate_limit_check(decision) if check_rate_limit else decision
 
         # Try custom rules first
         custom_match = self._match_custom_rules(message, files)
         if custom_match:
-            return custom_match
+            return self._apply_rate_limit_check(custom_match) if check_rate_limit else custom_match
 
         # Infer task type from message
         task_type = self._infer_task_type(message)
@@ -317,7 +328,7 @@ class UnifiedRouter:
         # Select provider based on task type and files
         provider = self._select_provider(task_type, files)
 
-        return RoutingDecision(
+        decision = RoutingDecision(
             provider=provider,
             channel=ChannelType.CCB_DAEMON,
             fallback=ChannelType.DIRECT_CLI,
@@ -325,6 +336,36 @@ class UnifiedRouter:
             reason=f"Task type '{task_type.value}' → {provider}",
             confidence=0.8,
         )
+        return self._apply_rate_limit_check(decision) if check_rate_limit else decision
+
+    def _apply_rate_limit_check(self, decision: RoutingDecision) -> RoutingDecision:
+        """Apply rate limit check to a routing decision."""
+        if not self._rate_limiter:
+            return decision
+
+        wait_time = self._rate_limiter.get_wait_time(decision.provider)
+        if wait_time > 0:
+            decision.rate_limited = True
+            decision.wait_time_s = wait_time
+            decision.reason += f" (rate limited, wait {wait_time:.1f}s)"
+
+        return decision
+
+    def acquire_rate_limit(self, provider: str, tokens: int = 1, block: bool = False) -> bool:
+        """
+        Acquire rate limit tokens for a provider.
+
+        Args:
+            provider: The provider to acquire tokens for
+            tokens: Number of tokens to acquire
+            block: Whether to block until tokens are available
+
+        Returns:
+            True if tokens were acquired, False if rate limited
+        """
+        if not self._rate_limiter:
+            return True
+        return self._rate_limiter.acquire(provider, tokens, block)
 
     def _match_custom_rules(
         self,

@@ -28,6 +28,14 @@
 - **Configurable Rules**: YAML-based routing configuration
 - **Context7 Integration**: Optional documentation lookup to reduce AI hallucinations
 
+### Phase 4 Advanced Features (NEW)
+- **Rate Limiting**: Token Bucket algorithm with per-provider limits
+- **MCP Aggregation**: Aggregate multiple MCP servers with unified tool discovery
+- **Specialized Agents**: 6 AI agents (Sisyphus, Oracle, Librarian, Explorer, Frontend, Reviewer)
+- **OAuth2 Authentication**: Token-based authentication for Web API
+- **LSP/AST Tools**: Code intelligence with Language Server Protocol and tree-sitter
+- **Hooks/Skills System**: Event-driven hooks and extensible skill plugins
+
 ### Contributors
 - **Leo** ([@LeoLin990405](https://github.com/LeoLin990405)) - Project lead & integration
 - **Claude** (Anthropic Claude Opus 4.5) - Architecture design & code optimization
@@ -369,6 +377,109 @@ pending → running → completed
 
 ---
 
+## Phase 4: Advanced Features
+
+### Rate Limiting
+
+Protect your API quotas with intelligent rate limiting:
+
+```bash
+# View rate limit status
+ccb-ratelimit status
+
+# Set provider limits
+ccb-ratelimit set claude --rpm 50 --tpm 100000
+
+# Reset counters
+ccb-ratelimit reset claude
+
+# Test rate limiting
+ccb-ratelimit test claude --requests 10
+```
+
+### Specialized Agents
+
+6 specialized AI agents for different task types:
+
+| Agent | Description | Preferred Providers |
+|-------|-------------|---------------------|
+| Sisyphus | Code implementation | codex, gemini |
+| Oracle | Deep reasoning & analysis | deepseek, claude |
+| Librarian | Documentation & search | claude |
+| Explorer | Codebase navigation | gemini |
+| Frontend | UI/UX development | gemini, claude |
+| Reviewer | Code review & testing | claude, deepseek |
+
+```bash
+# List available agents
+ccb-agent list
+
+# Show agent details
+ccb-agent info sisyphus
+
+# Execute with specific agent
+ccb-agent execute sisyphus "implement a sorting function"
+
+# Auto-select best agent
+ccb-agent auto "analyze this algorithm"
+
+# Show which agent would be selected
+ccb-agent match "find all API endpoints"
+```
+
+### MCP Aggregation
+
+Aggregate multiple MCP servers with unified tool discovery:
+
+```bash
+# List all tools from aggregated servers
+ccb-mcp list-tools
+
+# Call a tool
+ccb-mcp call github.list_issues --owner anthropics --repo claude
+
+# Check server health
+ccb-mcp health
+```
+
+### OAuth2 Authentication
+
+Secure your Web API with token-based authentication:
+
+```bash
+# Create access token
+curl -X POST http://localhost:8080/api/auth/token \
+  -d '{"username": "admin", "password": "admin", "scopes": ["read", "write"]}'
+
+# Use token in requests
+curl -H "Authorization: Bearer <token>" http://localhost:8080/api/stats
+```
+
+### LSP/AST Tools
+
+Code intelligence powered by Language Server Protocol and tree-sitter:
+
+- **Find References**: Locate all usages of a symbol
+- **Go to Definition**: Jump to symbol definitions
+- **Rename Symbol**: Refactor across files
+- **AST Analysis**: Parse and analyze code structure
+
+### Hooks & Skills
+
+Extend CCB with custom hooks and skills:
+
+```bash
+# Hooks: Event-driven extensions
+# Place Python files in ~/.ccb_config/hooks/
+
+# Skills: Reusable task plugins
+# Place skill folders in ~/.ccb_config/skills/
+```
+
+**Configuration**: `~/.ccb_config/phase4.yaml`
+
+---
+
 ## Supported Providers
 
 | Provider | Command | Ping | Description |
@@ -519,6 +630,8 @@ ccb update
 │   ├── ccb-batch          # Batch processing CLI
 │   ├── ccb-web            # Web dashboard CLI
 │   ├── ccb-docs           # Documentation lookup CLI
+│   ├── ccb-agent          # Agent execution CLI (Phase 4)
+│   ├── ccb-ratelimit      # Rate limiting CLI (Phase 4)
 │   ├── cask, gask, ...    # Provider ask commands
 │   └── cping, gping, ...  # Provider ping commands
 ├── lib/                    # Library modules
@@ -531,16 +644,36 @@ ccb update
 │   ├── batch_processor.py # Batch task processing
 │   ├── web_server.py      # Web dashboard server
 │   ├── context7_client.py # Context7 integration
+│   ├── rate_limiter.py    # Rate limiting (Phase 4)
+│   ├── mcp_aggregator.py  # MCP aggregation (Phase 4)
+│   ├── agent_registry.py  # Agent registry (Phase 4)
+│   ├── agent_executor.py  # Agent executor (Phase 4)
+│   ├── auth_provider.py   # OAuth2 provider (Phase 4)
+│   ├── auth_middleware.py # Auth middleware (Phase 4)
+│   ├── lsp_client.py      # LSP client (Phase 4)
+│   ├── ast_analyzer.py    # AST analyzer (Phase 4)
+│   ├── hooks_manager.py   # Hooks system (Phase 4)
+│   ├── skills_loader.py   # Skills loader (Phase 4)
+│   ├── agents/            # Specialized agents (Phase 4)
 │   └── *_daemon.py        # Provider daemons
+├── mcp/                    # MCP servers
+│   ├── ccb-delegation/    # Delegation MCP server
+│   └── ccb-aggregator/    # Aggregator MCP server (Phase 4)
 ├── config/                 # Configuration templates
 ├── ccb                     # Main CCB binary
 └── install.sh              # Installer script
 
 ~/.ccb_config/
 ├── unified-router.yaml    # Routing configuration
+├── phase4.yaml            # Phase 4 configuration
 ├── tasks.db               # Task tracking database
 ├── performance.db         # Performance metrics database
 ├── cache.db               # Response cache database
+├── ratelimit.db           # Rate limiting database (Phase 4)
+├── auth.db                # Authentication database (Phase 4)
+├── hooks/                 # Custom hooks (Phase 4)
+├── skills/                # Custom skills (Phase 4)
+├── logs/                  # Log files
 └── .*-session             # Provider session files
 ```
 
