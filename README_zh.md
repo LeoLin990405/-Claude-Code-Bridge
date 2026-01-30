@@ -16,6 +16,12 @@
 - **智能路由**：自动为每个任务选择最佳 AI provider
 - **魔法关键词**：特殊关键词（`@deep`、`@review`、`@all` 等）触发增强行为
 - **任务追踪**：基于 SQLite 的任务管理，支持状态追踪
+- **性能分析**：追踪 provider 延迟、成功率和 Token 使用量
+- **智能缓存**：缓存响应以减少重复请求
+- **自动重试**：指数退避和 provider 降级链
+- **多 Provider 查询**：同时查询多个 provider 并聚合结果
+- **批量处理**：并行处理多个任务
+- **Web 仪表盘**：实时监控和管理界面
 - **9 个 AI Provider**：Claude、Codex、Gemini、OpenCode、DeepSeek、Droid、iFlow、Kimi、Qwen
 - **统一接口**：所有 provider 使用一致的命令模式
 - **健康监控**：实时 provider 状态检查
@@ -97,6 +103,189 @@ ccb ask "@review 检查这段代码的安全问题"
 ccb ask "@all 这个问题的最佳方案是什么"
 ccb route "smartroute 优化这个函数"
 ```
+
+---
+
+## 性能分析
+
+追踪和分析 provider 性能：
+
+```bash
+# 查看所有 provider 统计（最近 24 小时）
+ccb stats
+
+# 查看特定 provider 统计
+ccb stats --provider claude --hours 48
+
+# 显示最近请求
+ccb stats recent --limit 20
+
+# 获取汇总报告
+ccb stats summary
+
+# 查找最佳 provider
+ccb stats best
+
+# 导出数据
+ccb stats --export csv > performance.csv
+ccb stats --export json > performance.json
+
+# 清理旧数据
+ccb stats cleanup --days 30
+```
+
+### 追踪指标
+- **延迟**：响应时间（毫秒）
+- **成功率**：成功请求百分比
+- **Token 使用量**：输入/输出 Token 数量（如可用）
+- **请求量**：每个 provider 的总请求数
+
+---
+
+## 智能缓存
+
+通过智能响应缓存减少重复请求：
+
+```bash
+# 查看缓存统计
+ccb cache stats
+
+# 列出缓存条目
+ccb cache list --limit 20
+
+# 获取特定缓存条目
+ccb cache get <key>
+
+# 清空所有缓存
+ccb cache clear
+
+# 清理过期条目
+ccb cache cleanup
+```
+
+### 缓存特性
+- **自动缓存**：响应自动缓存（可配置 TTL）
+- **命中率追踪**：监控缓存效果
+- **Provider 标记**：缓存条目按 provider 标记
+- **按请求禁用**：使用 `--no-cache` 标志绕过缓存
+
+```bash
+# 绕过缓存获取新鲜响应
+ccb ask --no-cache "现在几点了"
+```
+
+---
+
+## 自动重试与降级
+
+自动重试（指数退避）和 provider 降级链：
+
+```bash
+# 启用重试（默认）
+ccb ask --retry "你的问题"
+
+# 禁用重试
+ccb ask --no-retry "你的问题"
+
+# 自定义重试次数
+ccb ask --max-retries 5 "你的问题"
+```
+
+### 降级链
+当 provider 失败时，CCB 自动尝试降级 provider：
+
+| 主 Provider | 降级链 |
+|-------------|--------|
+| claude | gemini → codex |
+| gemini | claude → codex |
+| codex | claude → gemini |
+| deepseek | claude → gemini |
+| kimi | claude → qwen |
+| qwen | claude → kimi |
+
+---
+
+## 多 Provider 查询
+
+同时查询多个 provider 并聚合结果：
+
+```bash
+# 查询所有默认 provider（claude, gemini, codex）
+ccb ask "@all 最佳方案是什么"
+
+# 指定 provider
+ccb ask --multi --providers claude,gemini,deepseek "分析这个"
+
+# 不同聚合策略
+ccb ask --multi --strategy all "你的问题"      # 显示所有结果
+ccb ask --multi --strategy merge "你的问题"   # 合并结果
+ccb ask --multi --strategy compare "你的问题" # 并排比较
+ccb ask --multi --strategy first_success "问题" # 第一个成功的响应
+```
+
+---
+
+## 批量处理
+
+并行处理多个任务：
+
+```bash
+# 从文件读取（每行一条消息）
+ccb batch run -f tasks.txt
+
+# 从命令行
+ccb batch run "消息1" "消息2" "消息3"
+
+# 从 stdin
+echo -e "任务1\n任务2\n任务3" | ccb batch run --stdin
+
+# 指定 provider
+ccb batch run -p claude -f tasks.txt
+
+# 控制并发数
+ccb batch run -c 10 -f tasks.txt  # 10 个并发任务
+
+# 输出结果到文件
+ccb batch run -f tasks.txt -o results.txt
+
+# 检查任务状态
+ccb batch status <job_id>
+
+# 列出最近任务
+ccb batch list
+
+# 取消任务
+ccb batch cancel <job_id>
+```
+
+---
+
+## Web 仪表盘
+
+通过 Web 界面实时监控和管理：
+
+```bash
+# 启动 Web 服务器（默认：localhost:8080）
+ccb web
+
+# 自定义端口
+ccb web --port 9000
+
+# 允许外部访问
+ccb web --host 0.0.0.0
+
+# 不自动打开浏览器
+ccb web --no-browser
+```
+
+### 仪表盘功能
+- **概览**：总请求数、成功率、缓存统计
+- **Provider 性能**：每个 provider 的延迟、成功率
+- **任务管理**：查看和管理任务
+- **缓存管理**：查看和清理缓存
+- **健康状态**：实时 provider 健康检查
+
+**注意**：需要安装 `pip install fastapi uvicorn jinja2`
 
 ### 配置
 编辑 `~/.ccb_config/unified-router.yaml` 自定义路由规则：
@@ -265,6 +454,8 @@ ccb codex gemini opencode
 # 智能路由
 ccb ask "你的问题"
 ccb ask --track "追踪的问题"      # 带任务追踪
+ccb ask --no-cache "新鲜查询"     # 绕过缓存
+ccb ask --retry "可靠查询"        # 带自动重试
 ccb route "仅显示路由"
 ccb health
 ccb magic                         # 列出魔法关键词
@@ -274,6 +465,24 @@ ccb tasks list
 ccb tasks get <task_id>
 ccb tasks stats
 ccb tasks cleanup
+
+# 性能分析
+ccb stats                         # 查看 provider 统计
+ccb stats --provider claude       # 特定 provider
+ccb stats best                    # 最佳 provider
+
+# 缓存管理
+ccb cache stats                   # 缓存统计
+ccb cache list                    # 列出条目
+ccb cache clear                   # 清空缓存
+
+# 批量处理
+ccb batch run -f tasks.txt        # 处理批量任务
+ccb batch status <job_id>         # 检查状态
+ccb batch list                    # 列出任务
+
+# Web 仪表盘
+ccb web                           # 启动 Web UI
 
 # 文档查询（需要 Context7）
 ccb docs react "如何使用 hooks"
@@ -293,12 +502,22 @@ ccb update
 ├── bin/                    # 命令脚本 (ask/ping/pend)
 │   ├── ccb-ask            # 智能路由 CLI
 │   ├── ccb-tasks          # 任务管理 CLI
+│   ├── ccb-stats          # 性能分析 CLI
+│   ├── ccb-cache          # 缓存管理 CLI
+│   ├── ccb-batch          # 批量处理 CLI
+│   ├── ccb-web            # Web 仪表盘 CLI
 │   ├── ccb-docs           # 文档查询 CLI
 │   ├── cask, gask, ...    # Provider ask 命令
 │   └── cping, gping, ...  # Provider ping 命令
 ├── lib/                    # 库模块
 │   ├── unified_router.py  # 路由引擎（含魔法关键词）
 │   ├── task_tracker.py    # 任务追踪系统
+│   ├── performance_tracker.py  # 性能分析
+│   ├── response_cache.py  # 智能缓存系统
+│   ├── retry_policy.py    # 自动重试与降级
+│   ├── multi_provider.py  # 多 Provider 执行
+│   ├── batch_processor.py # 批量任务处理
+│   ├── web_server.py      # Web 仪表盘服务器
 │   ├── context7_client.py # Context7 集成
 │   └── *_daemon.py        # Provider 守护进程
 ├── config/                 # 配置模板
@@ -308,6 +527,8 @@ ccb update
 ~/.ccb_config/
 ├── unified-router.yaml    # 路由配置
 ├── tasks.db               # 任务追踪数据库
+├── performance.db         # 性能指标数据库
+├── cache.db               # 响应缓存数据库
 └── .*-session             # Provider 会话文件
 ```
 
