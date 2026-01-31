@@ -132,8 +132,8 @@ Focus on:
                 AgentCapability.NAVIGATION,
                 AgentCapability.ANALYSIS,
             ],
-            preferred_providers=["gemini", "claude"],
-            fallback_providers=["codex", "opencode"],
+            preferred_providers=["gemini", "opencode"],
+            fallback_providers=["claude", "codex"],
             tools=["glob", "grep", "read", "bash"],
             system_prompt="""You are Explorer, a codebase navigation specialist.
 Your role is to help navigate and understand codebases.
@@ -271,7 +271,7 @@ Focus on:
         ],
         AgentCapability.DOCUMENTATION: [
             "document", "docs", "explain", "describe", "comment",
-            "文档", "说明", "描述", "注释",
+            "文档", "说明", "描述", "注释", "解释",
         ],
         AgentCapability.NAVIGATION: [
             "find", "search", "locate", "where", "navigate",
@@ -375,6 +375,29 @@ Focus on:
         """List all registered agents."""
         return [a for a in self.agents.values() if a.enabled]
 
+    # Specialized capabilities get higher weight than generic ones
+    CAPABILITY_WEIGHTS: Dict[AgentCapability, float] = {
+        # Generic capabilities (lower weight)
+        AgentCapability.CODE_WRITE: 1.0,
+        AgentCapability.CODE_REFACTOR: 1.0,
+        AgentCapability.ANALYSIS: 1.0,
+        # Specialized capabilities (higher weight)
+        AgentCapability.CODE_REVIEW: 1.5,
+        AgentCapability.REASONING: 1.5,
+        AgentCapability.DOCUMENTATION: 1.2,
+        AgentCapability.NAVIGATION: 1.2,
+        AgentCapability.FRONTEND: 1.5,
+        AgentCapability.BACKEND: 1.5,
+        AgentCapability.TESTING: 1.5,
+        # Highly specialized capabilities (highest weight)
+        AgentCapability.WORKFLOW: 2.0,
+        AgentCapability.AUTOMATION: 2.0,
+        AgentCapability.MULTILINGUAL: 2.0,
+        AgentCapability.TRANSLATION: 2.0,
+        AgentCapability.AUTONOMOUS: 2.0,
+        AgentCapability.LONG_RUNNING: 2.0,
+    }
+
     def match_task(self, task: str, files: Optional[List[str]] = None) -> AgentMatch:
         """
         Match a task to the best agent.
@@ -396,12 +419,17 @@ Focus on:
             score = 0.0
             matched_caps = []
 
-            # Score based on capability keywords
+            # Bonus if agent name appears in task (e.g., "workflow" in "create workflow")
+            if agent_name.lower() in task_lower:
+                score += 3.0  # Strong bonus for explicit agent name match
+
+            # Score based on capability keywords with weighted scoring
             for cap in agent.capabilities:
                 keywords = self.CAPABILITY_KEYWORDS.get(cap, [])
+                cap_weight = self.CAPABILITY_WEIGHTS.get(cap, 1.0)
                 for keyword in keywords:
                     if keyword.lower() in task_lower:
-                        score += 1.0
+                        score += cap_weight
                         if cap not in matched_caps:
                             matched_caps.append(cap)
 

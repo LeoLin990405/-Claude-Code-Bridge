@@ -59,8 +59,8 @@ Output format:
         AgentCapability.ANALYSIS,
     ]
 
-    PREFERRED_PROVIDERS = ["gemini", "claude"]
-    FALLBACK_PROVIDERS = ["codex", "opencode"]
+    PREFERRED_PROVIDERS = ["gemini", "opencode"]
+    FALLBACK_PROVIDERS = ["claude", "codex"]
 
     TOOLS = [
         "glob",
