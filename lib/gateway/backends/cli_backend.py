@@ -84,12 +84,19 @@ class CLIBackend(BaseBackend):
         try:
             cmd = self._build_command(request.message)
 
-            # Create subprocess
+            # Set up environment for non-interactive execution
+            env = os.environ.copy()
+            env["TERM"] = "dumb"
+            env["NO_COLOR"] = "1"
+            env["CI"] = "1"  # Many CLIs detect CI mode and disable interactivity
+
+            # Create subprocess with stdin closed (DEVNULL) to prevent hanging
             process = await asyncio.create_subprocess_exec(
                 *cmd,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
-                stdin=asyncio.subprocess.PIPE,
+                stdin=asyncio.subprocess.DEVNULL,  # Close stdin to prevent hanging
+                env=env,
             )
 
             # Wait for completion with timeout
@@ -135,10 +142,37 @@ class CLIBackend(BaseBackend):
 
     def _clean_output(self, output: str) -> str:
         """Clean CLI output to extract just the response."""
-        # Remove common CLI prefixes/suffixes
-        lines = output.split("\n")
-        cleaned_lines = []
+        # Check if output is JSONL (Codex --json mode or OpenCode --format json)
+        lines = output.strip().split("\n")
 
+        # Try to parse as JSONL and extract response text
+        import json
+        text_parts = []
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                data = json.loads(line)
+                # Codex JSON format: look for agent_message
+                if data.get("type") == "item.completed":
+                    item = data.get("item", {})
+                    if item.get("type") == "agent_message":
+                        return item.get("text", "")
+                # OpenCode JSON format: look for text type
+                if data.get("type") == "text":
+                    part = data.get("part", {})
+                    if part.get("type") == "text" and part.get("text"):
+                        text_parts.append(part.get("text"))
+            except json.JSONDecodeError:
+                continue
+
+        # Return collected text parts from OpenCode format
+        if text_parts:
+            return "\n".join(text_parts)
+
+        # Fallback: clean regular output
+        cleaned_lines = []
         for line in lines:
             # Skip common status lines
             if any(skip in line.lower() for skip in [
@@ -147,7 +181,21 @@ class CLIBackend(BaseBackend):
                 "connecting",
                 "thinking...",
                 "processing...",
+                "mcp:",
+                "--------",
+                "workdir:",
+                "model:",
+                "provider:",
+                "approval:",
+                "sandbox:",
+                "reasoning effort:",
+                "reasoning summaries:",
+                "session id:",
+                "tokens used",
             ]):
+                continue
+            # Skip lines that look like metadata
+            if line.startswith("OpenAI") or line.startswith("user"):
                 continue
             cleaned_lines.append(line)
 

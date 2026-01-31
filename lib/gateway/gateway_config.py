@@ -205,55 +205,57 @@ class GatewayConfig:
             timeout_s=300.0,
         )
 
-        # DeepSeek (HTTP API)
+        # DeepSeek (CLI) - use '-q' for quick/non-interactive mode
         self.providers["deepseek"] = ProviderConfig(
             name="deepseek",
-            backend_type=BackendType.HTTP_API,
-            api_base_url="https://api.deepseek.com/v1",
-            api_key_env="DEEPSEEK_API_KEY",
-            model="deepseek-reasoner",
-            timeout_s=600.0,  # Longer for reasoning
+            backend_type=BackendType.CLI_EXEC,
+            cli_command="deepseek",
+            cli_args=["-q"],
+            timeout_s=120.0,  # Longer timeout for reasoning
         )
 
-        # Codex (CLI)
+        # Codex (CLI) - use 'exec --json' for non-interactive mode with JSON output
         self.providers["codex"] = ProviderConfig(
             name="codex",
             backend_type=BackendType.CLI_EXEC,
             cli_command="codex",
-            cli_args=["--quiet", "--no-full-stdout"],
+            cli_args=["exec", "--json"],
             timeout_s=300.0,
         )
 
-        # Gemini (CLI)
+        # Gemini (CLI) - use -p for non-interactive prompt mode
         self.providers["gemini"] = ProviderConfig(
             name="gemini",
             backend_type=BackendType.CLI_EXEC,
             cli_command="gemini",
-            cli_args=["--non-interactive"],
+            cli_args=["-p"],
             timeout_s=300.0,
         )
 
-        # OpenCode (CLI)
+        # OpenCode (CLI) - use 'run --format json' for non-interactive mode
         self.providers["opencode"] = ProviderConfig(
             name="opencode",
             backend_type=BackendType.CLI_EXEC,
             cli_command="opencode",
-            timeout_s=300.0,
+            cli_args=["run", "--format", "json", "-m", "opencode/minimax-m2.1-free"],
+            timeout_s=120.0,
         )
 
-        # iFlow (CLI)
+        # iFlow (CLI) - use '-p' for non-interactive prompt mode
         self.providers["iflow"] = ProviderConfig(
             name="iflow",
             backend_type=BackendType.CLI_EXEC,
             cli_command="iflow",
+            cli_args=["-p"],
             timeout_s=300.0,
         )
 
-        # Kimi (CLI)
+        # Kimi (CLI) - use '--quiet' for non-interactive mode
         self.providers["kimi"] = ProviderConfig(
             name="kimi",
             backend_type=BackendType.CLI_EXEC,
             cli_command="kimi",
+            cli_args=["--quiet", "-p"],
             timeout_s=300.0,
         )
 
