@@ -1,0 +1,115 @@
+# CCB Gateway Configuration
+# Copy to ~/.ccb_config/gateway.yaml to customize
+
+# Server settings
+server:
+  host: "127.0.0.1"
+  port: 8765
+
+# Database settings
+database:
+  path: null  # Defaults to ~/.ccb_config/gateway.db
+
+# Timeout settings
+timeouts:
+  default_s: 300.0
+  request_ttl_hours: 24
+
+# Queue settings
+queue:
+  max_size: 1000
+  max_concurrent: 10
+
+# Default provider for auto-routing
+default_provider: "claude"
+
+# WebSocket settings
+websocket:
+  enabled: true
+  heartbeat_s: 30.0
+
+# Logging
+logging:
+  level: "INFO"
+  file: null  # Defaults to stdout
+
+# Provider configurations
+providers:
+  # Claude (Anthropic API)
+  claude:
+    backend_type: "http_api"
+    enabled: true
+    priority: 50
+    timeout_s: 300.0
+    api_base_url: "https://api.anthropic.com/v1"
+    api_key_env: "ANTHROPIC_API_KEY"
+    model: "claude-sonnet-4-20250514"
+    max_tokens: 4096
+
+  # DeepSeek (HTTP API)
+  deepseek:
+    backend_type: "http_api"
+    enabled: true
+    priority: 40
+    timeout_s: 600.0  # Longer for reasoning
+    api_base_url: "https://api.deepseek.com/v1"
+    api_key_env: "DEEPSEEK_API_KEY"
+    model: "deepseek-reasoner"
+    max_tokens: 8192
+
+  # Codex (CLI)
+  codex:
+    backend_type: "cli_exec"
+    enabled: true
+    priority: 50
+    timeout_s: 300.0
+    cli_command: "codex"
+    cli_args: ["--quiet", "--no-full-stdout"]
+
+  # Gemini (CLI)
+  gemini:
+    backend_type: "cli_exec"
+    enabled: true
+    priority: 50
+    timeout_s: 300.0
+    cli_command: "gemini"
+    cli_args: ["--non-interactive"]
+
+  # OpenCode (CLI)
+  opencode:
+    backend_type: "cli_exec"
+    enabled: true
+    priority: 40
+    timeout_s: 300.0
+    cli_command: "opencode"
+
+  # iFlow (CLI)
+  iflow:
+    backend_type: "cli_exec"
+    enabled: true
+    priority: 40
+    timeout_s: 300.0
+    cli_command: "iflow"
+
+  # Kimi (CLI)
+  kimi:
+    backend_type: "cli_exec"
+    enabled: true
+    priority: 40
+    timeout_s: 300.0
+    cli_command: "kimi"
+
+  # Qwen (CLI)
+  qwen:
+    backend_type: "cli_exec"
+    enabled: true
+    priority: 40
+    timeout_s: 300.0
+    cli_command: "qwen"
+
+  # Droid (Terminal - legacy)
+  droid:
+    backend_type: "terminal"
+    enabled: false  # Disabled by default, requires WezTerm
+    priority: 30
+    timeout_s: 300.0

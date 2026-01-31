@@ -1,0 +1,244 @@
+#!/usr/bin/env python3
+"""
+CCB Gateway - Unified API Gateway for Multi-Provider AI Communication
+
+Usage:
+    ccb-gateway start [--host HOST] [--port PORT] [--config CONFIG]
+    ccb-gateway status
+    ccb-gateway stop
+    ccb-gateway monitor [--url URL]
+
+Commands:
+    start     Start the gateway server
+    status    Show gateway status
+    stop      Stop the gateway server
+    monitor   Connect to gateway monitor
+
+Options:
+    --host HOST      Host to bind to (default: 127.0.0.1)
+    --port PORT      Port to bind to (default: 8765)
+    --config CONFIG  Path to configuration file
+    --url URL        Gateway URL for status/monitor (default: http://localhost:8765)
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import signal
+import sys
+from pathlib import Path
+
+# Add lib to path
+script_dir = Path(__file__).resolve().parent
+lib_dir = script_dir.parent / "lib"
+sys.path.insert(0, str(lib_dir))
+
+
+def cmd_start(args):
+    """Start the gateway server."""
+    from gateway.gateway_server import run_gateway
+
+    return run_gateway(
+        config_path=args.config,
+        host=args.host,
+        port=args.port,
+    )
+
+
+def cmd_status(args):
+    """Show gateway status."""
+    import urllib.request
+    import urllib.error
+
+    url = f"{args.url}/api/status"
+
+    try:
+        with urllib.request.urlopen(url, timeout=5) as response:
+            data = json.loads(response.read().decode())
+
+        print("CCB Gateway Status")
+        print("=" * 50)
+        print()
+
+        gw = data.get("gateway", {})
+        print("Gateway:")
+        print(f"  Uptime:      {gw.get('uptime_s', 0):.0f}s")
+        print(f"  Requests:    {gw.get('total_requests', 0)}")
+        print(f"  Active:      {gw.get('active_requests', 0)}")
+        print(f"  Queue Depth: {gw.get('queue_depth', 0)}")
+        print(f"  Processing:  {gw.get('processing_count', 0)}")
+        print()
+
+        print("Providers:")
+        for p in data.get("providers", []):
+            status_icon = "●" if p.get("status") == "healthy" else "○"
+            enabled = "✓" if p.get("enabled") else "✗"
+            print(
+                f"  {status_icon} {p.get('name', 'unknown'):<12} "
+                f"[{enabled}] "
+                f"Q:{p.get('queue_depth', 0):>2}  "
+                f"Lat:{p.get('avg_latency_ms', 0):>6.0f}ms  "
+                f"OK:{p.get('success_rate', 1)*100:>5.1f}%"
+            )
+
+        return 0
+
+    except urllib.error.URLError as e:
+        print(f"Error: Cannot connect to gateway at {args.url}")
+        print(f"  {e}")
+        print()
+        print("Is the gateway running? Start with: ccb-gateway start")
+        return 1
+
+
+def cmd_stop(args):
+    """Stop the gateway server."""
+    import urllib.request
+    import urllib.error
+
+    # Try to find and kill the process
+    pid_file = Path.home() / ".ccb_config" / "gateway.pid"
+
+    if pid_file.exists():
+        try:
+            pid = int(pid_file.read_text().strip())
+            os.kill(pid, signal.SIGTERM)
+            print(f"Sent SIGTERM to gateway process {pid}")
+            pid_file.unlink()
+            return 0
+        except (ValueError, ProcessLookupError, PermissionError) as e:
+            print(f"Error stopping gateway: {e}")
+            return 1
+
+    # Try to check if it's running via API
+    url = f"{args.url}/api/health"
+    try:
+        with urllib.request.urlopen(url, timeout=2) as response:
+            print("Gateway is running but no PID file found.")
+            print("Please stop it manually or use Ctrl+C in the terminal where it's running.")
+            return 1
+    except urllib.error.URLError:
+        print("Gateway does not appear to be running.")
+        return 0
+
+
+def cmd_monitor(args):
+    """Connect to gateway monitor."""
+    import asyncio
+
+    ws_url = args.url.replace("http://", "ws://").replace("https://", "wss://")
+    if not ws_url.endswith("/api/ws"):
+        ws_url = ws_url.rstrip("/") + "/api/ws"
+
+    from gateway.monitor import run_monitor
+
+    try:
+        asyncio.run(run_monitor(ws_url, mode="websocket"))
+    except KeyboardInterrupt:
+        print("\nMonitor stopped.")
+
+    return 0
+
+
+def cmd_ask(args):
+    """Send a request to the gateway."""
+    import urllib.request
+    import urllib.error
+
+    url = f"{args.url}/api/ask"
+    data = {
+        "message": args.message,
+        "timeout_s": args.timeout,
+        "priority": args.priority,
+    }
+    if args.provider:
+        data["provider"] = args.provider
+
+    try:
+        req = urllib.request.Request(
+            url,
+            data=json.dumps(data).encode(),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=10) as response:
+            result = json.loads(response.read().decode())
+
+        request_id = result.get("request_id")
+        provider = result.get("provider")
+        print(f"Request submitted: {request_id} -> {provider}")
+
+        if args.wait:
+            # Wait for response
+            reply_url = f"{args.url}/api/reply/{request_id}?wait=true&timeout={args.timeout}"
+            with urllib.request.urlopen(reply_url, timeout=args.timeout + 10) as response:
+                reply = json.loads(response.read().decode())
+
+            if reply.get("status") == "completed":
+                print()
+                print(reply.get("response", ""))
+            else:
+                print(f"Request {reply.get('status')}: {reply.get('error', 'Unknown error')}")
+                return 1
+
+        return 0
+
+    except urllib.error.URLError as e:
+        print(f"Error: {e}")
+        return 1
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="CCB Gateway - Unified API Gateway",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    subparsers = parser.add_subparsers(dest="command", help="Command to run")
+
+    # start command
+    start_parser = subparsers.add_parser("start", help="Start the gateway server")
+    start_parser.add_argument("--host", "-H", default="127.0.0.1", help="Host to bind to")
+    start_parser.add_argument("--port", "-p", type=int, default=8765, help="Port to bind to")
+    start_parser.add_argument("--config", "-c", help="Path to configuration file")
+
+    # status command
+    status_parser = subparsers.add_parser("status", help="Show gateway status")
+    status_parser.add_argument("--url", "-u", default="http://localhost:8765", help="Gateway URL")
+
+    # stop command
+    stop_parser = subparsers.add_parser("stop", help="Stop the gateway server")
+    stop_parser.add_argument("--url", "-u", default="http://localhost:8765", help="Gateway URL")
+
+    # monitor command
+    monitor_parser = subparsers.add_parser("monitor", help="Connect to gateway monitor")
+    monitor_parser.add_argument("--url", "-u", default="http://localhost:8765", help="Gateway URL")
+
+    # ask command
+    ask_parser = subparsers.add_parser("ask", help="Send a request to the gateway")
+    ask_parser.add_argument("message", help="Message to send")
+    ask_parser.add_argument("--provider", "-P", help="Provider to use")
+    ask_parser.add_argument("--url", "-u", default="http://localhost:8765", help="Gateway URL")
+    ask_parser.add_argument("--timeout", "-t", type=float, default=300, help="Timeout in seconds")
+    ask_parser.add_argument("--priority", type=int, default=50, help="Request priority")
+    ask_parser.add_argument("--wait", "-w", action="store_true", help="Wait for response")
+
+    args = parser.parse_args()
+
+    if not args.command:
+        parser.print_help()
+        return 1
+
+    commands = {
+        "start": cmd_start,
+        "status": cmd_status,
+        "stop": cmd_stop,
+        "monitor": cmd_monitor,
+        "ask": cmd_ask,
+    }
+
+    return commands[args.command](args)
+
+
+if __name__ == "__main__":
+    sys.exit(main())
