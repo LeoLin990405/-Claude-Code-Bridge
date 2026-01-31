@@ -49,6 +49,14 @@
 | **Polyglot** | 翻译与多语言 | Kimi, Qwen |
 | **Autonomous** | 长时间任务 | Droid, Codex |
 
+### Gateway API（Phase 5）
+- **统一 REST API**：所有 Provider 的 HTTP 端点
+- **WebSocket 支持**：实时请求/响应更新
+- **优先级队列**：基于 SQLite 持久化的请求优先级
+- **多种后端**：HTTP API、CLI 执行、终端集成
+- **健康监控**：自动 Provider 健康检查
+- **终端解耦**：消息传递独立于 WezTerm
+
 ### 高级特性
 - **速率限制**：每个 Provider 独立的令牌桶算法
 - **MCP 聚合**：跨服务器统一工具发现
@@ -216,6 +224,24 @@ ccb-ratelimit status
 ccb-ratelimit set claude --rpm 50
 ```
 
+### Gateway API
+```bash
+# 启动 Gateway 服务器
+ccb-gateway start
+
+# 检查 Gateway 状态
+ccb-gateway status
+
+# 通过 Gateway 发送请求
+ccb-gateway ask "你好" --provider claude --wait
+
+# 实时监控活动
+ccb-gateway monitor
+
+# 为现有命令启用 Gateway 模式
+export CCB_USE_GATEWAY=1
+```
+
 ---
 
 ## 架构
@@ -230,8 +256,16 @@ ccb-ratelimit set claude --rpm 50
 │  │  Reviewer │ Workflow │ Polyglot │ Autonomous                 │   │
 │  └─────────────────────────────────────────────────────────────┘   │
 │  ┌─────────────────────────────────────────────────────────────┐   │
+│  │                    Gateway API 层                            │   │
+│  │  REST API │ WebSocket │ 请求队列 │ 状态存储                   │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+│  ┌─────────────────────────────────────────────────────────────┐   │
 │  │                    路由引擎                                   │   │
 │  │  任务分析 → Provider 选择 → 降级链                            │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │                    后端层                                     │   │
+│  │  HTTP API │ CLI 执行 │ 终端 │ FIFO (兼容)                     │   │
 │  └─────────────────────────────────────────────────────────────┘   │
 │  ┌─────────────────────────────────────────────────────────────┐   │
 │  │                 Provider 层 (9 个 Provider)                  │   │
@@ -248,20 +282,28 @@ ccb-ratelimit set claude --rpm 50
 ```
 ~/.local/share/codex-dual/
 ├── bin/                    # CLI 命令
-│   ├── ccb-ask, ccb-agent, ccb-ratelimit
+│   ├── ccb-ask, ccb-agent, ccb-ratelimit, ccb-gateway
 │   └── cask, gask, dskask, ...
 ├── lib/                    # 核心模块
 │   ├── unified_router.py   # 路由引擎
 │   ├── agent_registry.py   # Agent 定义
 │   ├── agent_executor.py   # Agent 执行器
 │   ├── provider_commands.py # Provider 映射
+│   ├── gateway/            # Gateway API 模块
+│   │   ├── gateway_server.py
+│   │   ├── gateway_api.py
+│   │   ├── state_store.py
+│   │   ├── request_queue.py
+│   │   └── backends/       # HTTP, CLI, 终端后端
 │   └── agents/             # Agent 实现
 ├── mcp/                    # MCP 服务器
 └── config/                 # 配置模板
+    └── gateway.yaml        # Gateway 配置
 
 ~/.ccb_config/
 ├── unified-router.yaml     # 路由规则
 ├── phase4.yaml             # 高级特性配置
+├── gateway.db              # Gateway 状态数据库
 └── *.db                    # SQLite 数据库
 ```
 

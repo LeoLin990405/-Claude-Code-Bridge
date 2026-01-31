@@ -49,6 +49,14 @@ This project stands on the shoulders of giants. Special thanks to:
 | **Polyglot** | Translation & multilingual | Kimi, Qwen |
 | **Autonomous** | Long-running tasks | Droid, Codex |
 
+### Gateway API (Phase 5)
+- **Unified REST API**: HTTP endpoints for all providers
+- **WebSocket Support**: Real-time request/response updates
+- **Priority Queue**: Request prioritization with SQLite persistence
+- **Multiple Backends**: HTTP API, CLI execution, terminal integration
+- **Health Monitoring**: Automatic provider health checks
+- **Terminal Decoupling**: Message passing independent of WezTerm
+
 ### Advanced Features
 - **Rate Limiting**: Token bucket algorithm per provider
 - **MCP Aggregation**: Unified tool discovery across servers
@@ -216,6 +224,24 @@ ccb-ratelimit status
 ccb-ratelimit set claude --rpm 50
 ```
 
+### Gateway API
+```bash
+# Start the gateway server
+ccb-gateway start
+
+# Check gateway status
+ccb-gateway status
+
+# Send request via gateway
+ccb-gateway ask "Hello" --provider claude --wait
+
+# Monitor real-time activity
+ccb-gateway monitor
+
+# Enable gateway mode for existing commands
+export CCB_USE_GATEWAY=1
+```
+
 ---
 
 ## Architecture
@@ -230,8 +256,16 @@ ccb-ratelimit set claude --rpm 50
 │  │  Reviewer │ Workflow │ Polyglot │ Autonomous                 │   │
 │  └─────────────────────────────────────────────────────────────┘   │
 │  ┌─────────────────────────────────────────────────────────────┐   │
+│  │                    Gateway API Layer                         │   │
+│  │  REST API │ WebSocket │ Request Queue │ State Store          │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+│  ┌─────────────────────────────────────────────────────────────┐   │
 │  │                    Routing Engine                            │   │
 │  │  Task Analysis → Provider Selection → Fallback Chain         │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │                    Backend Layer                             │   │
+│  │  HTTP API │ CLI Exec │ Terminal │ FIFO (legacy)              │   │
 │  └─────────────────────────────────────────────────────────────┘   │
 │  ┌─────────────────────────────────────────────────────────────┐   │
 │  │                 Provider Layer (9 Providers)                 │   │
@@ -248,20 +282,28 @@ ccb-ratelimit set claude --rpm 50
 ```
 ~/.local/share/codex-dual/
 ├── bin/                    # CLI commands
-│   ├── ccb-ask, ccb-agent, ccb-ratelimit
+│   ├── ccb-ask, ccb-agent, ccb-ratelimit, ccb-gateway
 │   └── cask, gask, dskask, ...
 ├── lib/                    # Core modules
 │   ├── unified_router.py   # Routing engine
 │   ├── agent_registry.py   # Agent definitions
 │   ├── agent_executor.py   # Agent execution
 │   ├── provider_commands.py # Provider mappings
+│   ├── gateway/            # Gateway API module
+│   │   ├── gateway_server.py
+│   │   ├── gateway_api.py
+│   │   ├── state_store.py
+│   │   ├── request_queue.py
+│   │   └── backends/       # HTTP, CLI, Terminal backends
 │   └── agents/             # Agent implementations
 ├── mcp/                    # MCP servers
 └── config/                 # Configuration templates
+    └── gateway.yaml        # Gateway configuration
 
 ~/.ccb_config/
 ├── unified-router.yaml     # Routing rules
 ├── phase4.yaml             # Advanced features config
+├── gateway.db              # Gateway state database
 └── *.db                    # SQLite databases
 ```
 
