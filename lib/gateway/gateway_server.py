@@ -183,15 +183,18 @@ class GatewayServer:
         provider = request.provider
         start_time = time.time()
 
-        # Broadcast processing started event
-        if self._app and hasattr(self._app.state, 'ws_manager'):
-            await self._app.state.ws_manager.broadcast(WebSocketEvent(
-                type="request_processing",
-                data={
-                    "request_id": request.id,
-                    "provider": provider,
-                },
-            ))
+        # Broadcast processing started event (wrapped in try-except)
+        try:
+            if self._app and hasattr(self._app.state, 'ws_manager'):
+                await self._app.state.ws_manager.broadcast(WebSocketEvent(
+                    type="request_processing",
+                    data={
+                        "request_id": request.id,
+                        "provider": provider,
+                    },
+                ))
+        except Exception:
+            pass  # Don't let WebSocket errors affect request processing
 
         # Use retry executor if available
         if self.retry_executor and self.config.retry.enabled:
@@ -256,17 +259,20 @@ class GatewayServer:
 
         start_time = time.time()
 
-        # Broadcast parallel processing started
-        if self._app and hasattr(self._app.state, 'ws_manager'):
-            await self._app.state.ws_manager.broadcast(WebSocketEvent(
-                type="request_processing",
-                data={
-                    "request_id": request.id,
-                    "providers": providers,
-                    "parallel": True,
-                    "strategy": strategy.value,
-                },
-            ))
+        # Broadcast parallel processing started (wrapped in try-except)
+        try:
+            if self._app and hasattr(self._app.state, 'ws_manager'):
+                await self._app.state.ws_manager.broadcast(WebSocketEvent(
+                    type="request_processing",
+                    data={
+                        "request_id": request.id,
+                        "providers": providers,
+                        "parallel": True,
+                        "strategy": strategy.value,
+                    },
+                ))
+        except Exception:
+            pass  # Don't let WebSocket errors affect request processing
 
         # Execute in parallel
         result = await self.parallel_executor.execute_parallel(request, providers, strategy)
@@ -310,18 +316,21 @@ class GatewayServer:
             ))
             self.queue.mark_completed(request.id, error=result.error)
 
-        # Broadcast completion
-        if self._app and hasattr(self._app.state, 'ws_manager'):
-            await self._app.state.ws_manager.broadcast(WebSocketEvent(
-                type="request_completed" if result.success else "request_failed",
-                data={
-                    "request_id": request.id,
-                    "success": result.success,
-                    "parallel": True,
-                    "selected_provider": result.selected_provider,
-                    "latency_ms": latency_ms,
-                },
-            ))
+        # Broadcast completion (wrapped in try-except to prevent status overwrite)
+        try:
+            if self._app and hasattr(self._app.state, 'ws_manager'):
+                await self._app.state.ws_manager.broadcast(WebSocketEvent(
+                    type="request_completed" if result.success else "request_failed",
+                    data={
+                        "request_id": request.id,
+                        "success": result.success,
+                        "parallel": True,
+                        "selected_provider": result.selected_provider,
+                        "latency_ms": latency_ms,
+                    },
+                ))
+        except Exception:
+            pass  # Don't let WebSocket errors affect request status
 
     async def _handle_success(
         self,
@@ -368,20 +377,23 @@ class GatewayServer:
             success=True,
         )
 
-        # Broadcast WebSocket event
-        if self._app and hasattr(self._app.state, 'ws_manager'):
-            resp_preview = result.response[:100] if result.response and len(result.response) > 100 else result.response
-            await self._app.state.ws_manager.broadcast(WebSocketEvent(
-                type="request_completed",
-                data={
-                    "request_id": request.id,
-                    "provider": provider,
-                    "success": True,
-                    "latency_ms": latency_ms,
-                    "response": resp_preview,
-                    "retry_info": retry_info,
-                },
-            ))
+        # Broadcast WebSocket event (wrapped in try-except to prevent status overwrite)
+        try:
+            if self._app and hasattr(self._app.state, 'ws_manager'):
+                resp_preview = result.response[:100] if result.response and len(result.response) > 100 else result.response
+                await self._app.state.ws_manager.broadcast(WebSocketEvent(
+                    type="request_completed",
+                    data={
+                        "request_id": request.id,
+                        "provider": provider,
+                        "success": True,
+                        "latency_ms": latency_ms,
+                        "response": resp_preview,
+                        "retry_info": retry_info,
+                    },
+                ))
+        except Exception:
+            pass  # Don't let WebSocket errors affect request status
 
     async def _handle_failure(
         self,
@@ -419,20 +431,23 @@ class GatewayServer:
             error=result.error,
         )
 
-        # Broadcast WebSocket event
-        if self._app and hasattr(self._app.state, 'ws_manager'):
-            error_preview = result.error[:100] if result.error and len(result.error) > 100 else result.error
-            await self._app.state.ws_manager.broadcast(WebSocketEvent(
-                type="request_failed",
-                data={
-                    "request_id": request.id,
-                    "provider": provider,
-                    "success": False,
-                    "latency_ms": latency_ms,
-                    "error": error_preview,
-                    "retry_info": retry_info,
-                },
-            ))
+        # Broadcast WebSocket event (wrapped in try-except to prevent status overwrite)
+        try:
+            if self._app and hasattr(self._app.state, 'ws_manager'):
+                error_preview = result.error[:100] if result.error and len(result.error) > 100 else result.error
+                await self._app.state.ws_manager.broadcast(WebSocketEvent(
+                    type="request_failed",
+                    data={
+                        "request_id": request.id,
+                        "provider": provider,
+                        "success": False,
+                        "latency_ms": latency_ms,
+                        "error": error_preview,
+                        "retry_info": retry_info,
+                    },
+                ))
+        except Exception:
+            pass  # Don't let WebSocket errors affect request status
 
     async def health_check_loop(self) -> None:
         """Periodically check provider health."""

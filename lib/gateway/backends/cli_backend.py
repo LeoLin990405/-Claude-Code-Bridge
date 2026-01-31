@@ -470,16 +470,26 @@ class CLIBackend(BaseBackend):
                         metadata={"auth_required": True, "auth_terminal_opened": True},
                     )
 
-        # Check return code
+        # Try to extract just the response if there's metadata
+        response_text = self._clean_output(stdout)
+
+        # If we have valid output, consider it a success even if exit code is non-zero
+        # Many CLI tools return non-zero exit codes for various reasons but still produce valid output
+        if response_text:
+            return BackendResult.ok(
+                response=response_text,
+                latency_ms=latency_ms,
+                metadata={"exit_code": returncode},
+            )
+
+        # No valid output - check return code for error
         if returncode != 0:
             error_msg = stderr if stderr else f"CLI exited with code {returncode}"
             return BackendResult.fail(error_msg, latency_ms=latency_ms)
 
-        # Try to extract just the response if there's metadata
-        response_text = self._clean_output(stdout)
-
+        # Empty output but success exit code
         return BackendResult.ok(
-            response=response_text,
+            response="",
             latency_ms=latency_ms,
             metadata={"exit_code": returncode},
         )

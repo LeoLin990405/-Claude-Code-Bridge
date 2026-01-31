@@ -112,6 +112,11 @@ class CacheConfig:
         """Get TTL for a provider."""
         return self.provider_ttl_s.get(provider, self.default_ttl_s)
 
+    def should_cache_message(self, message: str) -> bool:
+        """Check if a message should be cached based on patterns."""
+        message_lower = message.lower()
+        return not any(p in message_lower for p in self.no_cache_patterns)
+
 
 @dataclass
 class StreamConfig:
