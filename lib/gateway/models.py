@@ -20,6 +20,17 @@ class RequestStatus(Enum):
     FAILED = "failed"
     CANCELLED = "cancelled"
     TIMEOUT = "timeout"
+    RETRYING = "retrying"  # Request is being retried
+    FALLBACK = "fallback"  # Request switched to fallback provider
+
+
+class ErrorType(Enum):
+    """Classification of errors for retry decisions."""
+    RETRYABLE_TRANSIENT = "retryable_transient"  # Network errors, timeouts, 5xx
+    RETRYABLE_RATE_LIMIT = "retryable_rate_limit"  # 429 rate limit
+    NON_RETRYABLE_AUTH = "non_retryable_auth"  # 401, 403 auth errors
+    NON_RETRYABLE_CLIENT = "non_retryable_client"  # Other 4xx client errors
+    NON_RETRYABLE_PERMANENT = "non_retryable_permanent"  # Permanent failures
 
 
 class BackendType(Enum):
@@ -174,3 +185,62 @@ class WebSocketEvent:
             "data": self.data,
             "timestamp": self.timestamp,
         }
+
+
+@dataclass
+class StreamChunk:
+    """A chunk of streamed response."""
+    request_id: str
+    content: str
+    chunk_index: int
+    is_final: bool = False
+    tokens_used: Optional[int] = None
+    provider: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary."""
+        return {
+            "request_id": self.request_id,
+            "content": self.content,
+            "chunk_index": self.chunk_index,
+            "is_final": self.is_final,
+            "tokens_used": self.tokens_used,
+            "provider": self.provider,
+            "metadata": self.metadata,
+        }
+
+
+@dataclass
+class CacheEntry:
+    """A cached response entry."""
+    cache_key: str
+    provider: str
+    message_hash: str
+    response: str
+    tokens_used: Optional[int]
+    created_at: float
+    expires_at: float
+    hit_count: int = 0
+    last_hit_at: Optional[float] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+    def is_expired(self) -> bool:
+        """Check if the entry has expired."""
+        return time.time() > self.expires_at
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary."""
+        return {
+            "cache_key": self.cache_key,
+            "provider": self.provider,
+            "message_hash": self.message_hash,
+            "response": self.response,
+            "tokens_used": self.tokens_used,
+            "created_at": self.created_at,
+            "expires_at": self.expires_at,
+            "hit_count": self.hit_count,
+            "last_hit_at": self.last_hit_at,
+            "metadata": self.metadata,
+        }
+

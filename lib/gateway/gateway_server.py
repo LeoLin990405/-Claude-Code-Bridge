@@ -27,6 +27,12 @@ from .gateway_api import create_api
 from .backends import BaseBackend, BackendResult, HTTPBackend, CLIBackend
 from .backends.base_backend import BackendResult
 
+# Import new modules
+from .retry import RetryExecutor, RetryConfig, RetryState
+from .cache import CacheManager, CacheConfig
+from .streaming import StreamManager, StreamConfig
+from .parallel import ParallelExecutor, ParallelConfig, AggregationStrategy
+
 
 class GatewayServer:
     """
@@ -37,6 +43,10 @@ class GatewayServer:
     - Request queue processing
     - Backend management
     - Health monitoring
+    - Retry and fallback logic
+    - Response caching
+    - Streaming support
+    - Parallel execution
     """
 
     def __init__(self, config: Optional[GatewayConfig] = None):
@@ -58,6 +68,13 @@ class GatewayServer:
         # Backend instances
         self.backends: Dict[str, BaseBackend] = {}
         self._init_backends()
+
+        # Advanced feature managers
+        self.cache_manager: Optional[CacheManager] = None
+        self.stream_manager: Optional[StreamManager] = None
+        self.parallel_executor: Optional[ParallelExecutor] = None
+        self.retry_executor: Optional[RetryExecutor] = None
+        self._init_advanced_features()
 
         # Router (lazy import to avoid circular deps)
         self._router = None
@@ -83,6 +100,42 @@ class GatewayServer:
                 # FIFO and Terminal backends can be added later
             except Exception as e:
                 print(f"Warning: Failed to initialize backend for {name}: {e}")
+
+    def _init_advanced_features(self) -> None:
+        """Initialize advanced feature managers."""
+        # Cache manager
+        if self.config.cache.enabled:
+            self.cache_manager = CacheManager(self.store, self.config.cache)
+
+        # Stream manager
+        if self.config.streaming.enabled:
+            self.stream_manager = StreamManager(self.config.streaming)
+
+        # Parallel executor
+        if self.config.parallel.enabled:
+            parallel_config = ParallelConfig(
+                enabled=self.config.parallel.enabled,
+                default_strategy=AggregationStrategy(self.config.parallel.default_strategy),
+                timeout_s=self.config.parallel.timeout_s,
+                max_concurrent=self.config.parallel.max_concurrent,
+            )
+            self.parallel_executor = ParallelExecutor(parallel_config, self.backends)
+
+        # Retry executor
+        if self.config.retry.enabled:
+            retry_config = RetryConfig(
+                enabled=self.config.retry.enabled,
+                max_retries=self.config.retry.max_retries,
+                base_delay_s=self.config.retry.base_delay_s,
+                max_delay_s=self.config.retry.max_delay_s,
+                fallback_enabled=self.config.retry.fallback_enabled,
+                fallback_chains=self.config.retry.fallback_chains,
+            )
+            self.retry_executor = RetryExecutor(
+                retry_config,
+                self.backends,
+                list(self.backends.keys()),
+            )
 
     def _get_router(self):
         """Get or create the router instance."""
@@ -115,19 +168,20 @@ class GatewayServer:
         Process a single request.
 
         Called by the async queue processor.
+        Handles retry, fallback, caching, and parallel execution.
         """
-        provider = request.provider
-        backend = self.backends.get(provider)
+        # Check if this is a parallel request
+        is_parallel = request.metadata and request.metadata.get("parallel", False)
 
-        if not backend:
-            # No backend available, mark as failed
-            self.store.update_request_status(request.id, RequestStatus.FAILED)
-            self.store.save_response(GatewayResponse(
-                request_id=request.id,
-                status=RequestStatus.FAILED,
-                error=f"No backend available for provider: {provider}",
-            ))
-            return
+        if is_parallel:
+            await self._process_parallel_request(request)
+        else:
+            await self._process_single_request(request)
+
+    async def _process_single_request(self, request: GatewayRequest) -> None:
+        """Process a single (non-parallel) request with retry and fallback."""
+        provider = request.provider
+        start_time = time.time()
 
         # Broadcast processing started event
         if self._app and hasattr(self._app.state, 'ws_manager'):
@@ -139,115 +193,246 @@ class GatewayServer:
                 },
             ))
 
-        # Execute request
-        start_time = time.time()
-        try:
-            # For CLI backend, broadcast the command being executed
-            if hasattr(backend, '_build_command') and hasattr(backend, 'config'):
-                try:
-                    cmd = backend._build_command(request.message)
-                    cmd_str = " ".join(cmd[:3])  # Show first 3 parts of command
-                    if len(cmd) > 3:
-                        cmd_str += " ..."
-                    if self._app and hasattr(self._app.state, 'ws_manager'):
-                        await self._app.state.ws_manager.broadcast(WebSocketEvent(
-                            type="cli_executing",
-                            data={
-                                "request_id": request.id,
-                                "provider": provider,
-                                "command": cmd_str,
-                            },
-                        ))
-                except Exception:
-                    pass  # Don't fail if we can't build command preview
-
-            result = await backend.execute(request)
+        # Use retry executor if available
+        if self.retry_executor and self.config.retry.enabled:
+            result, retry_state = await self.retry_executor.execute_with_retry(request)
             latency_ms = (time.time() - start_time) * 1000
 
-            if result.success:
-                self.store.update_request_status(request.id, RequestStatus.COMPLETED)
-                self.store.save_response(GatewayResponse(
-                    request_id=request.id,
-                    status=RequestStatus.COMPLETED,
-                    response=result.response,
-                    provider=provider,
-                    latency_ms=latency_ms,
-                    tokens_used=result.tokens_used,
-                    metadata=result.metadata,
-                ))
-                self.queue.mark_completed(request.id, response=result.response)
+            # Build retry info for metadata
+            retry_info = retry_state.get_summary() if retry_state.total_attempts > 1 else None
 
-                # Record success metric
-                self.store.record_metric(
-                    provider=provider,
-                    event_type="request_completed",
-                    request_id=request.id,
-                    latency_ms=latency_ms,
-                    success=True,
-                )
+            if result.success:
+                await self._handle_success(request, result, latency_ms, retry_info)
             else:
+                await self._handle_failure(request, result, latency_ms, retry_info)
+        else:
+            # Direct execution without retry
+            backend = self.backends.get(provider)
+
+            if not backend:
                 self.store.update_request_status(request.id, RequestStatus.FAILED)
                 self.store.save_response(GatewayResponse(
                     request_id=request.id,
                     status=RequestStatus.FAILED,
-                    error=result.error,
-                    provider=provider,
-                    latency_ms=latency_ms,
+                    error=f"No backend available for provider: {provider}",
                 ))
-                self.queue.mark_completed(request.id, error=result.error)
+                return
 
-                # Record failure metric
-                self.store.record_metric(
-                    provider=provider,
-                    event_type="request_failed",
-                    request_id=request.id,
-                    latency_ms=latency_ms,
-                    success=False,
-                    error=result.error,
+            try:
+                result = await backend.execute(request)
+                latency_ms = (time.time() - start_time) * 1000
+
+                if result.success:
+                    await self._handle_success(request, result, latency_ms)
+                else:
+                    await self._handle_failure(request, result, latency_ms)
+
+            except Exception as e:
+                latency_ms = (time.time() - start_time) * 1000
+                await self._handle_failure(
+                    request,
+                    BackendResult.fail(str(e)),
+                    latency_ms,
                 )
 
-            # Broadcast WebSocket event
-            if self._app and hasattr(self._app.state, 'ws_manager'):
-                event_type = "request_completed" if result.success else "request_failed"
-                event_data = {
-                    "request_id": request.id,
-                    "provider": provider,
-                    "success": result.success,
-                    "latency_ms": latency_ms,
-                }
-                # Add response preview for completed requests
-                if result.success and result.response:
-                    resp_preview = result.response[:100] if len(result.response) > 100 else result.response
-                    event_data["response"] = resp_preview
-                # Add error for failed requests
-                if not result.success and result.error:
-                    event_data["error"] = result.error[:100] if len(result.error) > 100 else result.error
-
-                await self._app.state.ws_manager.broadcast(WebSocketEvent(
-                    type=event_type,
-                    data=event_data,
-                ))
-
-        except Exception as e:
-            latency_ms = (time.time() - start_time) * 1000
+    async def _process_parallel_request(self, request: GatewayRequest) -> None:
+        """Process a parallel request across multiple providers."""
+        if not self.parallel_executor:
             self.store.update_request_status(request.id, RequestStatus.FAILED)
             self.store.save_response(GatewayResponse(
                 request_id=request.id,
                 status=RequestStatus.FAILED,
-                error=str(e),
-                provider=provider,
-                latency_ms=latency_ms,
+                error="Parallel execution not enabled",
             ))
-            self.queue.mark_completed(request.id, error=str(e))
+            return
 
-            self.store.record_metric(
-                provider=provider,
-                event_type="request_error",
+        providers = request.metadata.get("providers", [])
+        strategy_str = request.metadata.get("aggregation_strategy", "first_success")
+
+        try:
+            strategy = AggregationStrategy(strategy_str)
+        except ValueError:
+            strategy = AggregationStrategy.FIRST_SUCCESS
+
+        start_time = time.time()
+
+        # Broadcast parallel processing started
+        if self._app and hasattr(self._app.state, 'ws_manager'):
+            await self._app.state.ws_manager.broadcast(WebSocketEvent(
+                type="request_processing",
+                data={
+                    "request_id": request.id,
+                    "providers": providers,
+                    "parallel": True,
+                    "strategy": strategy.value,
+                },
+            ))
+
+        # Execute in parallel
+        result = await self.parallel_executor.execute_parallel(request, providers, strategy)
+        latency_ms = (time.time() - start_time) * 1000
+
+        if result.success:
+            self.store.update_request_status(request.id, RequestStatus.COMPLETED)
+            self.store.save_response(GatewayResponse(
                 request_id=request.id,
+                status=RequestStatus.COMPLETED,
+                response=result.selected_response,
+                provider=result.selected_provider,
                 latency_ms=latency_ms,
-                success=False,
-                error=str(e),
+                metadata={
+                    "parallel": True,
+                    "strategy": strategy.value,
+                    "all_responses": {k: v.to_dict() for k, v in result.all_responses.items()},
+                },
+            ))
+            self.queue.mark_completed(request.id, response=result.selected_response)
+
+            # Cache the selected response
+            if self.cache_manager and result.selected_provider:
+                self.cache_manager.put(
+                    result.selected_provider,
+                    request.message,
+                    result.selected_response,
+                )
+        else:
+            self.store.update_request_status(request.id, RequestStatus.FAILED)
+            self.store.save_response(GatewayResponse(
+                request_id=request.id,
+                status=RequestStatus.FAILED,
+                error=result.error,
+                latency_ms=latency_ms,
+                metadata={
+                    "parallel": True,
+                    "strategy": strategy.value,
+                    "all_responses": {k: v.to_dict() for k, v in result.all_responses.items()},
+                },
+            ))
+            self.queue.mark_completed(request.id, error=result.error)
+
+        # Broadcast completion
+        if self._app and hasattr(self._app.state, 'ws_manager'):
+            await self._app.state.ws_manager.broadcast(WebSocketEvent(
+                type="request_completed" if result.success else "request_failed",
+                data={
+                    "request_id": request.id,
+                    "success": result.success,
+                    "parallel": True,
+                    "selected_provider": result.selected_provider,
+                    "latency_ms": latency_ms,
+                },
+            ))
+
+    async def _handle_success(
+        self,
+        request: GatewayRequest,
+        result: BackendResult,
+        latency_ms: float,
+        retry_info: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        """Handle successful request completion."""
+        provider = request.provider
+
+        self.store.update_request_status(request.id, RequestStatus.COMPLETED)
+
+        metadata = result.metadata or {}
+        if retry_info:
+            metadata["retry_info"] = retry_info
+
+        self.store.save_response(GatewayResponse(
+            request_id=request.id,
+            status=RequestStatus.COMPLETED,
+            response=result.response,
+            provider=provider,
+            latency_ms=latency_ms,
+            tokens_used=result.tokens_used,
+            metadata=metadata,
+        ))
+        self.queue.mark_completed(request.id, response=result.response)
+
+        # Cache the response
+        if self.cache_manager and result.response:
+            self.cache_manager.put(
+                provider,
+                request.message,
+                result.response,
+                tokens_used=result.tokens_used,
             )
+
+        # Record success metric
+        self.store.record_metric(
+            provider=provider,
+            event_type="request_completed",
+            request_id=request.id,
+            latency_ms=latency_ms,
+            success=True,
+        )
+
+        # Broadcast WebSocket event
+        if self._app and hasattr(self._app.state, 'ws_manager'):
+            resp_preview = result.response[:100] if result.response and len(result.response) > 100 else result.response
+            await self._app.state.ws_manager.broadcast(WebSocketEvent(
+                type="request_completed",
+                data={
+                    "request_id": request.id,
+                    "provider": provider,
+                    "success": True,
+                    "latency_ms": latency_ms,
+                    "response": resp_preview,
+                    "retry_info": retry_info,
+                },
+            ))
+
+    async def _handle_failure(
+        self,
+        request: GatewayRequest,
+        result: BackendResult,
+        latency_ms: float,
+        retry_info: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        """Handle request failure."""
+        provider = request.provider
+
+        self.store.update_request_status(request.id, RequestStatus.FAILED)
+
+        metadata = result.metadata or {}
+        if retry_info:
+            metadata["retry_info"] = retry_info
+
+        self.store.save_response(GatewayResponse(
+            request_id=request.id,
+            status=RequestStatus.FAILED,
+            error=result.error,
+            provider=provider,
+            latency_ms=latency_ms,
+            metadata=metadata,
+        ))
+        self.queue.mark_completed(request.id, error=result.error)
+
+        # Record failure metric
+        self.store.record_metric(
+            provider=provider,
+            event_type="request_failed",
+            request_id=request.id,
+            latency_ms=latency_ms,
+            success=False,
+            error=result.error,
+        )
+
+        # Broadcast WebSocket event
+        if self._app and hasattr(self._app.state, 'ws_manager'):
+            error_preview = result.error[:100] if result.error and len(result.error) > 100 else result.error
+            await self._app.state.ws_manager.broadcast(WebSocketEvent(
+                type="request_failed",
+                data={
+                    "request_id": request.id,
+                    "provider": provider,
+                    "success": False,
+                    "latency_ms": latency_ms,
+                    "error": error_preview,
+                    "retry_info": retry_info,
+                },
+            ))
 
     async def health_check_loop(self) -> None:
         """Periodically check provider health."""
@@ -278,6 +463,9 @@ class GatewayServer:
                 self.store.cleanup_old_requests(self.config.request_ttl_hours)
                 # Clean up old metrics
                 self.store.cleanup_old_metrics(168)  # 7 days
+                # Clean up expired cache entries
+                if self.cache_manager:
+                    self.cache_manager.cleanup_expired()
             except Exception:
                 pass
 
@@ -290,7 +478,13 @@ class GatewayServer:
             store=self.store,
             queue=self.queue,
             router_func=self.route,
+            cache_manager=self.cache_manager,
+            stream_manager=self.stream_manager,
+            parallel_executor=self.parallel_executor,
+            retry_executor=self.retry_executor,
         )
+        # Store backends on app for streaming access
+        self._app.state.backends = self.backends
         return self._app
 
     async def start(self) -> None:
@@ -307,6 +501,10 @@ class GatewayServer:
         asyncio.create_task(self.cleanup_loop())
 
         print(f"Gateway server started")
+        print(f"  Retry: {'enabled' if self.config.retry.enabled else 'disabled'}")
+        print(f"  Cache: {'enabled' if self.config.cache.enabled else 'disabled'}")
+        print(f"  Streaming: {'enabled' if self.config.streaming.enabled else 'disabled'}")
+        print(f"  Parallel: {'enabled' if self.config.parallel.enabled else 'disabled'}")
 
     async def stop(self) -> None:
         """Stop the gateway server."""

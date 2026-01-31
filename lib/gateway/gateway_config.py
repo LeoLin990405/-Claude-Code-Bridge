@@ -15,6 +15,28 @@ import yaml
 from .models import BackendType
 
 
+# Default fallback chains for providers
+DEFAULT_FALLBACK_CHAINS: Dict[str, List[str]] = {
+    "claude": ["deepseek", "gemini"],
+    "gemini": ["claude", "deepseek"],
+    "deepseek": ["claude", "qwen"],
+    "codex": ["opencode", "claude"],
+    "opencode": ["codex", "claude"],
+    "kimi": ["qwen", "deepseek"],
+    "qwen": ["kimi", "deepseek"],
+    "iflow": ["claude", "deepseek"],
+}
+
+# Default provider groups for parallel queries
+DEFAULT_PROVIDER_GROUPS: Dict[str, List[str]] = {
+    "all": ["claude", "gemini", "deepseek", "codex"],
+    "fast": ["claude", "deepseek"],
+    "reasoning": ["deepseek", "claude"],
+    "coding": ["codex", "claude", "opencode"],
+    "chinese": ["deepseek", "kimi", "qwen"],
+}
+
+
 @dataclass
 class ProviderConfig:
     """Configuration for a single provider."""
@@ -34,6 +56,88 @@ class ProviderConfig:
     # Model config
     model: Optional[str] = None
     max_tokens: int = 4096
+    # Streaming support
+    supports_streaming: bool = False
+
+
+@dataclass
+class RetryConfig:
+    """Configuration for retry behavior."""
+    enabled: bool = True
+    max_retries: int = 3
+    base_delay_s: float = 1.0
+    max_delay_s: float = 30.0
+    exponential_base: float = 2.0
+    jitter: bool = True
+    # Fallback configuration
+    fallback_enabled: bool = True
+    fallback_chains: Dict[str, List[str]] = field(default_factory=lambda: DEFAULT_FALLBACK_CHAINS.copy())
+
+    def get_delay(self, attempt: int) -> float:
+        """Calculate delay for a given retry attempt."""
+        import random
+        delay = self.base_delay_s * (self.exponential_base ** attempt)
+        delay = min(delay, self.max_delay_s)
+        if self.jitter:
+            delay = delay * (0.5 + random.random())
+        return delay
+
+    def get_fallbacks(self, provider: str) -> List[str]:
+        """Get fallback providers for a given provider."""
+        return self.fallback_chains.get(provider, [])
+
+
+@dataclass
+class CacheConfig:
+    """Configuration for response caching."""
+    enabled: bool = True
+    default_ttl_s: float = 3600.0  # 1 hour default
+    max_entries: int = 10000
+    # TTL by provider
+    provider_ttl_s: Dict[str, float] = field(default_factory=lambda: {
+        "claude": 3600.0,
+        "gemini": 3600.0,
+        "deepseek": 1800.0,
+        "codex": 1800.0,
+    })
+    # Don't cache responses shorter than this
+    min_response_length: int = 10
+    # Patterns that should not be cached
+    no_cache_patterns: List[str] = field(default_factory=lambda: [
+        "current time", "current date", "today", "now",
+        "latest", "recent", "weather", "stock price", "random",
+    ])
+
+    def get_ttl(self, provider: str) -> float:
+        """Get TTL for a provider."""
+        return self.provider_ttl_s.get(provider, self.default_ttl_s)
+
+
+@dataclass
+class StreamConfig:
+    """Configuration for streaming."""
+    enabled: bool = True
+    chunk_size: int = 50
+    chunk_delay_ms: float = 50.0
+    heartbeat_interval_s: float = 15.0
+    timeout_s: float = 300.0
+
+
+@dataclass
+class ParallelConfig:
+    """Configuration for parallel execution."""
+    enabled: bool = True
+    default_strategy: str = "first_success"  # first_success, fastest, all, consensus
+    timeout_s: float = 60.0
+    min_responses: int = 1
+    max_concurrent: int = 5
+    # Provider groups
+    provider_groups: Dict[str, List[str]] = field(default_factory=lambda: DEFAULT_PROVIDER_GROUPS.copy())
+
+    def get_provider_group(self, group_name: str) -> List[str]:
+        """Get providers in a named group."""
+        name = group_name.lstrip("@")
+        return self.provider_groups.get(name, [])
 
 
 @dataclass
@@ -60,6 +164,11 @@ class GatewayConfig:
     # Logging
     log_level: str = "INFO"
     log_file: Optional[str] = None
+    # Advanced features
+    retry: RetryConfig = field(default_factory=RetryConfig)
+    cache: CacheConfig = field(default_factory=CacheConfig)
+    streaming: StreamConfig = field(default_factory=StreamConfig)
+    parallel: ParallelConfig = field(default_factory=ParallelConfig)
 
     @classmethod
     def load(cls, config_path: Optional[str] = None) -> "GatewayConfig":
