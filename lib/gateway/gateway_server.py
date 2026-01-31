@@ -129,9 +129,38 @@ class GatewayServer:
             ))
             return
 
+        # Broadcast processing started event
+        if self._app and hasattr(self._app.state, 'ws_manager'):
+            await self._app.state.ws_manager.broadcast(WebSocketEvent(
+                type="request_processing",
+                data={
+                    "request_id": request.id,
+                    "provider": provider,
+                },
+            ))
+
         # Execute request
         start_time = time.time()
         try:
+            # For CLI backend, broadcast the command being executed
+            if hasattr(backend, '_build_command') and hasattr(backend, 'config'):
+                try:
+                    cmd = backend._build_command(request.message)
+                    cmd_str = " ".join(cmd[:3])  # Show first 3 parts of command
+                    if len(cmd) > 3:
+                        cmd_str += " ..."
+                    if self._app and hasattr(self._app.state, 'ws_manager'):
+                        await self._app.state.ws_manager.broadcast(WebSocketEvent(
+                            type="cli_executing",
+                            data={
+                                "request_id": request.id,
+                                "provider": provider,
+                                "command": cmd_str,
+                            },
+                        ))
+                except Exception:
+                    pass  # Don't fail if we can't build command preview
+
             result = await backend.execute(request)
             latency_ms = (time.time() - start_time) * 1000
 
@@ -180,14 +209,23 @@ class GatewayServer:
             # Broadcast WebSocket event
             if self._app and hasattr(self._app.state, 'ws_manager'):
                 event_type = "request_completed" if result.success else "request_failed"
+                event_data = {
+                    "request_id": request.id,
+                    "provider": provider,
+                    "success": result.success,
+                    "latency_ms": latency_ms,
+                }
+                # Add response preview for completed requests
+                if result.success and result.response:
+                    resp_preview = result.response[:100] if len(result.response) > 100 else result.response
+                    event_data["response"] = resp_preview
+                # Add error for failed requests
+                if not result.success and result.error:
+                    event_data["error"] = result.error[:100] if len(result.error) > 100 else result.error
+
                 await self._app.state.ws_manager.broadcast(WebSocketEvent(
                     type=event_type,
-                    data={
-                        "request_id": request.id,
-                        "provider": provider,
-                        "success": result.success,
-                        "latency_ms": latency_ms,
-                    },
+                    data=event_data,
                 ))
 
         except Exception as e:

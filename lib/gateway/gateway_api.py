@@ -172,10 +172,15 @@ def create_api(
                 detail="Request queue is full. Try again later.",
             )
 
-        # Broadcast event
+        # Broadcast event with message preview for monitor
+        msg_preview = request.message[:100] if len(request.message) > 100 else request.message
         await ws_manager.broadcast(WebSocketEvent(
-            type="request_queued",
-            data={"request_id": gw_request.id, "provider": provider},
+            type="request_submitted",
+            data={
+                "request_id": gw_request.id,
+                "provider": provider,
+                "message": msg_preview,
+            },
         ))
 
         return AskResponse(

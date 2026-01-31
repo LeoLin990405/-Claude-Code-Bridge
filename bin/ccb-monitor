@@ -1,0 +1,344 @@
+#!/usr/bin/env python3.13
+"""
+ccb-monitor - Real-time monitor for CCB Gateway activity.
+
+Displays:
+- Request/Response flow
+- CLI command execution
+- Provider status
+- Performance metrics
+"""
+
+from __future__ import annotations
+
+import asyncio
+import json
+import os
+import sys
+import time
+from datetime import datetime
+from pathlib import Path
+from typing import Optional, Dict, Any, List
+
+script_dir = Path(__file__).resolve().parent
+lib_dir = script_dir.parent / "lib"
+sys.path.insert(0, str(lib_dir))
+
+
+# ANSI color codes
+class Colors:
+    RESET = "\033[0m"
+    BOLD = "\033[1m"
+    DIM = "\033[2m"
+
+    RED = "\033[31m"
+    GREEN = "\033[32m"
+    YELLOW = "\033[33m"
+    BLUE = "\033[34m"
+    MAGENTA = "\033[35m"
+    CYAN = "\033[36m"
+    WHITE = "\033[37m"
+
+    BG_BLACK = "\033[40m"
+    BG_BLUE = "\033[44m"
+
+
+def clear_screen():
+    """Clear terminal screen."""
+    print("\033[2J\033[H", end="")
+
+
+def move_cursor(row: int, col: int):
+    """Move cursor to position."""
+    print(f"\033[{row};{col}H", end="")
+
+
+class GatewayMonitor:
+    """Real-time Gateway activity monitor."""
+
+    def __init__(self, gateway_url: str = "http://localhost:8765"):
+        self.gateway_url = gateway_url
+        self.ws_url = gateway_url.replace("http://", "ws://").replace("https://", "wss://") + "/api/ws"
+        self._running = False
+        self._events: List[Dict[str, Any]] = []
+        self._max_events = 100
+        self._last_status: Optional[Dict[str, Any]] = None
+        self._start_time = time.time()
+
+    def _format_event(self, event: Dict[str, Any]) -> str:
+        """Format an event for display."""
+        event_type = event.get("type", "unknown")
+        data = event.get("data", {})
+        ts = event.get("timestamp", time.time())
+        time_str = datetime.fromtimestamp(ts).strftime("%H:%M:%S")
+
+        # Color based on event type
+        if event_type in ("request_submitted", "request_queued"):
+            provider = data.get("provider", "?")
+            msg_preview = data.get("message", "")[:50]
+            if msg_preview:
+                return f"{Colors.CYAN}[{time_str}]{Colors.RESET} {Colors.BOLD}→{Colors.RESET} {Colors.YELLOW}{provider}{Colors.RESET}: {msg_preview}..."
+            else:
+                req_id = data.get("request_id", "?")[:8]
+                return f"{Colors.CYAN}[{time_str}]{Colors.RESET} {Colors.BOLD}→{Colors.RESET} {Colors.YELLOW}{provider}{Colors.RESET} [{req_id}]"
+
+        elif event_type == "request_processing":
+            provider = data.get("provider", "?")
+            req_id = data.get("request_id", "?")[:8]
+            return f"{Colors.BLUE}[{time_str}]{Colors.RESET} {Colors.BOLD}⚙{Colors.RESET} {Colors.YELLOW}{provider}{Colors.RESET} processing [{req_id}]"
+
+        elif event_type == "cli_executing":
+            provider = data.get("provider", "?")
+            cmd = data.get("command", "?")
+            return f"{Colors.MAGENTA}[{time_str}]{Colors.RESET} {Colors.BOLD}${Colors.RESET} {Colors.YELLOW}{provider}{Colors.RESET}: {cmd}"
+
+        elif event_type == "request_completed":
+            provider = data.get("provider", "?")
+            latency = data.get("latency_ms", 0)
+            resp_preview = str(data.get("response", ""))[:40]
+            return f"{Colors.GREEN}[{time_str}]{Colors.RESET} {Colors.BOLD}✓{Colors.RESET} {Colors.YELLOW}{provider}{Colors.RESET} ({latency:.0f}ms): {resp_preview}..."
+
+        elif event_type == "request_failed":
+            provider = data.get("provider", "?")
+            error = data.get("error", "unknown")[:50]
+            return f"{Colors.RED}[{time_str}]{Colors.RESET} {Colors.BOLD}✗{Colors.RESET} {Colors.YELLOW}{provider}{Colors.RESET}: {error}"
+
+        elif event_type == "provider_status":
+            name = data.get("name", "?")
+            status = data.get("status", "?")
+            icon = "●" if status == "healthy" else "○"
+            color = Colors.GREEN if status == "healthy" else Colors.RED
+            return f"{Colors.DIM}[{time_str}]{Colors.RESET} {color}{icon}{Colors.RESET} {name}: {status}"
+
+        else:
+            return f"{Colors.DIM}[{time_str}]{Colors.RESET} {event_type}: {json.dumps(data)[:60]}"
+
+    def _render_header(self) -> List[str]:
+        """Render the header section."""
+        uptime = time.time() - self._start_time
+        uptime_str = f"{int(uptime // 60)}m {int(uptime % 60)}s"
+
+        return [
+            f"{Colors.BG_BLUE}{Colors.WHITE}{Colors.BOLD}",
+            "═" * 70,
+            f"  CCB Gateway Monitor                              Uptime: {uptime_str}",
+            "═" * 70,
+            f"{Colors.RESET}",
+        ]
+
+    def _render_providers(self) -> List[str]:
+        """Render provider status section."""
+        lines = [
+            "",
+            f"{Colors.BOLD}  PROVIDERS{Colors.RESET}",
+            "  " + "─" * 66,
+        ]
+
+        if self._last_status and "providers" in self._last_status:
+            for p in self._last_status["providers"]:
+                name = p.get("name", "?")
+                status = p.get("status", "unknown")
+                enabled = p.get("enabled", False)
+                latency = p.get("avg_latency_ms", 0)
+                success = p.get("success_rate", 0) * 100
+                queue = p.get("queue_depth", 0)
+
+                if not enabled:
+                    icon = "○"
+                    color = Colors.DIM
+                elif status == "healthy":
+                    icon = "●"
+                    color = Colors.GREEN
+                elif status == "unavailable":
+                    icon = "○"
+                    color = Colors.RED
+                else:
+                    icon = "◐"
+                    color = Colors.YELLOW
+
+                lines.append(
+                    f"  {color}{icon}{Colors.RESET} {name:<12} "
+                    f"Q:{queue:>2}  "
+                    f"Lat:{latency:>6.0f}ms  "
+                    f"OK:{success:>5.1f}%"
+                )
+        else:
+            lines.append(f"  {Colors.DIM}(waiting for status...){Colors.RESET}")
+
+        return lines
+
+    def _render_stats(self) -> List[str]:
+        """Render statistics section."""
+        lines = [
+            "",
+            f"{Colors.BOLD}  STATISTICS{Colors.RESET}",
+            "  " + "─" * 66,
+        ]
+
+        if self._last_status and "gateway" in self._last_status:
+            g = self._last_status["gateway"]
+            lines.append(
+                f"  Total: {g.get('total_requests', 0):>6}  "
+                f"Active: {g.get('active_requests', 0):>4}  "
+                f"Queue: {g.get('queue_depth', 0):>4}  "
+                f"Processing: {g.get('processing_count', 0):>3}"
+            )
+        else:
+            lines.append(f"  {Colors.DIM}(waiting for status...){Colors.RESET}")
+
+        return lines
+
+    def _render_events(self, max_lines: int = 15) -> List[str]:
+        """Render recent events section."""
+        lines = [
+            "",
+            f"{Colors.BOLD}  ACTIVITY LOG{Colors.RESET}",
+            "  " + "─" * 66,
+        ]
+
+        recent = self._events[-max_lines:] if self._events else []
+
+        if recent:
+            for event in recent:
+                formatted = self._format_event(event)
+                lines.append(f"  {formatted}")
+        else:
+            lines.append(f"  {Colors.DIM}(waiting for events...){Colors.RESET}")
+
+        return lines
+
+    def _render_footer(self) -> List[str]:
+        """Render footer section."""
+        return [
+            "",
+            "  " + "─" * 66,
+            f"  {Colors.DIM}Press Ctrl+C to exit | Gateway: {self.gateway_url}{Colors.RESET}",
+            "",
+        ]
+
+    def render(self) -> str:
+        """Render the full monitor display."""
+        lines = []
+        lines.extend(self._render_header())
+        lines.extend(self._render_providers())
+        lines.extend(self._render_stats())
+        lines.extend(self._render_events())
+        lines.extend(self._render_footer())
+        return "\n".join(lines)
+
+    async def _fetch_status(self):
+        """Fetch gateway status via HTTP."""
+        import urllib.request
+        import urllib.error
+
+        try:
+            url = f"{self.gateway_url}/api/status"
+            with urllib.request.urlopen(url, timeout=2) as response:
+                self._last_status = json.loads(response.read().decode())
+        except Exception:
+            pass
+
+    async def _connect_websocket(self):
+        """Connect to gateway WebSocket for real-time events."""
+        try:
+            import websockets
+        except ImportError:
+            print(f"{Colors.YELLOW}Warning: websockets not installed. Using polling mode.{Colors.RESET}")
+            print(f"{Colors.DIM}Install with: pip install websockets{Colors.RESET}")
+            return
+
+        try:
+            async with websockets.connect(self.ws_url) as ws:
+                # Subscribe to all events
+                await ws.send(json.dumps({
+                    "type": "subscribe",
+                    "channels": ["requests", "providers", "cli"]
+                }))
+
+                while self._running:
+                    try:
+                        message = await asyncio.wait_for(ws.recv(), timeout=1.0)
+                        event = json.loads(message)
+                        if event.get("type") != "pong":
+                            self._events.append(event)
+                            if len(self._events) > self._max_events:
+                                self._events = self._events[-self._max_events:]
+                    except asyncio.TimeoutError:
+                        # Send ping
+                        await ws.send(json.dumps({"type": "ping"}))
+                    except Exception as e:
+                        break
+        except Exception as e:
+            # WebSocket connection failed, will use polling
+            pass
+
+    async def _poll_status(self):
+        """Poll gateway status periodically."""
+        while self._running:
+            await self._fetch_status()
+            await asyncio.sleep(2.0)
+
+    async def _refresh_display(self):
+        """Refresh the terminal display."""
+        while self._running:
+            clear_screen()
+            print(self.render())
+            await asyncio.sleep(0.5)
+
+    async def run(self):
+        """Run the monitor."""
+        self._running = True
+        self._start_time = time.time()
+
+        # Initial status fetch
+        await self._fetch_status()
+
+        # Run tasks concurrently
+        tasks = [
+            asyncio.create_task(self._connect_websocket()),
+            asyncio.create_task(self._poll_status()),
+            asyncio.create_task(self._refresh_display()),
+        ]
+
+        try:
+            await asyncio.gather(*tasks)
+        except asyncio.CancelledError:
+            pass
+        finally:
+            self._running = False
+            for task in tasks:
+                task.cancel()
+
+    def stop(self):
+        """Stop the monitor."""
+        self._running = False
+
+
+def main():
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="CCB Gateway Monitor - Real-time activity display"
+    )
+    parser.add_argument(
+        "--url",
+        default=os.environ.get("CCB_GATEWAY_URL", "http://localhost:8765"),
+        help="Gateway URL (default: http://localhost:8765)",
+    )
+
+    args = parser.parse_args()
+
+    monitor = GatewayMonitor(args.url)
+
+    print(f"{Colors.CYAN}Connecting to Gateway at {args.url}...{Colors.RESET}")
+
+    try:
+        asyncio.run(monitor.run())
+    except KeyboardInterrupt:
+        monitor.stop()
+        clear_screen()
+        print(f"\n{Colors.GREEN}Monitor stopped.{Colors.RESET}")
+
+
+if __name__ == "__main__":
+    main()

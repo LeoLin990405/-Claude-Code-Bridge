@@ -1,15 +1,15 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/CCB-Multi--AI%20Platform-blue?style=for-the-badge" alt="CCB">
+  <img src="https://img.shields.io/badge/AI%20Orchestrator-Multi--AI%20Platform-blue?style=for-the-badge" alt="AI Orchestrator">
   <img src="https://img.shields.io/badge/Providers-9-green?style=for-the-badge" alt="Providers">
-  <img src="https://img.shields.io/badge/Agents-9-orange?style=for-the-badge" alt="Agents">
+  <img src="https://img.shields.io/badge/Gateway-REST%20%2B%20WebSocket-orange?style=for-the-badge" alt="Gateway">
 </p>
 
-<h1 align="center">CCB - Claude Code Bridge</h1>
+<h1 align="center">AI Orchestrator</h1>
 
 <p align="center">
   <strong>Enterprise-Grade Multi-AI Orchestration Platform</strong>
   <br>
-  <em>Intelligent routing, specialized agents, and unified API for 9 AI providers</em>
+  <em>Unified Gateway API, intelligent routing, and real-time monitoring for 9 AI providers</em>
 </p>
 
 <p align="center">
@@ -17,7 +17,7 @@
   <a href="#-quick-start">Quick Start</a> •
   <a href="#-architecture">Architecture</a> •
   <a href="#-gateway-api">Gateway API</a> •
-  <a href="#-agents">Agents</a> •
+  <a href="#-monitor">Monitor</a> •
   <a href="#-installation">Installation</a>
 </p>
 
@@ -35,72 +35,79 @@
 
 ## 🎯 Overview
 
-**CCB (Claude Code Bridge)** is a production-ready multi-AI orchestration platform that unifies 9 AI providers under a single, intelligent interface. It features automatic task routing, specialized agents for different domains, and a modern Gateway API with WebSocket support.
+**AI Orchestrator** is a production-ready multi-AI orchestration platform that unifies 9 AI providers under a single, intelligent Gateway API. It features automatic task routing, real-time activity monitoring, and a modern REST/WebSocket interface.
 
-### Why CCB?
+### Why AI Orchestrator?
 
-| Challenge | CCB Solution |
-|-----------|--------------|
-| Multiple AI CLIs with different interfaces | **Unified command interface** for all providers |
+| Challenge | Solution |
+|-----------|----------|
+| Multiple AI CLIs with different interfaces | **Unified Gateway API** for all providers |
 | Manual provider selection | **Intelligent routing** based on task analysis |
-| No persistence or state management | **SQLite-backed state store** with request queuing |
+| No visibility into AI operations | **Real-time Monitor** with WebSocket events |
 | Terminal-dependent communication | **REST API + WebSocket** for decoupled architecture |
-| Single-provider limitations | **9 specialized agents** with automatic fallback |
+| Complex daemon management | **Stateless Gateway** - no daemons required |
 
 ---
 
 ## ✨ Features
 
-### Core Platform
-
-| Feature | Description |
-|---------|-------------|
-| **9 AI Providers** | Claude, Codex, Gemini, OpenCode, DeepSeek, Droid, iFlow, Kimi, Qwen |
-| **Intelligent Routing** | Task-aware provider selection with keyword and file pattern matching |
-| **Magic Keywords** | `@deep`, `@review`, `@all`, `@docs`, `@search` for special behaviors |
-| **Unified CLI** | Consistent `*ask` / `*ping` commands across all providers |
-
-### Gateway API (Phase 5)
+### Gateway API (Core)
 
 | Feature | Description |
 |---------|-------------|
 | **REST API** | `POST /api/ask`, `GET /api/reply/{id}`, `GET /api/status` |
-| **WebSocket** | Real-time request/response streaming at `/api/ws` |
+| **WebSocket** | Real-time events at `/api/ws` |
 | **Priority Queue** | Request prioritization with SQLite persistence |
-| **Multi-Backend** | HTTP API, CLI Exec, Terminal integration |
+| **Multi-Backend** | HTTP API, CLI Exec, WezTerm integration |
 | **Health Monitoring** | Automatic provider health checks and metrics |
 
-### Advanced Capabilities
+### Real-time Monitor
 
 | Feature | Description |
 |---------|-------------|
-| **Rate Limiting** | Token bucket algorithm per provider |
-| **MCP Aggregation** | Unified tool discovery across MCP servers |
-| **OAuth2 Auth** | Secure Web API access |
-| **LSP/AST Tools** | Code intelligence with tree-sitter |
-| **Batch Processing** | Parallel task execution |
-| **Smart Caching** | Reduce redundant API calls |
-| **Auto Auth Terminal** | Auto-open terminal for CLI authentication when needed |
-| **WezTerm Integration** | TTY-dependent CLIs execute in WezTerm panes |
+| **Activity Log** | See all requests, CLI commands, and responses |
+| **Provider Status** | Live health, latency, and success rates |
+| **WebSocket Events** | `request_submitted`, `cli_executing`, `request_completed` |
+| **WezTerm Integration** | Launch monitor in a dedicated pane |
+
+### Intelligent Routing
+
+| Feature | Description |
+|---------|-------------|
+| **9 AI Providers** | Claude, Codex, Gemini, OpenCode, DeepSeek, iFlow, Kimi, Qwen, Droid |
+| **Task Analysis** | Keyword and file pattern matching |
+| **Magic Keywords** | `@deep`, `@review`, `@all`, `@docs`, `@search` |
+| **Unified CLI** | Consistent `*ask` / `*ping` commands |
 
 ---
 
 ## 🚀 Quick Start
 
-### Basic Usage
+### Start Gateway
 
 ```bash
-# Smart routing - auto-selects optimal provider
-ccb ask "Add a React component"        # → Gemini (frontend)
-ccb ask "Design an API endpoint"       # → Codex (backend)
-ccb ask "Analyze algorithm complexity" # → DeepSeek (reasoning)
+# Start the gateway server
+ccb-gateway start
 
-# Magic keywords
-ccb ask "@deep analyze this algorithm"   # Force deep reasoning
-ccb ask "@review check this code"        # Force code review
-ccb ask "@all what's the best approach"  # Multi-provider query
+# Check status
+ccb-gateway status
 
-# Direct provider commands
+# Launch real-time monitor in WezTerm pane
+ccb-gateway monitor --pane
+```
+
+### Send Requests
+
+```bash
+# Via REST API
+curl -X POST http://localhost:8765/api/ask \
+  -H "Content-Type: application/json" \
+  -d '{"provider": "gemini", "message": "Hello"}'
+
+# Get response
+curl http://localhost:8765/api/reply/{request_id}?wait=true
+
+# Via CLI commands
 cask "your question"   # Codex
 gask "your question"   # Gemini
 dskask "your question" # DeepSeek
@@ -108,36 +115,14 @@ kask "your question"   # Kimi
 qask "your question"   # Qwen
 ```
 
-### Gateway API
+### Monitor Activity
 
 ```bash
-# Start the gateway server
-ccb-gateway start
+# Run monitor in current terminal
+ccb-monitor
 
-# Send request via REST API
-curl -X POST http://localhost:8765/api/ask \
-  -H "Content-Type: application/json" \
-  -d '{"provider": "gemini", "message": "Hello"}'
-
-# Get response
-curl http://localhost:8765/api/reply/{request_id}
-
-# Check system status
-curl http://localhost:8765/api/status
-```
-
-### Agent Execution
-
-```bash
-# Auto-select best agent for task
-ccb-agent auto "implement sorting function"
-
-# Execute with specific agent
-ccb-agent execute reviewer "audit this code"
-ccb-agent execute oracle "analyze algorithm complexity"
-
-# List available agents
-ccb-agent list
+# Or launch in WezTerm pane
+ccb-gateway monitor --pane
 ```
 
 ---
@@ -146,27 +131,23 @@ ccb-agent list
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                           CCB Platform Architecture                          │
+│                        AI Orchestrator Architecture                          │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
 │  ┌────────────────────────────────────────────────────────────────────────┐ │
-│  │                         Agent Layer (9 Agents)                         │ │
-│  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──��───────┐ ┌──────────┐    │ │
-│  │  │ Sisyphus │ │  Oracle  │ │Librarian │ │ Explorer │ │ Frontend │    │ │
-│  │  │  (Code)  │ │(Reasoning│ │  (Docs)  │ │ (Search) │ │  (UI/UX) │    │ │
-│  │  └──────────┘ └──────────┘ └──────────┘ └──────────┘ └──────────┘    │ │
-│  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐                 │ │
-│  │  │ Reviewer │ │ Workflow │ │ Polyglot │ │Autonomous│                 │ │
-│  │  │ (Review) │ │  (Auto)  │ │ (i18n)   │ │(Long-run)│                 │ │
-│  │  └──────────┘ └──────────┘ └──────────┘ └──────────┘                 │ │
+│  │                         Gateway API Layer                              │ │
+│  │  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐     │ │
+│  │  │  REST API   │ │  WebSocket  │ │Request Queue│ │ State Store │     │ │
+│  │  │ (FastAPI)   │ │  (Events)   │ │ (Priority)  │ │  (SQLite)   │     │ │
+│  │  └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘     │ │
 │  └────────────────────────────────────────────────────────────────────────┘ │
 │                                    │                                         │
 │  ┌────────────────────────────────────────────────────────────────────────┐ │
-│  │                      Gateway API Layer (Phase 5)                       │ │
-│  │  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐     │ │
-│  │  │  REST API   │ │  WebSocket  │ │Request Queue│ │ State Store │     │ │
-│  │  │ (FastAPI)   │ │  (Real-time)│ │ (Priority)  │ │  (SQLite)   │     │ │
-│  │  └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘     │ │
+│  │                         Monitor Service                                │ │
+│  │  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐                     │ │
+│  │  │Activity Log │ │Provider Stat│ │ CLI Events  │                     │ │
+│  │  │ (Real-time) │ │  (Health)   │ │ (Commands)  │                     │ │
+│  │  └─────────────┘ └─────────────┘ └─────────────┘                     │ │
 │  └────────────────────────────────────────────────────────────────────────┘ │
 │                                    │                                         │
 │  ┌────────────────────────────────────────────────────────────────────────┐ │
@@ -176,11 +157,11 @@ ccb-agent list
 │                                    │                                         │
 │  ┌────────────────────────────────────────────────────────────────────────┐ │
 │  │                           Backend Layer                                │ │
-│  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐                 │ │
-│  │  │ HTTP API │ │ CLI Exec │ │ Terminal │ │   FIFO   │                 │ │
-│  │  │(Anthropic│ │ (Codex,  │ │ (Legacy) │ │ (Legacy) │                 │ │
-│  │  │ DeepSeek)│ │ Gemini)  │ │          │ │          │                 │ │
-│  │  └──────────┘ └──────────┘ └──────────┘ └──────────┘                 │ │
+│  │  ┌──────────┐ ┌──────────┐ ┌──────────┐                              │ │
+│  │  │ HTTP API │ │ CLI Exec │ │ WezTerm  │                              │ │
+│  │  │(Anthropic│ │ (Codex,  │ │ (Gemini) │                              │ │
+│  │  │ DeepSeek)│ │ OpenCode)│ │          │                              │ │
+│  │  └──────────┘ └──────────┘ └──────────┘                              │ │
 │  └────────────────────────────────────────────────────────────────────────┘ │
 │                                    │                                         │
 │  ┌────────────────────────────────────────────────────────────────────────┐ │
@@ -205,9 +186,10 @@ ccb-agent list
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `POST` | `/api/ask` | Submit a request to a provider |
-| `GET` | `/api/reply/{request_id}` | Get response for a request |
+| `GET` | `/api/reply/{request_id}` | Get response (supports `?wait=true`) |
 | `GET` | `/api/status` | Get gateway and provider status |
 | `DELETE` | `/api/request/{request_id}` | Cancel a pending request |
+| `GET` | `/api/health` | Health check |
 | `GET` | `/docs` | Interactive API documentation |
 
 ### Request Example
@@ -229,6 +211,9 @@ curl -X POST http://localhost:8765/api/ask \
   "provider": "gemini",
   "status": "queued"
 }
+
+# Get response (blocking)
+curl "http://localhost:8765/api/reply/abc123-def?wait=true&timeout=60"
 ```
 
 ### WebSocket Events
@@ -240,68 +225,67 @@ const ws = new WebSocket('ws://localhost:8765/api/ws');
 // Subscribe to events
 ws.send(JSON.stringify({
   type: 'subscribe',
-  channels: ['requests', 'providers']
+  channels: ['requests', 'providers', 'cli']
 }));
 
-// Receive events
-ws.onmessage = (event) => {
-  const data = JSON.parse(event.data);
-  // { type: 'request_update', request_id: '...', status: 'completed', response: '...' }
-};
-```
-
-### Provider Status
-
-```bash
-curl http://localhost:8765/api/status | jq '.providers'
-```
-
-```json
-[
-  {"name": "gemini", "enabled": true, "status": "healthy", "avg_latency_ms": 2500},
-  {"name": "codex", "enabled": true, "status": "healthy", "avg_latency_ms": 5800},
-  {"name": "deepseek", "enabled": true, "status": "healthy", "avg_latency_ms": 48000},
-  {"name": "kimi", "enabled": true, "status": "healthy", "avg_latency_ms": 5000},
-  {"name": "qwen", "enabled": true, "status": "healthy", "avg_latency_ms": 11000},
-  {"name": "iflow", "enabled": true, "status": "healthy", "avg_latency_ms": 40000},
-  {"name": "opencode", "enabled": true, "status": "healthy", "avg_latency_ms": 23000}
-]
+// Event types
+// - request_submitted: New request with message preview
+// - request_processing: Request started processing
+// - cli_executing: CLI command being executed
+// - request_completed: Success with response preview
+// - request_failed: Failure with error message
 ```
 
 ---
 
-## 🤖 Agents
+## 📊 Monitor
 
-### Agent Overview
+The real-time monitor displays Gateway activity in a terminal UI.
 
-| Agent | Purpose | Primary Providers | Keywords |
-|-------|---------|-------------------|----------|
-| **Sisyphus** | Code implementation | Codex, Gemini | implement, create, build |
-| **Oracle** | Deep reasoning & analysis | DeepSeek, Claude | analyze, reason, algorithm |
-| **Librarian** | Documentation & search | Claude, Gemini | document, explain |
-| **Explorer** | Codebase navigation | Gemini, Claude | find, search, locate |
-| **Frontend** | UI/UX development | Gemini, Claude | react, vue, component |
-| **Reviewer** | Code review & testing | Gemini, Claude | review, audit, check |
-| **Workflow** | Multi-step automation | iFlow, Droid | automate, pipeline |
-| **Polyglot** | Translation & i18n | Kimi, Qwen | translate, multilingual |
-| **Autonomous** | Long-running tasks | Droid, Codex | background, long-running |
+### Features
 
-### Agent Commands
+- **Provider Status**: Health, queue depth, latency, success rate
+- **Activity Log**: All requests, CLI commands, and responses
+- **WebSocket Events**: Real-time updates via Gateway WebSocket
+- **WezTerm Integration**: Launch in a dedicated pane
+
+### Usage
 
 ```bash
-# List all agents with capabilities
-ccb-agent list
+# Run in current terminal
+ccb-monitor
 
-# Auto-select agent based on task
-ccb-agent auto "implement a binary search tree"
+# Launch in WezTerm pane
+ccb-gateway monitor --pane
 
-# Execute with specific agent
-ccb-agent execute sisyphus "create a REST API endpoint"
-ccb-agent execute oracle "analyze time complexity of this algorithm"
-ccb-agent execute reviewer "review this pull request"
+# Custom Gateway URL
+ccb-monitor --url http://localhost:8765
+```
 
-# Show which agent would be selected
-ccb-agent match "translate this documentation to Chinese"
+### Display
+
+```
+══════════════════════════════════════════════════════════════════════
+  AI Orchestrator Monitor                              Uptime: 5m 23s
+══════════════════════════════════════════════════════════════════════
+
+  PROVIDERS
+  ──────────────────────────────────────────────────────────────────
+  ● gemini       Q: 0  Lat:  2500ms  OK: 95.0%
+  ● codex        Q: 0  Lat:  5800ms  OK: 90.0%
+  ● deepseek     Q: 1  Lat: 48000ms  OK: 85.0%
+  ● kimi         Q: 0  Lat:  5000ms  OK: 92.0%
+
+  STATISTICS
+  ──────────────────────────────────────────────────────────────────
+  Total:     45  Active:    1  Queue:    1  Processing:   1
+
+  ACTIVITY LOG
+  ──────────────────────────────────────────────────────────────────
+  [14:23:15] → gemini: Explain async/await in Python...
+  [14:23:15] ⚙ gemini processing [abc123-d]
+  [14:23:16] $ gemini: gemini -p "Explain async/await..."
+  [14:23:18] ✓ gemini (2534ms): Async/await is a pattern...
 ```
 
 ---
@@ -313,26 +297,16 @@ ccb-agent match "translate this documentation to Chinese"
 | Provider | Command | Backend | Best For | Status |
 |----------|---------|---------|----------|--------|
 | **Claude** | `lask` | HTTP API | Architecture, general | ✅ |
-| **Codex** | `cask` | CLI (`exec --json`) | Backend, API | ✅ |
-| **Gemini** | `gask` | CLI + WezTerm¹ | Frontend, review | ✅ |
-| **OpenCode** | `oask` | CLI (`run --format json`) | General coding | ✅ |
-| **DeepSeek** | `dskask` | CLI (`-q`) | Deep reasoning | ✅ |
+| **Codex** | `cask` | CLI Exec | Backend, API | ✅ |
+| **Gemini** | `gask` | WezTerm¹ | Frontend, review | ✅ |
+| **OpenCode** | `oask` | CLI Exec | General coding | ✅ |
+| **DeepSeek** | `dskask` | CLI Exec | Deep reasoning | ✅ |
+| **iFlow** | `iask` | CLI Exec | Workflow | ✅ |
+| **Kimi** | `kask` | CLI Exec | Chinese, long context | ✅ |
+| **Qwen** | `qask` | CLI Exec | Multilingual | ✅ |
 | **Droid** | `dask` | Terminal | Autonomous | ⚠️ |
-| **iFlow** | `iask` | CLI (`-p`) | Workflow | ✅ |
-| **Kimi** | `kask` | CLI (`--quiet -p`) | Chinese, long context | ✅ |
-| **Qwen** | `qask` | CLI | Multilingual | ✅ |
 
-¹ Gemini CLI requires TTY environment; Gateway uses WezTerm pane execution for proper TTY support.
-
-### Routing Rules
-
-| Task Type | Keywords | File Patterns | Provider |
-|-----------|----------|---------------|----------|
-| Frontend | react, vue, component | `*.tsx`, `*.vue` | Gemini |
-| Backend | api, endpoint, server | `api/**`, `routes/**` | Codex |
-| Reasoning | analyze, algorithm | - | DeepSeek |
-| Architecture | design, architect | - | Claude |
-| Review | review, check, audit | - | Gemini |
+¹ Gemini CLI requires TTY; Gateway uses WezTerm pane execution.
 
 ### Magic Keywords
 
@@ -351,41 +325,34 @@ ccb-agent match "translate this documentation to Chinese"
 ```
 ~/.local/share/codex-dual/
 ├── bin/                        # CLI commands
+│   ├── ccb-gateway             # Gateway management
+│   ├── ccb-monitor             # Real-time activity monitor
 │   ├── ccb-ask                 # Smart routing command
 │   ├── ccb-agent               # Agent execution
-│   ├── ccb-gateway             # Gateway management
-│   ├── ccb-ratelimit           # Rate limiting
 │   └── cask, gask, dskask...   # Provider-specific commands
 │
 ├── lib/                        # Core modules
 │   ├── unified_router.py       # Intelligent routing engine
-│   ├── agent_registry.py       # Agent definitions
-│   ├── agent_executor.py       # Agent execution logic
-│   ├── provider_commands.py    # Provider command mappings
+│   ├── gateway_client.py       # Gateway API client
 │   │
-│   └── gateway/                # Gateway API module (Phase 5)
+│   └── gateway/                # Gateway API module
 │       ├── gateway_server.py   # FastAPI server
 │       ├── gateway_api.py      # REST endpoints
-│       ├── gateway_config.py   # Configuration management
-│       ├── state_store.py      # SQLite state persistence
+│       ├── gateway_config.py   # Configuration
+│       ├── state_store.py      # SQLite persistence
 │       ├── request_queue.py    # Priority queue
-│       ├── monitor.py          # Real-time monitoring
 │       ├── models.py           # Data models
 │       └── backends/           # Backend implementations
-│           ├── base_backend.py
 │           ├── http_backend.py
-│           ├── cli_backend.py
-│           └── terminal_backend.py
+│           └── cli_backend.py
 │
-├── mcp/                        # MCP servers
-├── config/                     # Configuration templates
+├── config/                     # Configuration
 │   └── gateway.yaml            # Gateway configuration
 │
 └── install.sh                  # Installation script
 
 ~/.ccb_config/                  # User configuration
 ├── unified-router.yaml         # Routing rules
-├── phase4.yaml                 # Advanced features
 └── gateway.db                  # Gateway state database
 ```
 
@@ -396,64 +363,52 @@ ccb-agent match "translate this documentation to Chinese"
 ### Prerequisites
 
 - **Python 3.9+**
-- **WezTerm** or **tmux** (for terminal multiplexing)
+- **WezTerm** (recommended) or tmux
 - Provider CLIs: `claude`, `codex`, `gemini`, `opencode`, `deepseek`, `kimi`, `qwen`
 
 ### Install
 
 ```bash
 # Clone repository
-git clone https://github.com/LeoLin990405/ccb.git ~/.local/share/codex-dual
+git clone https://github.com/LeoLin990405/ai-router-ccb.git ~/.local/share/codex-dual
 
 # Run installation
 cd ~/.local/share/codex-dual && ./install.sh
 
-# Add to PATH (add to ~/.zshrc or ~/.bashrc)
+# Add to PATH
 export PATH="$HOME/.local/share/codex-dual/bin:$PATH"
 ```
 
 ### Environment Variables
 
 ```bash
-# Add to ~/.zshrc or ~/.bashrc
-export CCB_SIDECAR_AUTOSTART=1      # Auto-start sidecar panes
-export CCB_SIDECAR_DIRECTION=right  # Sidecar pane direction
-export CCB_CLI_READY_WAIT_S=20      # CLI ready timeout
-export CCB_USE_GATEWAY=1            # Enable Gateway mode
+export CCB_USE_GATEWAY=1            # Enable Gateway mode (default)
 export CCB_GATEWAY_PORT=8765        # Gateway port
-export CCB_AUTO_OPEN_AUTH=1         # Auto-open auth terminal on timeout (default: 1)
-export CCB_DEBUG=1                  # Enable verbose debug logging
+export CCB_AUTO_OPEN_AUTH=1         # Auto-open auth terminal
+export CCB_DEBUG=1                  # Enable debug logging
 ```
 
 ### Verify Installation
 
 ```bash
-# Check CCB version
-ccb --version
-
-# Check provider health
-ccb health
-
 # Start gateway
 ccb-gateway start
 
-# Test routing
-ccb route "implement a React component"
+# Check status
+ccb-gateway status
+
+# Launch monitor
+ccb-gateway monitor --pane
+
+# Test request
+curl -X POST http://localhost:8765/api/ask \
+  -H "Content-Type: application/json" \
+  -d '{"provider": "codex", "message": "Hello"}'
 ```
 
 ---
 
 ## 📊 Performance
-
-### Gateway Metrics
-
-| Metric | Description |
-|--------|-------------|
-| `total_requests` | Total requests processed |
-| `active_requests` | Currently processing |
-| `queue_depth` | Pending requests |
-| `avg_latency_ms` | Average response time |
-| `success_rate` | Request success rate |
 
 ### Provider Latency (Typical)
 
@@ -471,11 +426,8 @@ ccb route "implement a React component"
 
 ## 🙏 Acknowledgements
 
-This project stands on the shoulders of giants:
-
 - **[bfly123/claude_code_bridge](https://github.com/bfly123/claude_code_bridge)** - Original multi-AI collaboration framework
 - **[Grafbase/Nexus](https://github.com/grafbase/nexus)** - AI gateway architecture inspiration
-- **[code-yeongyu/oh-my-opencode](https://github.com/code-yeongyu/oh-my-opencode)** - Agent orchestration patterns
 
 ---
 

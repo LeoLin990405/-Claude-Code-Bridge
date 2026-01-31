@@ -125,20 +125,43 @@ def cmd_stop(args):
 
 def cmd_monitor(args):
     """Connect to gateway monitor."""
-    import asyncio
+    import subprocess
+    import shutil
 
-    ws_url = args.url.replace("http://", "ws://").replace("https://", "wss://")
-    if not ws_url.endswith("/api/ws"):
-        ws_url = ws_url.rstrip("/") + "/api/ws"
+    # Use the standalone ccb-monitor script
+    monitor_script = script_dir / "ccb-monitor"
+    if not monitor_script.exists():
+        print(f"Error: ccb-monitor not found at {monitor_script}")
+        return 1
 
-    from gateway.monitor import run_monitor
+    # If --pane is specified, launch in a WezTerm pane
+    if args.pane:
+        wezterm = shutil.which("wezterm")
+        if not wezterm:
+            print("Error: WezTerm not found. Install WezTerm or run without --pane.")
+            return 1
 
+        try:
+            cmd = [wezterm, "cli", "spawn", "--", str(monitor_script), "--url", args.url]
+            result = subprocess.run(cmd, capture_output=True, text=True)
+            if result.returncode == 0:
+                pane_id = result.stdout.strip()
+                print(f"Monitor launched in WezTerm pane {pane_id}")
+                return 0
+            else:
+                print(f"Error launching monitor: {result.stderr}")
+                return 1
+        except Exception as e:
+            print(f"Error: {e}")
+            return 1
+
+    # Run in current terminal
     try:
-        asyncio.run(run_monitor(ws_url, mode="websocket"))
+        subprocess.run([str(monitor_script), "--url", args.url])
+        return 0
     except KeyboardInterrupt:
         print("\nMonitor stopped.")
-
-    return 0
+        return 0
 
 
 def cmd_ask(args):
@@ -213,6 +236,7 @@ def main():
     # monitor command
     monitor_parser = subparsers.add_parser("monitor", help="Connect to gateway monitor")
     monitor_parser.add_argument("--url", "-u", default="http://localhost:8765", help="Gateway URL")
+    monitor_parser.add_argument("--pane", "-p", action="store_true", help="Launch in WezTerm pane")
 
     # ask command
     ask_parser = subparsers.add_parser("ask", help="Send a request to the gateway")
