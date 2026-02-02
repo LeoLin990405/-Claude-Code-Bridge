@@ -559,31 +559,25 @@ class CLIBackend(BaseBackend):
         return "\n".join(cleaned_lines).strip()
 
     async def health_check(self) -> bool:
-        """Check if the CLI is available."""
+        """Check if the CLI is available.
+
+        For CLIs that have slow startup (like Gemini with OAuth),
+        we just check if the binary exists and is executable.
+        """
         cli = self._find_cli()
         if not cli:
             return False
 
-        try:
-            # Try to run with --version or --help to check if it works
-            process = await asyncio.create_subprocess_exec(
-                cli, "--version",
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-            )
-
-            try:
-                await asyncio.wait_for(process.communicate(), timeout=5.0)
-            except asyncio.TimeoutError:
-                process.kill()
-                return False
-
-            # Some CLIs don't support --version, so we accept any exit code
-            # as long as the process ran
-            return True
-
-        except Exception:
+        # Check if the file exists and is executable
+        if not os.path.isfile(cli):
             return False
+
+        if not os.access(cli, os.X_OK):
+            return False
+
+        # CLI exists and is executable - consider it healthy
+        # We don't run --version because some CLIs (like Gemini) have slow startup
+        return True
 
     async def shutdown(self) -> None:
         """No cleanup needed for CLI backend."""
