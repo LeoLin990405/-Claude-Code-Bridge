@@ -607,6 +607,36 @@ class CLIBackend(BaseBackend):
             thinking = "\n\n---\n\n".join(thinking_parts) if thinking_parts else None
             return response, thinking
 
+        # Try to find a JSON object with "response" field (Gemini CLI format)
+        # Search for all JSON objects and find one with "response" key
+        import re
+        # Find all potential JSON object starts
+        json_objects = []
+        i = 0
+        while i < len(output):
+            if output[i] == "{":
+                brace_count = 0
+                start = i
+                for j in range(i, len(output)):
+                    if output[j] == "{":
+                        brace_count += 1
+                    elif output[j] == "}":
+                        brace_count -= 1
+                        if brace_count == 0:
+                            json_objects.append(output[start:j+1])
+                            i = j
+                            break
+            i += 1
+
+        # Look for JSON object with "response" field (not "error" field)
+        for json_str in json_objects:
+            try:
+                data = json.loads(json_str)
+                if isinstance(data, dict) and "response" in data and "error" not in data:
+                    return data["response"], None
+            except (json.JSONDecodeError, ValueError):
+                continue
+
         # Fallback: clean regular output and extract thinking
         cleaned_text, thinking = self._extract_thinking(output)
 
@@ -630,6 +660,9 @@ class CLIBackend(BaseBackend):
                 "reasoning summaries:",
                 "session id:",
                 "tokens used",
+                "loaded cached credentials",
+                "hook registry initialized",
+                "credentials loaded",
             ]):
                 continue
             # Skip lines that look like metadata
