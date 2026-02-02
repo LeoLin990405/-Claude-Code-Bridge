@@ -321,6 +321,10 @@ class AuthMiddleware:
         if not self.config.enabled:
             return await call_next(request)
 
+        # Skip WebSocket upgrade requests
+        if request.headers.get("upgrade", "").lower() == "websocket":
+            return await call_next(request)
+
         # Skip auth for public paths
         if self._is_public_path(request.url.path):
             return await call_next(request)

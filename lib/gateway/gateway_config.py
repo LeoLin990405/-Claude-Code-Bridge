@@ -17,22 +17,21 @@ from .models import BackendType
 
 # Default fallback chains for providers
 DEFAULT_FALLBACK_CHAINS: Dict[str, List[str]] = {
-    "claude": ["deepseek", "gemini"],
-    "gemini": ["claude", "deepseek"],
-    "deepseek": ["claude", "qwen"],
-    "codex": ["opencode", "claude"],
-    "opencode": ["codex", "claude"],
+    "gemini": ["deepseek", "qwen"],
+    "deepseek": ["qwen", "kimi"],
+    "codex": ["opencode", "gemini"],
+    "opencode": ["codex", "gemini"],
     "kimi": ["qwen", "deepseek"],
     "qwen": ["kimi", "deepseek"],
-    "iflow": ["claude", "deepseek"],
+    "iflow": ["deepseek", "gemini"],
 }
 
 # Default provider groups for parallel queries
 DEFAULT_PROVIDER_GROUPS: Dict[str, List[str]] = {
-    "all": ["claude", "gemini", "deepseek", "codex"],
-    "fast": ["claude", "deepseek"],
-    "reasoning": ["deepseek", "claude"],
-    "coding": ["codex", "claude", "opencode"],
+    "all": ["gemini", "deepseek", "codex", "opencode", "kimi", "qwen", "iflow"],
+    "fast": ["deepseek", "kimi"],
+    "reasoning": ["deepseek", "gemini"],
+    "coding": ["codex", "opencode", "gemini"],
     "chinese": ["deepseek", "kimi", "qwen"],
 }
 
@@ -95,7 +94,6 @@ class CacheConfig:
     max_entries: int = 10000
     # TTL by provider
     provider_ttl_s: Dict[str, float] = field(default_factory=lambda: {
-        "claude": 3600.0,
         "gemini": 3600.0,
         "deepseek": 1800.0,
         "codex": 1800.0,
@@ -202,7 +200,7 @@ class GatewayConfig:
     # Provider configs
     providers: Dict[str, ProviderConfig] = field(default_factory=dict)
     # Default provider for auto-routing
-    default_provider: str = "claude"
+    default_provider: str = "deepseek"
     # WebSocket settings
     ws_enabled: bool = True
     ws_heartbeat_s: float = 30.0
@@ -352,16 +350,6 @@ class GatewayConfig:
 
     def _init_default_providers(self) -> None:
         """Initialize default provider configurations."""
-        # Claude (Anthropic API)
-        self.providers["claude"] = ProviderConfig(
-            name="claude",
-            backend_type=BackendType.HTTP_API,
-            api_base_url="https://api.anthropic.com/v1",
-            api_key_env="ANTHROPIC_API_KEY",
-            model="claude-sonnet-4-20250514",
-            timeout_s=300.0,
-        )
-
         # DeepSeek (CLI) - use '-q' for quick/non-interactive mode
         self.providers["deepseek"] = ProviderConfig(
             name="deepseek",
@@ -423,13 +411,6 @@ class GatewayConfig:
             name="qwen",
             backend_type=BackendType.CLI_EXEC,
             cli_command="qwen",
-            timeout_s=300.0,
-        )
-
-        # Droid (Terminal - legacy)
-        self.providers["droid"] = ProviderConfig(
-            name="droid",
-            backend_type=BackendType.TERMINAL,
             timeout_s=300.0,
         )
 

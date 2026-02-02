@@ -346,10 +346,20 @@ Phase 8 introduces a comprehensive Web UI for managing and monitoring the Gatewa
 
 | Feature | Description |
 |---------|-------------|
-| **Cost Tracking** | Estimated cost based on token usage per provider |
+| **Token Statistics** | Input/output token tracking per provider (no cost conversion) |
+| **CLI Warmup** | One-click warmup for all AI providers to reduce first-request latency |
 | **Alert System** | Configurable alerts for latency, success rate, queue depth |
 | **Theme Toggle** | Dark/Light theme with localStorage persistence |
 | **i18n Support** | Full English and Chinese localization |
+
+### Phase 8E: UI Beautification
+
+| Feature | Description |
+|---------|-------------|
+| **Cyber-Industrial Design** | Premium glassmorphism effects with gradient borders |
+| **Custom Typography** | Outfit + JetBrains Mono font pairing |
+| **Smooth Animations** | FadeUp, slideIn, pulse-glow effects |
+| **Responsive Layout** | Mobile-friendly design with adaptive components |
 
 ### Access Web UI
 

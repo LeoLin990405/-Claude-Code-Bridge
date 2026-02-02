@@ -278,6 +278,10 @@ class RateLimitMiddleware:
         if not self.limiter.config.enabled:
             return await call_next(request)
 
+        # Skip WebSocket upgrade requests
+        if request.headers.get("upgrade", "").lower() == "websocket":
+            return await call_next(request)
+
         # Get identifiers
         api_key_id = None
         key_rate_limit = None

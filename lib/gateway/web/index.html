@@ -8,376 +8,598 @@
     <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root, .dark {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: #16161f;
+            --bg-elevated: #1a1a25;
+            --border-subtle: rgba(255,255,255,0.06);
+            --border-accent: rgba(99,102,241,0.3);
+            --text-primary: #f0f0f5;
+            --text-secondary: #9ca3af;
+            --text-muted: #6b7280;
+            --accent-primary: #6366f1;
+            --accent-secondary: #8b5cf6;
+            --accent-cyan: #22d3ee;
+            --accent-emerald: #10b981;
+            --accent-amber: #f59e0b;
+            --accent-rose: #f43f5e;
+            --glow-primary: rgba(99,102,241,0.15);
+        }
+
+        .light {
+            --bg-primary: #f8fafc;
+            --bg-secondary: #f1f5f9;
+            --bg-card: #ffffff;
+            --bg-elevated: #ffffff;
+            --border-subtle: rgba(0,0,0,0.08);
+            --border-accent: rgba(99,102,241,0.4);
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --text-muted: #94a3b8;
+            --glow-primary: rgba(99,102,241,0.1);
+        }
+
+        .light .bg-mesh {
+            background:
+                radial-gradient(ellipse at 20% 0%, rgba(99,102,241,0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 100%, rgba(139,92,246,0.04) 0%, transparent 50%),
+                radial-gradient(ellipse at 0% 50%, rgba(34,211,238,0.03) 0%, transparent 50%),
+                var(--bg-primary);
+        }
+
+        .light .glass-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.9) 100%);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        }
+
+        .light .stat-card {
+            background: var(--bg-card);
+            box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+        }
+
+        .light .stat-card .text-3xl {
+            color: var(--text-primary) !important;
+        }
+
+        .light .modal-content {
+            background: var(--bg-card);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+        }
+
+        .light .input-field {
+            background: var(--bg-secondary);
+            border-color: var(--border-subtle);
+            color: var(--text-primary);
+        }
+
+        .light .data-table th {
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+        }
+
+        .light .data-table td {
+            color: var(--text-primary);
+        }
+
+        .light .data-table tr:hover {
+            background: var(--bg-secondary);
+        }
+
+        .light .provider-card {
+            background: var(--bg-secondary);
+        }
+
+        .light .activity-item {
+            border-color: var(--border-subtle);
+        }
+
+        .light pre {
+            background: var(--bg-secondary) !important;
+            color: var(--text-primary);
+        }
+
+        .light .text-white {
+            color: var(--text-primary) !important;
+        }
+
+        .light .text-gray-400, .light .text-gray-500 {
+            color: var(--text-secondary) !important;
+        }
+
+        .light .text-gray-300, .light .text-gray-600 {
+            color: var(--text-muted) !important;
+        }
+
+        .light .nav-tab {
+            color: var(--text-secondary);
+        }
+
+        .light .nav-tab.active {
+            color: var(--accent-primary);
+            background: rgba(99,102,241,0.1);
+        }
+
+        .light .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .light .font-mono {
+            color: var(--text-primary);
+        }
+
+        .light .bg-gray-900\\/50, .light .bg-gray-800 {
+            background: var(--bg-secondary) !important;
+        }
+        
+        * { font-family: 'Outfit', sans-serif; }
+        code, pre, .font-mono { font-family: 'JetBrains Mono', monospace; }
         [v-cloak] { display: none; }
-        .fade-enter-active, .fade-leave-active { transition: opacity 0.3s; }
-        .fade-enter-from, .fade-leave-to { opacity: 0; }
-        /* Custom scrollbar for activity log */
-        .activity-log::-webkit-scrollbar { width: 6px; }
-        .activity-log::-webkit-scrollbar-track { background: #1e293b; }
-        .activity-log::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
-        /* Pulse animation for active status */
-        @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        .pulse-dot { animation: pulse-dot 2s ease-in-out infinite; }
-        /* Keyboard shortcut hints */
-        .kbd { @apply px-1.5 py-0.5 bg-gray-700 rounded text-xs font-mono; }
-        /* Timeline chart */
-        .timeline-container { height: 120px; }
-        /* Toast notifications */
-        .toast { animation: slideIn 0.3s ease-out; }
+        
+        body { background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; }
+        
+        .bg-mesh {
+            background: 
+                radial-gradient(ellipse at 20% 0%, rgba(99,102,241,0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 100%, rgba(139,92,246,0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 0% 50%, rgba(34,211,238,0.04) 0%, transparent 50%),
+                var(--bg-primary);
+        }
+        
+        .glass-card {
+            background: linear-gradient(135deg, rgba(22,22,31,0.9) 0%, rgba(26,26,37,0.8) 100%);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-card:hover {
+            border-color: var(--border-accent);
+            box-shadow: 0 0 40px var(--glow-primary);
+            transform: translateY(-2px);
+        }
+        
+        .stat-card {
+            position: relative;
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 16px;
+            padding: 1px;
+            background: linear-gradient(135deg, var(--gradient-from), var(--gradient-to));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0.5;
+            transition: opacity 0.3s;
+        }
+        .stat-card:hover::before { opacity: 1; }
+        .stat-card:hover { transform: translateY(-4px) scale(1.02); box-shadow: 0 20px 40px -20px var(--glow-color); }
+        
+        .stat-card.blue { --gradient-from: #6366f1; --gradient-to: #8b5cf6; --glow-color: rgba(99,102,241,0.3); }
+        .stat-card.amber { --gradient-from: #f59e0b; --gradient-to: #ef4444; --glow-color: rgba(245,158,11,0.3); }
+        .stat-card.purple { --gradient-from: #8b5cf6; --gradient-to: #ec4899; --glow-color: rgba(139,92,246,0.3); }
+        .stat-card.emerald { --gradient-from: #10b981; --gradient-to: #22d3ee; --glow-color: rgba(16,185,129,0.3); }
+        .stat-card.cyan { --gradient-from: #22d3ee; --gradient-to: #6366f1; --glow-color: rgba(34,211,238,0.3); }
+        .stat-card.rose { --gradient-from: #f43f5e; --gradient-to: #f59e0b; --glow-color: rgba(244,63,94,0.3); }
+        
+        .nav-tab {
+            position: relative;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            border-radius: 12px;
+            transition: all 0.3s;
+        }
+        .nav-tab:hover { color: var(--text-primary); background: rgba(99,102,241,0.1); }
+        .nav-tab.active {
+            color: var(--text-primary);
+            background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.1));
+            border: 1px solid var(--border-accent);
+        }
+        
+        .provider-card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 1rem;
+            transition: all 0.3s;
+        }
+        .provider-card:hover { border-color: var(--border-accent); box-shadow: 0 0 30px var(--glow-primary); }
+        
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-secondary); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: var(--accent-primary); border-radius: 3px; }
+        
+        @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 5px currentColor; } 50% { box-shadow: 0 0 20px currentColor; } }
+        .pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+        
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        /* Comparison radar */
-        .radar-container { max-width: 400px; margin: 0 auto; }
-        /* Light theme overrides */
-        .light-theme { background-color: #f3f4f6 !important; color: #1f2937 !important; }
-        .light-theme .bg-gray-800 { background-color: #ffffff !important; }
-        .light-theme .bg-gray-900 { background-color: #f3f4f6 !important; }
-        .light-theme .bg-gray-700 { background-color: #e5e7eb !important; }
-        .light-theme .bg-gray-700\/50 { background-color: rgba(229, 231, 235, 0.5) !important; }
-        .light-theme .bg-gray-950 { background-color: #f9fafb !important; }
-        .light-theme .border-gray-700 { border-color: #d1d5db !important; }
-        .light-theme .border-gray-600 { border-color: #d1d5db !important; }
-        .light-theme .text-gray-100 { color: #1f2937 !important; }
-        .light-theme .text-gray-300 { color: #374151 !important; }
-        .light-theme .text-gray-400 { color: #6b7280 !important; }
-        .light-theme .text-gray-500 { color: #9ca3af !important; }
-        .light-theme .kbd { background-color: #e5e7eb !important; }
-        .light-theme .activity-log::-webkit-scrollbar-track { background: #e5e7eb; }
-        .light-theme .activity-log::-webkit-scrollbar-thumb { background: #9ca3af; }
+        .slide-in { animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        @keyframes fadeUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .fade-up { animation: fadeUp 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        .stagger-children > * { animation: fadeUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) backwards; }
+        .stagger-children > *:nth-child(1) { animation-delay: 0.05s; }
+        .stagger-children > *:nth-child(2) { animation-delay: 0.1s; }
+        .stagger-children > *:nth-child(3) { animation-delay: 0.15s; }
+        .stagger-children > *:nth-child(4) { animation-delay: 0.2s; }
+        .stagger-children > *:nth-child(5) { animation-delay: 0.25s; }
+        .stagger-children > *:nth-child(6) { animation-delay: 0.3s; }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white; padding: 0.5rem 1.25rem; border-radius: 10px; font-weight: 500;
+            transition: all 0.3s; border: none; cursor: pointer;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 30px -10px var(--accent-primary); }
+        
+        .btn-secondary {
+            background: var(--bg-elevated); color: var(--text-primary);
+            padding: 0.5rem 1.25rem; border-radius: 10px; font-weight: 500;
+            transition: all 0.3s; border: 1px solid var(--border-subtle); cursor: pointer;
+        }
+        .btn-secondary:hover { border-color: var(--border-accent); background: var(--bg-card); }
+        
+        .input-field {
+            background: var(--bg-secondary); border: 1px solid var(--border-subtle);
+            border-radius: 10px; padding: 0.625rem 1rem; color: var(--text-primary);
+            transition: all 0.3s; width: 100%;
+        }
+        .input-field:focus { outline: none; border-color: var(--accent-primary); box-shadow: 0 0 0 3px var(--glow-primary); }
+        .input-field::placeholder { color: var(--text-muted); }
+        
+        .toggle-switch {
+            position: relative; width: 44px; height: 24px;
+            background: var(--bg-secondary); border-radius: 12px;
+            cursor: pointer; transition: all 0.3s;
+        }
+        .toggle-switch.active { background: linear-gradient(135deg, var(--accent-emerald), var(--accent-cyan)); }
+        .toggle-switch::after {
+            content: ''; position: absolute; top: 2px; left: 2px;
+            width: 20px; height: 20px; background: white; border-radius: 50%;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        .toggle-switch.active::after { transform: translateX(20px); }
+        
+        .badge { padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 500; display: inline-flex; align-items: center; gap: 0.375rem; }
+        .badge-success { background: rgba(16,185,129,0.15); color: #10b981; }
+        .badge-warning { background: rgba(245,158,11,0.15); color: #f59e0b; }
+        .badge-error { background: rgba(244,63,94,0.15); color: #f43f5e; }
+        .badge-info { background: rgba(99,102,241,0.15); color: #6366f1; }
+        
+        .modal-backdrop { background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); }
+        .modal-content { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 20px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
+        
+        .data-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+        .data-table th { text-align: left; padding: 1rem; color: var(--text-muted); font-weight: 500; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-subtle); }
+        .data-table td { padding: 1rem; border-bottom: 1px solid var(--border-subtle); transition: background 0.2s; }
+        .data-table tr:hover td { background: rgba(99,102,241,0.05); }
+        
+        .activity-log { background: var(--bg-secondary); border-radius: 12px; padding: 1rem; max-height: 300px; overflow-y: auto; }
+        .log-entry { padding: 0.5rem 0; border-bottom: 1px solid var(--border-subtle); font-size: 0.8125rem; font-family: 'JetBrains Mono', monospace; }
+        .log-entry:last-child { border-bottom: none; }
+        
+        .chart-container { background: var(--bg-secondary); border-radius: 12px; padding: 1rem; }
+        .kbd { background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 0.25rem 0.5rem; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--text-secondary); }
+        
+        .light-theme {
+            --bg-primary: #f8fafc; --bg-secondary: #ffffff; --bg-card: #ffffff;
+            --bg-elevated: #f1f5f9; --border-subtle: rgba(0,0,0,0.08);
+            --border-accent: rgba(99,102,241,0.4); --text-primary: #1e293b;
+            --text-secondary: #64748b; --text-muted: #94a3b8; --glow-primary: rgba(99,102,241,0.1);
+        }
+        .light-theme .bg-mesh {
+            background: radial-gradient(ellipse at 20% 0%, rgba(99,102,241,0.05) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 100%, rgba(139,92,246,0.04) 0%, transparent 50%), var(--bg-primary);
+        }
+        .light-theme .glass-card { background: rgba(255,255,255,0.9); box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        .light-theme .stat-card { background: var(--bg-card); box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
     </style>
 </head>
-<body :class="['min-h-screen', theme === 'light' ? 'light-theme bg-gray-100 text-gray-900' : 'bg-gray-900 text-gray-100']">
-    <div id="app" v-cloak>
+<body class="min-h-screen bg-mesh transition-colors duration-500">
+    <div id="app" v-cloak :class="theme">
         <!-- Header -->
-        <header class="bg-gray-800 border-b border-gray-700 px-6 py-4">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-4">
-                    <h1 class="text-2xl font-bold text-blue-400">CCB Gateway</h1>
-                    <span class="px-2 py-1 text-xs rounded flex items-center space-x-1"
-                          :class="connected ? 'bg-green-600' : 'bg-red-600'">
-                        <span class="w-2 h-2 rounded-full bg-white" :class="connected ? 'pulse-dot' : ''"></span>
-                        <span>{{ connected ? t('connected') : t('disconnected') }}</span>
-                    </span>
-                </div>
-                <div class="flex items-center space-x-4 text-sm text-gray-400">
-                    <span>{{ t('uptime') }}: {{ formatDuration(status.gateway?.uptime_s || 0) }}</span>
-                    <span class="text-gray-600">|</span>
-                    <span>{{ new Date().toLocaleTimeString() }}</span>
-                    <span class="text-gray-600">|</span>
-                    <button @click="toggleTheme" class="text-gray-500 hover:text-gray-300" :title="t('toggleTheme')">
-                        <i :class="theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon'"></i>
-                    </button>
-                    <button @click="showShortcuts = true" class="text-gray-500 hover:text-gray-300" title="Keyboard Shortcuts">
-                        <i class="fas fa-keyboard"></i>
-                    </button>
-                    <button @click="showAlertSettings = true" class="text-gray-500 hover:text-gray-300" :title="t('alertSettings')">
-                        <i class="fas fa-bell"></i>
-                    </button>
-                    <button @click="exportData" class="text-gray-500 hover:text-gray-300" title="Export Data">
-                        <i class="fas fa-download"></i>
-                    </button>
-                    <button @click="toggleFullscreen" class="text-gray-500 hover:text-gray-300" title="Fullscreen">
-                        <i class="fas fa-expand"></i>
-                    </button>
-                    <button @click="toggleLang" class="text-gray-500 hover:text-gray-300 font-medium" :title="t('switchLang')">
-                        {{ lang === 'en' ? '中文' : 'EN' }}
-                    </button>
+        <header class="sticky top-0 z-40 backdrop-blur-xl bg-opacity-80" :class="theme === 'light' ? 'bg-white/80' : 'bg-[#0a0a0f]/80'" style="border-bottom: 1px solid var(--border-subtle);">
+            <div class="max-w-[1800px] mx-auto px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-6">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                                <i class="fas fa-bolt text-white text-lg"></i>
+                            </div>
+                            <div>
+                                <h1 class="text-xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">CCB Gateway</h1>
+                                <p class="text-xs" :class="theme === 'light' ? 'text-gray-600' : 'text-gray-500'">Multi-AI Orchestrator</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2 px-3 py-1.5 rounded-full"
+                             :class="connected ? 'bg-emerald-500/10 border border-emerald-500/30' : 'bg-rose-500/10 border border-rose-500/30'">
+                            <span class="w-2 h-2 rounded-full" :class="connected ? 'bg-emerald-400 pulse-glow text-emerald-400' : 'bg-rose-400'"></span>
+                            <span class="text-sm font-medium" :class="connected ? 'text-emerald-400' : 'text-rose-400'">
+                                {{ connected ? t('connected') : t('disconnected') }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <span class="text-sm text-gray-500 hidden md:block"><i class="fas fa-clock mr-1"></i>{{ formatDuration(status.gateway?.uptime_s || 0) }}</span>
+                        <div class="h-4 w-px bg-gray-700 hidden md:block"></div>
+                        <button @click="showWarmupModal = true" class="px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 text-sm font-medium hover:bg-amber-500/20 transition-colors flex items-center space-x-2" :title="t('warmupAll')">
+                            <i class="fas fa-fire"></i>
+                            <span class="hidden md:inline">{{ t('warmup') }}</span>
+                        </button>
+                        <button @click="toggleTheme" class="p-2.5 rounded-xl hover:bg-white/5 transition-colors" :title="t('toggleTheme')">
+                            <i :class="theme === 'dark' ? 'fas fa-sun text-amber-400' : 'fas fa-moon text-indigo-400'" class="text-lg"></i>
+                        </button>
+                        <button @click="showShortcuts = true" class="p-2.5 rounded-xl hover:bg-white/5 transition-colors"><i class="fas fa-keyboard text-gray-400"></i></button>
+                        <button @click="showAlertSettings = true" class="p-2.5 rounded-xl hover:bg-white/5 transition-colors"><i class="fas fa-bell text-gray-400"></i></button>
+                        <button @click="exportData" class="p-2.5 rounded-xl hover:bg-white/5 transition-colors"><i class="fas fa-download text-gray-400"></i></button>
+                        <button @click="toggleLang" class="px-3 py-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-sm font-medium hover:bg-indigo-500/20 transition-colors">
+                            {{ lang === 'en' ? '中文' : 'EN' }}
+                        </button>
+                    </div>
                 </div>
             </div>
         </header>
 
         <!-- Navigation -->
-        <nav class="bg-gray-800 border-b border-gray-700 px-6 py-2">
-            <div class="flex space-x-1">
-                <button
-                    v-for="tab in tabs"
-                    :key="tab.id"
-                    @click="activeTab = tab.id"
-                    :class="[
-                        'px-4 py-2 rounded-t text-sm font-medium transition-all duration-200',
-                        activeTab === tab.id
-                            ? 'bg-gray-700 text-blue-400 border-b-2 border-blue-400'
-                            : 'text-gray-400 hover:text-gray-200 hover:bg-gray-700/50'
-                    ]"
-                >
-                    <span class="flex items-center space-x-2">
-                        <span v-html="tab.icon"></span>
-                        <span>{{ t(tab.id) }}</span>
-                    </span>
-                </button>
+        <nav class="sticky top-[73px] z-30 backdrop-blur-xl" :class="theme === 'light' ? 'bg-white/60' : 'bg-[#0a0a0f]/60'" style="border-bottom: 1px solid var(--border-subtle);">
+            <div class="max-w-[1800px] mx-auto px-6 py-3">
+                <div class="flex space-x-2">
+                    <button v-for="tab in tabs" :key="tab.id" @click="activeTab = tab.id" :class="['nav-tab', activeTab === tab.id ? 'active' : '']">
+                        <span class="flex items-center space-x-2"><span v-html="tab.icon"></span><span>{{ t(tab.id) }}</span></span>
+                    </button>
+                </div>
             </div>
         </nav>
 
         <!-- Main Content -->
-        <main class="p-6">
+        <main class="max-w-[1800px] mx-auto px-6 py-8">
             <!-- Dashboard Tab -->
-            <div v-show="activeTab === 'dashboard'">
+            <div v-show="activeTab === 'dashboard'" class="space-y-8">
                 <!-- Stats Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
-                    <div class="bg-gradient-to-br from-blue-900/50 to-blue-800/30 rounded-lg p-4 border border-blue-700/50">
-                        <div class="text-blue-300 text-sm font-medium">{{ t('totalRequests') }}</div>
-                        <div class="text-3xl font-bold text-blue-400">{{ status.gateway?.total_requests || 0 }}</div>
-                        <div class="text-xs text-blue-400/60 mt-1">{{ t('allTime') }}</div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-5 stagger-children">
+                    <div class="stat-card blue">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-indigo-400 text-sm font-medium">{{ t('totalRequests') }}</span>
+                            <div class="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center"><i class="fas fa-paper-plane text-indigo-400 text-sm"></i></div>
+                        </div>
+                        <div class="text-3xl font-bold text-white mb-1">{{ formatNumber(status.gateway?.total_requests || 0) }}</div>
+                        <div class="text-xs text-gray-500">{{ t('allTime') }}</div>
                     </div>
-                    <div class="bg-gradient-to-br from-yellow-900/50 to-yellow-800/30 rounded-lg p-4 border border-yellow-700/50">
-                        <div class="text-yellow-300 text-sm font-medium">{{ t('active') }}</div>
-                        <div class="text-3xl font-bold text-yellow-400">{{ status.gateway?.active_requests || 0 }}</div>
-                        <div class="text-xs text-yellow-400/60 mt-1">{{ t('processingNow') }}</div>
+                    <div class="stat-card amber">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-amber-400 text-sm font-medium">{{ t('active') }}</span>
+                            <div class="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center"><i class="fas fa-spinner fa-spin text-amber-400 text-sm"></i></div>
+                        </div>
+                        <div class="text-3xl font-bold text-white mb-1">{{ status.gateway?.active_requests || 0 }}</div>
+                        <div class="text-xs text-gray-500">{{ t('processingNow') }}</div>
                     </div>
-                    <div class="bg-gradient-to-br from-purple-900/50 to-purple-800/30 rounded-lg p-4 border border-purple-700/50">
-                        <div class="text-purple-300 text-sm font-medium">{{ t('queue') }}</div>
-                        <div class="text-3xl font-bold text-purple-400">{{ status.gateway?.queue_depth || 0 }}</div>
-                        <div class="text-xs text-purple-400/60 mt-1">{{ t('waiting') }}</div>
+                    <div class="stat-card purple">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-purple-400 text-sm font-medium">{{ t('queue') }}</span>
+                            <div class="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center"><i class="fas fa-layer-group text-purple-400 text-sm"></i></div>
+                        </div>
+                        <div class="text-3xl font-bold text-white mb-1">{{ status.gateway?.queue_depth || 0 }}</div>
+                        <div class="text-xs text-gray-500">{{ t('waiting') }}</div>
                     </div>
-                    <div class="bg-gradient-to-br from-green-900/50 to-green-800/30 rounded-lg p-4 border border-green-700/50">
-                        <div class="text-green-300 text-sm font-medium">{{ t('cacheHit') }}</div>
-                        <div class="text-3xl font-bold text-green-400">{{ formatPercent(status.gateway?.cache?.hit_rate || 0) }}</div>
-                        <div class="text-xs text-green-400/60 mt-1">{{ status.gateway?.cache?.hits || 0 }} {{ t('hits') }}</div>
+                    <div class="stat-card emerald">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-emerald-400 text-sm font-medium">{{ t('cacheHit') }}</span>
+                            <div class="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center"><i class="fas fa-database text-emerald-400 text-sm"></i></div>
+                        </div>
+                        <div class="text-3xl font-bold text-white mb-1">{{ formatPercent(status.gateway?.cache?.hit_rate || 0) }}</div>
+                        <div class="text-xs text-gray-500">{{ status.gateway?.cache?.hits || 0 }} {{ t('hits') }}</div>
                     </div>
-                    <div class="bg-gradient-to-br from-cyan-900/50 to-cyan-800/30 rounded-lg p-4 border border-cyan-700/50">
-                        <div class="text-cyan-300 text-sm font-medium">{{ t('providers') }}</div>
-                        <div class="text-3xl font-bold text-cyan-400">{{ healthyProviders }}/{{ status.providers?.length || 0 }}</div>
-                        <div class="text-xs text-cyan-400/60 mt-1">{{ t('healthy') }}</div>
+                    <div class="stat-card cyan">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-cyan-400 text-sm font-medium">{{ t('providers') }}</span>
+                            <div class="w-8 h-8 rounded-lg bg-cyan-500/20 flex items-center justify-center"><i class="fas fa-server text-cyan-400 text-sm"></i></div>
+                        </div>
+                        <div class="text-3xl font-bold text-white mb-1">{{ healthyProviders }}/{{ status.providers?.length || 0 }}</div>
+                        <div class="text-xs text-gray-500">{{ t('healthy') }}</div>
                     </div>
-                    <div class="bg-gradient-to-br from-orange-900/50 to-orange-800/30 rounded-lg p-4 border border-orange-700/50">
-                        <div class="text-orange-300 text-sm font-medium">{{ t('estimatedCost') }}</div>
-                        <div class="text-3xl font-bold text-orange-400">${{ formatCost(estimatedCost) }}</div>
-                        <div class="text-xs text-orange-400/60 mt-1">{{ formatNumber(totalTokens) }} tokens</div>
+                    <div class="stat-card rose">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-rose-400 text-sm font-medium">{{ t('tokenUsage') }}</span>
+                            <div class="w-8 h-8 rounded-lg bg-rose-500/20 flex items-center justify-center"><i class="fas fa-coins text-rose-400 text-sm"></i></div>
+                        </div>
+                        <div class="text-3xl font-bold text-white mb-1">{{ formatNumber(totalTokens) }}</div>
+                        <div class="text-xs text-gray-500">{{ formatNumber(totalInputTokens) }} in / {{ formatNumber(totalOutputTokens) }} out</div>
                     </div>
                 </div>
 
-                <!-- Charts Row -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                    <!-- Latency Chart -->
-                    <div class="bg-gray-800 rounded-lg border border-gray-700">
-                        <div class="px-4 py-3 border-b border-gray-700 flex justify-between items-center">
-                            <h2 class="text-lg font-semibold">{{ t('latencyDistribution') }}</h2>
-                            <span class="text-xs text-gray-500">{{ t('last100') }}</span>
-                        </div>
-                        <div class="p-4">
-                            <canvas ref="latencyChart" height="200"></canvas>
-                        </div>
+                <!-- Token Usage by Provider -->
+                <div class="glass-card p-6 mb-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-semibold flex items-center"><i class="fas fa-chart-bar text-amber-400 mr-3"></i>{{ t('tokensByProvider') }}</h2>
                     </div>
-
-                    <!-- Request Status Pie -->
-                    <div class="bg-gray-800 rounded-lg border border-gray-700">
-                        <div class="px-4 py-3 border-b border-gray-700 flex justify-between items-center">
-                            <h2 class="text-lg font-semibold">{{ t('statusDistribution') }}</h2>
-                            <span class="text-xs text-gray-500">{{ t('currentSession') }}</span>
-                        </div>
-                        <div class="p-4 flex justify-center">
-                            <canvas ref="statusChart" height="200" style="max-width: 300px;"></canvas>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Provider Status & Activity Log -->
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-                    <!-- Provider Status -->
-                    <div class="lg:col-span-2 bg-gray-800 rounded-lg border border-gray-700">
-                        <div class="px-4 py-3 border-b border-gray-700">
-                            <h2 class="text-lg font-semibold">{{ t('providerStatus') }}</h2>
-                        </div>
-                        <div class="p-4">
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                <div v-for="provider in status.providers" :key="provider.name"
-                                     class="bg-gray-700/50 rounded-lg p-3 border border-gray-600/50 hover:border-gray-500 transition-colors">
-                                    <div class="flex items-center justify-between mb-2">
-                                        <span class="font-medium">{{ provider.name }}</span>
-                                        <div class="flex items-center space-x-2">
-                                            <span :class="getStatusBadgeClass(provider.status)" class="px-2 py-0.5 rounded text-xs">
-                                                {{ provider.status }}
-                                            </span>
-                                            <button @click="toggleProvider(provider)"
-                                                    :class="provider.enabled ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-600 hover:bg-gray-500'"
-                                                    class="w-8 h-4 rounded-full relative transition-colors"
-                                                    :title="provider.enabled ? t('clickToDisable') : t('clickToEnable')">
-                                                <span :class="provider.enabled ? 'translate-x-4' : 'translate-x-0'"
-                                                      class="absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full transition-transform"></span>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div class="grid grid-cols-2 gap-2 text-xs">
-                                        <div>
-                                            <span class="text-gray-400">{{ t('latency') }}:</span>
-                                            <span class="ml-1">{{ formatLatency(provider.avg_latency_ms) }}</span>
-                                        </div>
-                                        <div>
-                                            <span class="text-gray-400">{{ t('success') }}:</span>
-                                            <span class="ml-1" :class="provider.success_rate >= 0.9 ? 'text-green-400' : 'text-yellow-400'">
-                                                {{ formatPercent(provider.success_rate) }}
-                                            </span>
-                                        </div>
-                                        <div>
-                                            <span class="text-gray-400">{{ t('queue') }}:</span>
-                                            <span class="ml-1">{{ provider.queue_depth }}</span>
-                                        </div>
-                                        <div>
-                                            <span class="text-gray-400">{{ t('requests') }}:</span>
-                                            <span class="ml-1">{{ provider.total_requests || 0 }}</span>
-                                        </div>
-                                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div v-for="provider in sortedProviders" :key="provider.name" class="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="font-medium text-white">{{ provider.name }}</span>
+                                <span :class="getStatusBadgeClass(provider.status)" class="text-xs px-2 py-0.5 rounded-full border">{{ provider.status }}</span>
+                            </div>
+                            <div class="space-y-1 text-sm">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">{{ t('inputTokens') }}:</span>
+                                    <span class="text-emerald-400 font-mono">{{ formatNumber(provider.total_input_tokens || 0) }}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">{{ t('outputTokens') }}:</span>
+                                    <span class="text-blue-400 font-mono">{{ formatNumber(provider.total_output_tokens || 0) }}</span>
+                                </div>
+                                <div class="flex justify-between border-t border-gray-700 pt-1 mt-1">
+                                    <span class="text-gray-400">{{ t('total') }}:</span>
+                                    <span class="text-white font-mono font-medium">{{ formatNumber((provider.total_input_tokens || 0) + (provider.total_output_tokens || 0)) }}</span>
                                 </div>
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Activity Log -->
-                    <div class="bg-gray-800 rounded-lg border border-gray-700">
-                        <div class="px-4 py-3 border-b border-gray-700 flex justify-between items-center">
-                            <h2 class="text-lg font-semibold">{{ t('activityLog') }}</h2>
-                            <button @click="activityLogs = []" class="text-xs text-gray-500 hover:text-gray-300">{{ t('clear') }}</button>
+                <!-- Charts Row -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="glass-card p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-lg font-semibold flex items-center"><i class="fas fa-chart-bar text-indigo-400 mr-3"></i>{{ t('latencyDistribution') }}</h2>
+                            <span class="badge badge-info">{{ t('last100') }}</span>
                         </div>
-                        <div class="activity-log bg-gray-950 m-2 rounded p-2 h-64 overflow-auto font-mono text-xs">
-                            <div v-for="(log, i) in activityLogs" :key="i"
-                                 :class="getLogClass(log.type)"
-                                 class="py-0.5 border-b border-gray-800/50">
-                                <span class="text-gray-500">[{{ log.time }}]</span>
-                                <span class="ml-1">{{ log.message }}</span>
+                        <div class="chart-container"><canvas ref="latencyChart" height="200"></canvas></div>
+                    </div>
+                    <div class="glass-card p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-lg font-semibold flex items-center"><i class="fas fa-chart-pie text-purple-400 mr-3"></i>{{ t('statusDistribution') }}</h2>
+                            <span class="badge badge-info">{{ t('currentSession') }}</span>
+                        </div>
+                        <div class="chart-container flex justify-center"><canvas ref="statusChart" height="200" style="max-width: 280px;"></canvas></div>
+                    </div>
+                </div>
+
+                <!-- Provider Status & Activity -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 glass-card p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-lg font-semibold flex items-center"><i class="fas fa-server text-cyan-400 mr-3"></i>{{ t('providerStatus') }}</h2>
+                            <button @click="fetchStatus" class="btn-secondary text-sm"><i class="fas fa-sync-alt mr-2"></i>{{ t('refresh') }}</button>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                            <div v-for="provider in status.providers" :key="provider.name" class="provider-card">
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="font-semibold text-white">{{ provider.name }}</span>
+                                    <div class="flex items-center space-x-2">
+                                        <span :class="getStatusBadgeClass(provider.status)" class="badge"><span class="w-1.5 h-1.5 rounded-full bg-current"></span>{{ provider.status }}</span>
+                                        <div @click="toggleProvider(provider)" :class="['toggle-switch', provider.enabled ? 'active' : '']" :title="provider.enabled ? t('clickToDisable') : t('clickToEnable')"></div>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-3 text-sm">
+                                    <div class="flex flex-col"><span class="text-gray-500 text-xs mb-1">{{ t('latency') }}</span><span class="font-medium text-white">{{ formatLatency(provider.avg_latency_ms) }}</span></div>
+                                    <div class="flex flex-col"><span class="text-gray-500 text-xs mb-1">{{ t('success') }}</span><span class="font-medium" :class="provider.success_rate >= 0.9 ? 'text-emerald-400' : 'text-amber-400'">{{ formatPercent(provider.success_rate) }}</span></div>
+                                    <div class="flex flex-col"><span class="text-gray-500 text-xs mb-1">{{ t('queue') }}</span><span class="font-medium text-white">{{ provider.queue_depth }}</span></div>
+                                    <div class="flex flex-col"><span class="text-gray-500 text-xs mb-1">{{ t('requests') }}</span><span class="font-medium text-white">{{ provider.total_requests || 0 }}</span></div>
+                                </div>
                             </div>
-                            <div v-if="activityLogs.length === 0" class="text-gray-600 text-center py-4">
-                                {{ t('noActivity') }}
+                        </div>
+                    </div>
+                    <div class="glass-card p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-lg font-semibold flex items-center"><i class="fas fa-stream text-emerald-400 mr-3"></i>{{ t('activityLog') }}</h2>
+                            <button @click="activityLogs = []" class="text-xs text-gray-500 hover:text-white transition-colors">{{ t('clear') }}</button>
+                        </div>
+                        <div class="activity-log">
+                            <div v-for="(log, i) in activityLogs" :key="i" class="log-entry" :class="getLogClass(log.type)">
+                                <span class="text-gray-600">[{{ log.time }}]</span><span class="ml-2">{{ log.message }}</span>
                             </div>
+                            <div v-if="activityLogs.length === 0" class="text-center py-8 text-gray-600"><i class="fas fa-inbox text-2xl mb-2"></i><p>{{ t('noActivity') }}</p></div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Features Status -->
-                <div class="bg-gray-800 rounded-lg border border-gray-700">
-                    <div class="px-4 py-3 border-b border-gray-700">
-                        <h2 class="text-lg font-semibold">{{ t('features') }}</h2>
-                    </div>
-                    <div class="p-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                        <div v-for="(enabled, feature) in status.gateway?.features" :key="feature"
-                             class="flex items-center space-x-2 bg-gray-700/30 rounded px-3 py-2">
-                            <span :class="enabled ? 'text-green-400' : 'text-gray-500'" class="text-lg">
-                                {{ enabled ? '✓' : '✗' }}
-                            </span>
-                            <span class="text-sm">{{ formatFeatureName(feature) }}</span>
+                <!-- Features -->
+                <div class="glass-card p-6">
+                    <h2 class="text-lg font-semibold flex items-center mb-6"><i class="fas fa-puzzle-piece text-amber-400 mr-3"></i>{{ t('features') }}</h2>
+                    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                        <div v-for="(enabled, feature) in status.gateway?.features" :key="feature" class="flex items-center space-x-3 p-3 rounded-xl" :class="enabled ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-gray-500/10 border border-gray-500/20'">
+                            <span :class="enabled ? 'text-emerald-400' : 'text-gray-500'" class="text-lg"><i :class="enabled ? 'fas fa-check-circle' : 'fas fa-times-circle'"></i></span>
+                            <span class="text-sm font-medium">{{ formatFeatureName(feature) }}</span>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Requests Tab -->
-            <div v-show="activeTab === 'requests'">
-                <div class="bg-gray-800 rounded-lg border border-gray-700">
-                    <div class="px-4 py-3 border-b border-gray-700 flex justify-between items-center">
-                        <h2 class="text-lg font-semibold">{{ t('recentRequests') }}</h2>
-                        <div class="flex items-center space-x-2">
-                            <input v-model="searchQuery" type="text"
-                                   :placeholder="t('searchRequests')"
-                                   class="bg-gray-700 border border-gray-600 rounded px-3 py-1 text-sm w-48">
-                            <select v-model="requestFilter" class="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm">
+            <div v-show="activeTab === 'requests'" class="space-y-6">
+                <div class="glass-card p-6">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                        <h2 class="text-lg font-semibold flex items-center"><i class="fas fa-list text-indigo-400 mr-3"></i>{{ t('recentRequests') }}</h2>
+                        <div class="flex flex-wrap items-center gap-3">
+                            <input v-model="searchQuery" type="text" :placeholder="t('searchRequests')" class="input-field w-48">
+                            <select v-model="requestFilter" class="input-field w-32">
                                 <option value="">{{ t('allStatus') }}</option>
                                 <option value="queued">{{ t('queued') }}</option>
                                 <option value="processing">{{ t('processing') }}</option>
                                 <option value="completed">{{ t('completed') }}</option>
                                 <option value="failed">{{ t('failed') }}</option>
                             </select>
-                            <select v-model="providerFilter" class="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm">
+                            <select v-model="providerFilter" class="input-field w-32">
                                 <option value="">{{ t('allProviders') }}</option>
                                 <option v-for="p in status.providers" :key="p.name" :value="p.name">{{ p.name }}</option>
                             </select>
-                            <button @click="fetchRequests" class="px-3 py-1 bg-blue-600 rounded text-sm hover:bg-blue-700">
-                                <i v-if="loading.requests" class="fas fa-spinner fa-spin mr-1"></i>
-                                {{ t('refresh') }}
-                            </button>
+                            <button @click="fetchRequests" class="btn-primary"><i v-if="loading.requests" class="fas fa-spinner fa-spin mr-2"></i>{{ t('refresh') }}</button>
                         </div>
                     </div>
-                    <div class="p-4">
-                        <!-- Loading skeleton -->
-                        <div v-if="loading.requests" class="space-y-3">
-                            <div v-for="i in 5" :key="i" class="animate-pulse flex space-x-4">
-                                <div class="h-4 bg-gray-700 rounded w-24"></div>
-                                <div class="h-4 bg-gray-700 rounded w-20"></div>
-                                <div class="h-4 bg-gray-700 rounded w-16"></div>
-                                <div class="h-4 bg-gray-700 rounded flex-1"></div>
-                                <div class="h-4 bg-gray-700 rounded w-32"></div>
-                            </div>
+                    <div v-if="loading.requests" class="space-y-3">
+                        <div v-for="i in 5" :key="i" class="animate-pulse flex space-x-4">
+                            <div class="h-4 bg-gray-700 rounded w-24"></div>
+                            <div class="h-4 bg-gray-700 rounded w-20"></div>
+                            <div class="h-4 bg-gray-700 rounded w-16"></div>
+                            <div class="h-4 bg-gray-700 rounded flex-1"></div>
+                            <div class="h-4 bg-gray-700 rounded w-32"></div>
                         </div>
-                        <div v-else class="overflow-x-auto">
-                            <table class="w-full">
-                                <thead>
-                                    <tr class="text-left text-gray-400 text-sm">
-                                        <th class="pb-2 pr-4">{{ t('id') }}</th>
-                                        <th class="pb-2 pr-4">{{ t('provider') }}</th>
-                                        <th class="pb-2 pr-4">{{ t('status') }}</th>
-                                        <th class="pb-2 pr-4">{{ t('message') }}</th>
-                                        <th class="pb-2 pr-4">{{ t('created') }}</th>
-                                        <th class="pb-2">{{ t('actions') }}</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr v-for="req in paginatedRequests" :key="req.id"
-                                        class="border-t border-gray-700 hover:bg-gray-700/30 transition-colors">
-                                        <td class="py-2 pr-4 font-mono text-sm text-blue-400">{{ req.id }}</td>
-                                        <td class="py-2 pr-4">
-                                            <span class="px-2 py-0.5 bg-gray-700 rounded text-sm">{{ req.provider }}</span>
-                                        </td>
-                                        <td class="py-2 pr-4">
-                                            <span :class="getRequestStatusClass(req.status)" class="flex items-center space-x-1">
-                                                <span class="w-2 h-2 rounded-full" :class="getStatusDotClass(req.status)"></span>
-                                                <span>{{ req.status }}</span>
-                                            </span>
-                                        </td>
-                                        <td class="py-2 pr-4 max-w-xs truncate text-gray-300" :title="req.message">
-                                            {{ req.message }}
-                                        </td>
-                                        <td class="py-2 pr-4 text-sm text-gray-400">{{ formatTime(req.created_at) }}</td>
-                                        <td class="py-2">
-                                            <div class="flex space-x-1">
-                                                <button
-                                                    @click="viewRequest(req)"
-                                                    class="px-2 py-1 bg-gray-700 rounded text-xs hover:bg-gray-600"
-                                                >
-                                                    {{ t('view') }}
-                                                </button>
-                                                <button
-                                                    v-if="req.status === 'failed'"
-                                                    @click="retryRequest(req)"
-                                                    class="px-2 py-1 bg-blue-600 rounded text-xs hover:bg-blue-700"
-                                                    :title="t('retry')"
-                                                >
-                                                    <i class="fas fa-redo"></i>
-                                                </button>
-                                                <button
-                                                    v-if="req.status === 'queued' || req.status === 'processing'"
-                                                    @click="showConfirmDialog(t('cancelRequest'), t('confirmCancelRequest'), () => cancelRequest(req.id))"
-                                                    class="px-2 py-1 bg-red-600 rounded text-xs hover:bg-red-700"
-                                                >
-                                                    {{ t('cancel') }}
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                            <div v-if="filteredRequests.length === 0" class="text-center py-8 text-gray-500">
-                                {{ t('noRequests') }}
-                            </div>
-                            <!-- Pagination -->
-                            <div v-if="filteredRequests.length > 0" class="flex justify-between items-center mt-4 pt-4 border-t border-gray-700">
-                                <span class="text-sm text-gray-400">
-                                    {{ t('showing') }} {{ paginationStart }}-{{ paginationEnd }} {{ t('of') }} {{ filteredRequests.length }}
-                                </span>
-                                <div class="flex items-center space-x-2">
-                                    <select v-model="pagination.pageSize" @change="pagination.page = 1" class="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm">
-                                        <option :value="10">10</option>
-                                        <option :value="20">20</option>
-                                        <option :value="50">50</option>
-                                        <option :value="100">100</option>
-                                    </select>
-                                    <span class="text-sm text-gray-400">{{ t('perPage') }}</span>
-                                    <button @click="pagination.page--" :disabled="pagination.page <= 1"
-                                            class="px-3 py-1 bg-gray-700 rounded text-sm hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed">
-                                        <i class="fas fa-chevron-left"></i>
-                                    </button>
-                                    <span class="text-sm">{{ pagination.page }} / {{ totalPages }}</span>
-                                    <button @click="pagination.page++" :disabled="pagination.page >= totalPages"
-                                            class="px-3 py-1 bg-gray-700 rounded text-sm hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed">
-                                        <i class="fas fa-chevron-right"></i>
-                                    </button>
+                    </div>
+                    <div v-else class="overflow-x-auto">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>{{ t('id') }}</th>
+                                    <th>{{ t('provider') }}</th>
+                                    <th>{{ t('status') }}</th>
+                                    <th>{{ t('message') }}</th>
+                                    <th>{{ t('created') }}</th>
+                                    <th>{{ t('actions') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="req in paginatedRequests" :key="req.id">
+                                    <td class="font-mono text-sm text-indigo-400">{{ req.id }}</td>
+                                    <td><span class="badge badge-info">{{ req.provider }}</span></td>
+                                    <td>
+                                        <span :class="getRequestStatusClass(req.status)" class="badge">
+                                            <span class="w-1.5 h-1.5 rounded-full" :class="getStatusDotClass(req.status)"></span>
+                                            {{ req.status }}
+                                        </span>
+                                    </td>
+                                    <td class="max-w-xs truncate text-gray-300" :title="req.message">{{ req.message }}</td>
+                                    <td class="text-sm text-gray-400">{{ formatTime(req.created_at) }}</td>
+                                    <td>
+                                        <div class="flex space-x-2">
+                                            <button @click="viewRequest(req)" class="btn-secondary text-xs py-1 px-2">{{ t('view') }}</button>
+                                            <button v-if="req.status === 'failed'" @click="retryRequest(req)" class="btn-primary text-xs py-1 px-2"><i class="fas fa-redo"></i></button>
+                                            <button v-if="req.status === 'queued' || req.status === 'processing'" @click="showConfirmDialog(t('cancelRequest'), t('confirmCancelRequest'), () => cancelRequest(req.id))" class="text-xs py-1 px-2 bg-rose-500/20 text-rose-400 rounded-lg hover:bg-rose-500/30">{{ t('cancel') }}</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div v-if="filteredRequests.length === 0" class="text-center py-12 text-gray-500"><i class="fas fa-inbox text-4xl mb-3"></i><p>{{ t('noRequests') }}</p></div>
+                        <div v-if="filteredRequests.length > 0" class="flex flex-col md:flex-row justify-between items-center mt-6 pt-6 border-t border-gray-700/50 gap-4">
+                            <span class="text-sm text-gray-400">{{ t('showing') }} {{ paginationStart }}-{{ paginationEnd }} {{ t('of') }} {{ filteredRequests.length }}</span>
+                            <div class="flex items-center space-x-3">
+                                <select v-model="pagination.pageSize" @change="pagination.page = 1" class="input-field w-20 text-sm">
+                                    <option :value="10">10</option>
+                                    <option :value="20">20</option>
+                                    <option :value="50">50</option>
+                                </select>
+                                <span class="text-sm text-gray-400">{{ t('perPage') }}</span>
+                                <div class="flex items-center space-x-1">
+                                    <button @click="pagination.page--" :disabled="pagination.page <= 1" class="btn-secondary py-1 px-3 disabled:opacity-50"><i class="fas fa-chevron-left"></i></button>
+                                    <span class="px-3 text-sm">{{ pagination.page }} / {{ totalPages }}</span>
+                                    <button @click="pagination.page++" :disabled="pagination.page >= totalPages" class="btn-secondary py-1 px-3 disabled:opacity-50"><i class="fas fa-chevron-right"></i></button>
                                 </div>
                             </div>
                         </div>
@@ -386,26 +608,23 @@
             </div>
 
             <!-- Test Tab -->
-            <div v-show="activeTab === 'test'">
+            <div v-show="activeTab === 'test'" class="space-y-6">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <!-- Quick Test Panel -->
-                    <div class="bg-gray-800 rounded-lg border border-gray-700">
-                        <div class="px-4 py-3 border-b border-gray-700 flex justify-between items-center">
-                            <h2 class="text-lg font-semibold">{{ t('quickTest') }}</h2>
+                    <div class="glass-card p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-lg font-semibold flex items-center"><i class="fas fa-flask text-purple-400 mr-3"></i>{{ t('quickTest') }}</h2>
                             <div class="flex items-center space-x-2">
-                                <select v-model="selectedTemplate" @change="loadTemplate" class="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm">
+                                <select v-model="selectedTemplate" @change="loadTemplate" class="input-field w-40 text-sm cursor-pointer">
                                     <option value="">{{ t('selectTemplate') }}</option>
-                                    <option v-for="(tpl, i) in testTemplates" :key="i" :value="i">{{ tpl.name }}</option>
+                                    <option v-for="(tpl, i) in testTemplates" :key="i" :value="String(i)">{{ tpl.name }}</option>
                                 </select>
-                                <button @click="showSaveTemplateModal = true" class="px-2 py-1 bg-green-600 rounded text-xs hover:bg-green-700" :title="t('saveTemplate')">
-                                    <i class="fas fa-save"></i>
-                                </button>
+                                <button @click="showSaveTemplateModal = true" class="btn-secondary py-1 px-2" :title="t('saveTemplate')"><i class="fas fa-save"></i></button>
                             </div>
                         </div>
-                        <div class="p-4 space-y-4">
+                        <div class="space-y-4">
                             <div>
-                                <label class="block text-sm text-gray-400 mb-1">{{ t('provider') }}</label>
-                                <select v-model="testForm.provider" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2">
+                                <label class="block text-sm text-gray-400 mb-2">{{ t('provider') }}</label>
+                                <select v-model="testForm.provider" class="input-field">
                                     <option value="">{{ t('autoDefault') }}</option>
                                     <option v-for="p in status.providers" :key="p.name" :value="p.name">{{ p.name }}</option>
                                     <option value="@all">@all ({{ t('parallel') }})</option>
@@ -413,652 +632,500 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-sm text-gray-400 mb-1">{{ t('message') }}</label>
-                                <textarea v-model="testForm.message" rows="4"
-                                    class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 font-mono text-sm"
-                                    :placeholder="t('enterMessage')"></textarea>
+                                <label class="block text-sm text-gray-400 mb-2">{{ t('message') }}</label>
+                                <textarea v-model="testForm.message" rows="4" class="input-field font-mono text-sm" :placeholder="t('enterMessage')"></textarea>
                             </div>
-                            <div class="flex items-center space-x-4">
-                                <label class="flex items-center space-x-2">
-                                    <input type="checkbox" v-model="testForm.stream" class="rounded">
+                            <div class="flex items-center space-x-6">
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="checkbox" v-model="testForm.stream" class="w-4 h-4 rounded border-gray-600 bg-gray-700 text-indigo-500 focus:ring-indigo-500">
                                     <span class="text-sm">{{ t('stream') }}</span>
                                 </label>
-                                <label class="flex items-center space-x-2">
-                                    <input type="checkbox" v-model="testForm.cacheBypass" class="rounded">
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="checkbox" v-model="testForm.cacheBypass" class="w-4 h-4 rounded border-gray-600 bg-gray-700 text-indigo-500 focus:ring-indigo-500">
                                     <span class="text-sm">{{ t('bypassCache') }}</span>
                                 </label>
                             </div>
-                            <button @click="sendTestRequest" :disabled="testSending"
-                                class="w-full px-4 py-2 bg-blue-600 rounded font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <button @click="sendTestRequest" :disabled="testSending" class="w-full btn-primary py-3 text-base">
+                                <i v-if="testSending" class="fas fa-spinner fa-spin mr-2"></i>
                                 {{ testSending ? t('sending') : t('sendTest') }}
                             </button>
                         </div>
                     </div>
-
-                    <!-- Test Result -->
-                    <div class="bg-gray-800 rounded-lg border border-gray-700">
-                        <div class="px-4 py-3 border-b border-gray-700 flex justify-between items-center">
-                            <h2 class="text-lg font-semibold">{{ t('result') }}</h2>
-                            <span v-if="testResult" class="text-sm" :class="testResult.success ? 'text-green-400' : 'text-red-400'">
-                                {{ testResult.latency }}ms
-                            </span>
+                    <div class="glass-card p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-lg font-semibold flex items-center"><i class="fas fa-terminal text-emerald-400 mr-3"></i>{{ t('result') }}</h2>
+                            <span v-if="testResult" class="badge" :class="testResult.success ? 'badge-success' : 'badge-error'">{{ testResult.latency }}ms</span>
                         </div>
-                        <div class="p-4">
-                            <div v-if="testResult" class="space-y-3">
-                                <div class="flex items-center space-x-2">
-                                    <span class="text-gray-400">{{ t('status') }}:</span>
-                                    <span :class="testResult.success ? 'text-green-400' : 'text-red-400'">
-                                        {{ testResult.success ? t('completed') : t('failed') }}
-                                    </span>
-                                </div>
-                                <div class="flex items-center space-x-2">
-                                    <span class="text-gray-400">{{ t('requestId') }}:</span>
-                                    <span class="font-mono text-blue-400">{{ testResult.requestId }}</span>
-                                </div>
-                                <div v-if="testResult.cached" class="flex items-center space-x-2">
-                                    <span class="px-2 py-0.5 bg-green-600/30 text-green-400 rounded text-xs">{{ t('cached') }}</span>
-                                </div>
-                                <div>
-                                    <span class="text-gray-400 block mb-1">{{ t('response') }}:</span>
-                                    <pre class="bg-gray-950 rounded p-3 text-sm overflow-auto max-h-64 font-mono text-green-300">{{ testResult.response || testResult.error }}</pre>
-                                </div>
+                        <div v-if="testResult" class="space-y-4">
+                            <div class="flex items-center space-x-3">
+                                <span class="text-gray-400">{{ t('status') }}:</span>
+                                <span :class="testResult.success ? 'text-emerald-400' : 'text-rose-400'" class="font-medium">{{ testResult.success ? t('completed') : t('failed') }}</span>
                             </div>
-                            <div v-else class="text-center py-8 text-gray-500">
-                                {{ t('sendToSee') }}
+                            <div class="flex items-center space-x-3">
+                                <span class="text-gray-400">{{ t('requestId') }}:</span>
+                                <span class="font-mono text-indigo-400">{{ testResult.requestId }}</span>
+                            </div>
+                            <div v-if="testResult.cached" class="badge badge-success">{{ t('cached') }}</div>
+                            <div>
+                                <span class="text-gray-400 block mb-2">{{ t('response') }}:</span>
+                                <pre class="bg-gray-900/50 rounded-xl p-4 text-sm overflow-auto max-h-64 font-mono" :class="testResult.success ? 'text-emerald-300' : 'text-rose-300'">{{ testResult.response || testResult.error }}</pre>
                             </div>
                         </div>
+                        <div v-else class="text-center py-16 text-gray-500"><i class="fas fa-paper-plane text-4xl mb-3"></i><p>{{ t('sendToSee') }}</p></div>
                     </div>
                 </div>
             </div>
 
             <!-- API Keys Tab -->
-            <div v-show="activeTab === 'keys'">
-                <div class="bg-gray-800 rounded-lg border border-gray-700 mb-6">
-                    <div class="px-4 py-3 border-b border-gray-700 flex justify-between items-center">
-                        <h2 class="text-lg font-semibold">{{ t('apiKeys') }}</h2>
-                        <button @click="showCreateKeyModal = true" class="px-3 py-1 bg-green-600 rounded text-sm hover:bg-green-700">
-                            {{ t('createKey') }}
-                        </button>
+            <div v-show="activeTab === 'keys'" class="space-y-6">
+                <div class="glass-card p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-lg font-semibold flex items-center"><i class="fas fa-key text-amber-400 mr-3"></i>{{ t('apiKeys') }}</h2>
+                        <button @click="showCreateKeyModal = true" class="btn-primary"><i class="fas fa-plus mr-2"></i>{{ t('createKey') }}</button>
                     </div>
-                    <div class="p-4">
-                        <div class="overflow-x-auto">
-                            <table class="w-full">
-                                <thead>
-                                    <tr class="text-left text-gray-400 text-sm">
-                                        <th class="pb-2">{{ t('keyId') }}</th>
-                                        <th class="pb-2">{{ t('name') }}</th>
-                                        <th class="pb-2">{{ t('createdAt') }}</th>
-                                        <th class="pb-2">{{ t('lastUsed') }}</th>
-                                        <th class="pb-2">{{ t('rateLimit') }}</th>
-                                        <th class="pb-2">{{ t('status') }}</th>
-                                        <th class="pb-2">{{ t('actions') }}</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr v-for="key in apiKeys" :key="key.key_id" class="border-t border-gray-700">
-                                        <td class="py-2 font-mono text-sm">{{ key.key_id }}</td>
-                                        <td class="py-2">{{ key.name }}</td>
-                                        <td class="py-2 text-sm text-gray-400">{{ formatTime(key.created_at) }}</td>
-                                        <td class="py-2 text-sm text-gray-400">{{ key.last_used_at ? formatTime(key.last_used_at) : t('never') }}</td>
-                                        <td class="py-2">{{ key.rate_limit_rpm || t('default') }}</td>
-                                        <td class="py-2">
-                                            <span :class="key.enabled ? 'text-green-400' : 'text-red-400'">
-                                                {{ key.enabled ? t('activeStatus') : t('disabled') }}
-                                            </span>
-                                        </td>
-                                        <td class="py-2 space-x-2">
-                                            <button
-                                                @click="toggleKey(key)"
-                                                :class="key.enabled ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-green-600 hover:bg-green-700'"
-                                                class="px-2 py-1 rounded text-xs"
-                                            >
-                                                {{ key.enabled ? t('disable') : t('enable') }}
-                                            </button>
-                                            <button
-                                                @click="showConfirmDialog(t('deleteKey'), t('confirmDeleteKey'), () => deleteKey(key.key_id))"
-                                                class="px-2 py-1 bg-red-600 rounded text-xs hover:bg-red-700"
-                                            >
-                                                {{ t('delete') }}
-                                            </button>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
+                    <div class="overflow-x-auto">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>{{ t('keyId') }}</th>
+                                    <th>{{ t('name') }}</th>
+                                    <th>{{ t('createdAt') }}</th>
+                                    <th>{{ t('lastUsed') }}</th>
+                                    <th>{{ t('rateLimit') }}</th>
+                                    <th>{{ t('status') }}</th>
+                                    <th>{{ t('actions') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="key in apiKeys" :key="key.key_id">
+                                    <td class="font-mono text-sm">{{ key.key_id }}</td>
+                                    <td class="font-medium">{{ key.name }}</td>
+                                    <td class="text-sm text-gray-400">{{ formatTime(key.created_at) }}</td>
+                                    <td class="text-sm text-gray-400">{{ key.last_used_at ? formatTime(key.last_used_at) : t('never') }}</td>
+                                    <td>{{ key.rate_limit_rpm || t('default') }}</td>
+                                    <td><span :class="key.enabled ? 'badge-success' : 'badge-error'" class="badge">{{ key.enabled ? t('activeStatus') : t('disabled') }}</span></td>
+                                    <td>
+                                        <div class="flex space-x-2">
+                                            <button @click="toggleKey(key)" :class="key.enabled ? 'bg-amber-500/20 text-amber-400 hover:bg-amber-500/30' : 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30'" class="text-xs py-1 px-2 rounded-lg">{{ key.enabled ? t('disable') : t('enable') }}</button>
+                                            <button @click="showConfirmDialog(t('deleteKey'), t('confirmDeleteKey'), () => deleteKey(key.key_id))" class="text-xs py-1 px-2 bg-rose-500/20 text-rose-400 rounded-lg hover:bg-rose-500/30">{{ t('delete') }}</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-
-                <!-- New Key Display -->
-                <div v-if="newApiKey" class="bg-green-900/50 border border-green-700 rounded-lg p-4 mb-6">
-                    <div class="font-semibold text-green-400 mb-2">{{ t('newKeyCreated') }}</div>
-                    <div class="text-sm text-gray-300 mb-2">{{ t('saveKeyNow') }}</div>
-                    <div class="flex items-center space-x-2">
-                        <div class="flex-1 bg-gray-800 p-3 rounded font-mono text-sm break-all select-all">{{ newApiKey }}</div>
-                        <button @click="copyToClipboard(newApiKey)"
-                                class="px-3 py-3 bg-blue-600 rounded text-sm hover:bg-blue-700 flex items-center space-x-1"
-                                :title="t('copyToClipboard')">
-                            <i class="fas fa-copy"></i>
-                            <span>{{ t('copy') }}</span>
-                        </button>
+                <div v-if="newApiKey" class="glass-card p-6 border-emerald-500/30 bg-emerald-500/5">
+                    <div class="font-semibold text-emerald-400 mb-2 flex items-center"><i class="fas fa-check-circle mr-2"></i>{{ t('newKeyCreated') }}</div>
+                    <div class="text-sm text-gray-300 mb-3">{{ t('saveKeyNow') }}</div>
+                    <div class="flex items-center space-x-3">
+                        <div class="flex-1 bg-gray-900/50 p-4 rounded-xl font-mono text-sm break-all select-all border border-gray-700">{{ newApiKey }}</div>
+                        <button @click="copyToClipboard(newApiKey)" class="btn-primary py-3 px-4"><i class="fas fa-copy mr-2"></i>{{ t('copy') }}</button>
                     </div>
-                    <button @click="newApiKey = null" class="mt-3 px-3 py-1 bg-gray-700 rounded text-sm hover:bg-gray-600">
-                        {{ t('dismiss') }}
-                    </button>
+                    <button @click="newApiKey = null" class="mt-4 btn-secondary text-sm">{{ t('dismiss') }}</button>
                 </div>
             </div>
 
             <!-- Config Tab -->
-            <div v-show="activeTab === 'config'">
+            <div v-show="activeTab === 'config'" class="space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <!-- Auth Config -->
-                    <div class="bg-gray-800 rounded-lg border border-gray-700">
-                        <div class="px-4 py-3 border-b border-gray-700">
-                            <h2 class="text-lg font-semibold">{{ t('authentication') }}</h2>
-                        </div>
-                        <div class="p-4 space-y-2 text-sm">
-                            <div class="flex justify-between">
-                                <span class="text-gray-400">{{ t('enabled') }}:</span>
-                                <span :class="authConfig.enabled ? 'text-green-400' : 'text-gray-400'">
-                                    {{ authConfig.enabled ? t('yes') : t('no') }}
-                                </span>
+                    <div class="glass-card p-6">
+                        <h2 class="text-lg font-semibold flex items-center mb-6"><i class="fas fa-shield-alt text-indigo-400 mr-3"></i>{{ t('authentication') }}</h2>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center py-2 border-b border-gray-700/50">
+                                <span class="text-gray-400">{{ t('enabled') }}</span>
+                                <span :class="authConfig.enabled ? 'text-emerald-400' : 'text-gray-500'">{{ authConfig.enabled ? t('yes') : t('no') }}</span>
                             </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-400">{{ t('headerName') }}:</span>
-                                <span class="font-mono text-blue-400">{{ authConfig.header_name }}</span>
+                            <div class="flex justify-between items-center py-2 border-b border-gray-700/50">
+                                <span class="text-gray-400">{{ t('headerName') }}</span>
+                                <span class="font-mono text-indigo-400 text-sm">{{ authConfig.header_name }}</span>
                             </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-400">{{ t('allowLocalhost') }}:</span>
+                            <div class="flex justify-between items-center py-2">
+                                <span class="text-gray-400">{{ t('allowLocalhost') }}</span>
                                 <span>{{ authConfig.allow_localhost ? t('yes') : t('no') }}</span>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Rate Limit Config -->
-                    <div class="bg-gray-800 rounded-lg border border-gray-700">
-                        <div class="px-4 py-3 border-b border-gray-700">
-                            <h2 class="text-lg font-semibold">{{ t('rateLimiting') }}</h2>
-                        </div>
-                        <div class="p-4 space-y-2 text-sm">
-                            <div class="flex justify-between">
-                                <span class="text-gray-400">{{ t('enabled') }}:</span>
-                                <span :class="rateLimitConfig.enabled ? 'text-green-400' : 'text-gray-400'">
-                                    {{ rateLimitConfig.enabled ? t('yes') : t('no') }}
-                                </span>
+                    <div class="glass-card p-6">
+                        <h2 class="text-lg font-semibold flex items-center mb-6"><i class="fas fa-tachometer-alt text-purple-400 mr-3"></i>{{ t('rateLimiting') }}</h2>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center py-2 border-b border-gray-700/50">
+                                <span class="text-gray-400">{{ t('enabled') }}</span>
+                                <span :class="rateLimitConfig.enabled ? 'text-emerald-400' : 'text-gray-500'">{{ rateLimitConfig.enabled ? t('yes') : t('no') }}</span>
                             </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-400">{{ t('requestsPerMin') }}:</span>
-                                <span class="text-blue-400">{{ rateLimitConfig.requests_per_minute }}</span>
+                            <div class="flex justify-between items-center py-2 border-b border-gray-700/50">
+                                <span class="text-gray-400">{{ t('requestsPerMin') }}</span>
+                                <span class="text-indigo-400 font-medium">{{ rateLimitConfig.requests_per_minute }}</span>
                             </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-400">{{ t('burstSize') }}:</span>
+                            <div class="flex justify-between items-center py-2">
+                                <span class="text-gray-400">{{ t('burstSize') }}</span>
                                 <span>{{ rateLimitConfig.burst_size }}</span>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Retry Config -->
-                    <div class="bg-gray-800 rounded-lg border border-gray-700">
-                        <div class="px-4 py-3 border-b border-gray-700">
-                            <h2 class="text-lg font-semibold">{{ t('retryFallback') }}</h2>
-                        </div>
-                        <div class="p-4 space-y-2 text-sm">
-                            <div class="flex justify-between">
-                                <span class="text-gray-400">{{ t('retryEnabled') }}:</span>
-                                <span :class="retryConfig.enabled ? 'text-green-400' : 'text-gray-400'">
-                                    {{ retryConfig.enabled ? t('yes') : t('no') }}
-                                </span>
+                    <div class="glass-card p-6">
+                        <h2 class="text-lg font-semibold flex items-center mb-6"><i class="fas fa-redo text-cyan-400 mr-3"></i>{{ t('retryFallback') }}</h2>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center py-2 border-b border-gray-700/50">
+                                <span class="text-gray-400">{{ t('retryEnabled') }}</span>
+                                <span :class="retryConfig.enabled ? 'text-emerald-400' : 'text-gray-500'">{{ retryConfig.enabled ? t('yes') : t('no') }}</span>
                             </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-400">{{ t('maxRetries') }}:</span>
+                            <div class="flex justify-between items-center py-2 border-b border-gray-700/50">
+                                <span class="text-gray-400">{{ t('maxRetries') }}</span>
                                 <span>{{ retryConfig.max_retries }}</span>
                             </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-400">{{ t('fallbackEnabled') }}:</span>
-                                <span :class="retryConfig.fallback_enabled ? 'text-green-400' : 'text-gray-400'">
-                                    {{ retryConfig.fallback_enabled ? t('yes') : t('no') }}
-                                </span>
+                            <div class="flex justify-between items-center py-2">
+                                <span class="text-gray-400">{{ t('fallbackEnabled') }}</span>
+                                <span :class="retryConfig.fallback_enabled ? 'text-emerald-400' : 'text-gray-500'">{{ retryConfig.fallback_enabled ? t('yes') : t('no') }}</span>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Cache Stats -->
-                    <div class="bg-gray-800 rounded-lg border border-gray-700">
-                        <div class="px-4 py-3 border-b border-gray-700 flex justify-between items-center">
-                            <h2 class="text-lg font-semibold">{{ t('cacheManagement') }}</h2>
+                    <div class="glass-card p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-lg font-semibold flex items-center"><i class="fas fa-database text-emerald-400 mr-3"></i>{{ t('cacheManagement') }}</h2>
                             <div class="flex space-x-2">
-                                <button @click="cleanupCache" class="px-2 py-1 bg-yellow-600 rounded text-xs hover:bg-yellow-700" :title="t('cleanupExpired')">
-                                    <i class="fas fa-broom mr-1"></i>{{ t('cleanup') }}
-                                </button>
-                                <button @click="showConfirmDialog(t('clearCache'), t('confirmClearCache'), clearCache)" class="px-2 py-1 bg-red-600 rounded text-xs hover:bg-red-700">
-                                    <i class="fas fa-trash mr-1"></i>{{ t('clearAll') }}
-                                </button>
+                                <button @click="cleanupCache" class="btn-secondary text-xs py-1 px-2"><i class="fas fa-broom mr-1"></i>{{ t('cleanup') }}</button>
+                                <button @click="showConfirmDialog(t('clearCache'), t('confirmClearCache'), clearCache)" class="text-xs py-1 px-2 bg-rose-500/20 text-rose-400 rounded-lg hover:bg-rose-500/30"><i class="fas fa-trash mr-1"></i>{{ t('clearAll') }}</button>
                             </div>
                         </div>
-                        <div class="p-4 space-y-2 text-sm">
-                            <div class="flex justify-between">
-                                <span class="text-gray-400">{{ t('hits') }}:</span>
-                                <span class="text-green-400">{{ status.gateway?.cache?.hits || 0 }}</span>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center py-2 border-b border-gray-700/50">
+                                <span class="text-gray-400">{{ t('hits') }}</span>
+                                <span class="text-emerald-400 font-medium">{{ status.gateway?.cache?.hits || 0 }}</span>
                             </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-400">{{ t('misses') }}:</span>
-                                <span class="text-yellow-400">{{ status.gateway?.cache?.misses || 0 }}</span>
+                            <div class="flex justify-between items-center py-2 border-b border-gray-700/50">
+                                <span class="text-gray-400">{{ t('misses') }}</span>
+                                <span class="text-amber-400">{{ status.gateway?.cache?.misses || 0 }}</span>
                             </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-400">{{ t('hitRate') }}:</span>
-                                <span class="text-blue-400">{{ formatPercent(status.gateway?.cache?.hit_rate || 0) }}</span>
+                            <div class="flex justify-between items-center py-2 border-b border-gray-700/50">
+                                <span class="text-gray-400">{{ t('hitRate') }}</span>
+                                <span class="text-indigo-400 font-medium">{{ formatPercent(status.gateway?.cache?.hit_rate || 0) }}</span>
                             </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-400">{{ t('totalEntries') }}:</span>
+                            <div class="flex justify-between items-center py-2">
+                                <span class="text-gray-400">{{ t('totalEntries') }}</span>
                                 <span>{{ status.gateway?.cache?.total_entries || 0 }}</span>
                             </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-400">{{ t('tokensSaved') }}:</span>
-                                <span class="text-blue-400">{{ formatNumber(status.gateway?.cache?.total_tokens_saved || 0) }}</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-400">{{ t('memorySaved') }}:</span>
-                                <span class="text-purple-400">{{ formatBytes(status.gateway?.cache?.memory_bytes || 0) }}</span>
-                            </div>
                         </div>
                     </div>
-
-                    <!-- Metrics -->
-                    <div class="bg-gray-800 rounded-lg border border-gray-700">
-                        <div class="px-4 py-3 border-b border-gray-700">
-                            <h2 class="text-lg font-semibold">{{ t('prometheusMetrics') }}</h2>
-                        </div>
-                        <div class="p-4">
-                            <a href="/metrics" target="_blank"
-                               class="inline-flex items-center space-x-2 text-blue-400 hover:text-blue-300">
-                                <span>{{ t('viewRawMetrics') }}</span>
-                                <span>→</span>
-                            </a>
-                            <p class="text-xs text-gray-500 mt-2">
-                                {{ t('endpoint') }}: <code class="bg-gray-700 px-1 rounded">/metrics</code>
-                            </p>
-                        </div>
+                    <div class="glass-card p-6">
+                        <h2 class="text-lg font-semibold flex items-center mb-6"><i class="fas fa-chart-line text-rose-400 mr-3"></i>{{ t('prometheusMetrics') }}</h2>
+                        <a href="/metrics" target="_blank" class="flex items-center space-x-2 text-indigo-400 hover:text-indigo-300 transition-colors mb-3">
+                            <span>{{ t('viewRawMetrics') }}</span><i class="fas fa-external-link-alt text-sm"></i>
+                        </a>
+                        <p class="text-xs text-gray-500">{{ t('endpoint') }}: <code class="bg-gray-800 px-2 py-1 rounded">/metrics</code></p>
                     </div>
-
-                    <!-- API Docs -->
-                    <div class="bg-gray-800 rounded-lg border border-gray-700">
-                        <div class="px-4 py-3 border-b border-gray-700">
-                            <h2 class="text-lg font-semibold">{{ t('apiDocs') }}</h2>
-                        </div>
-                        <div class="p-4">
-                            <a href="/docs" target="_blank"
-                               class="inline-flex items-center space-x-2 text-blue-400 hover:text-blue-300">
-                                <span>{{ t('openApiSwagger') }}</span>
-                                <span>→</span>
-                            </a>
-                            <p class="text-xs text-gray-500 mt-2">
-                                {{ t('interactiveApi') }}
-                            </p>
-                        </div>
+                    <div class="glass-card p-6">
+                        <h2 class="text-lg font-semibold flex items-center mb-6"><i class="fas fa-book text-amber-400 mr-3"></i>{{ t('apiDocs') }}</h2>
+                        <a href="/docs" target="_blank" class="flex items-center space-x-2 text-indigo-400 hover:text-indigo-300 transition-colors mb-3">
+                            <span>{{ t('openApiSwagger') }}</span><i class="fas fa-external-link-alt text-sm"></i>
+                        </a>
+                        <p class="text-xs text-gray-500">{{ t('interactiveApi') }}</p>
                     </div>
                 </div>
             </div>
 
             <!-- Compare Tab -->
-            <div v-show="activeTab === 'compare'">
+            <div v-show="activeTab === 'compare'" class="space-y-6">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <!-- Provider Comparison Radar -->
-                    <div class="bg-gray-800 rounded-lg border border-gray-700">
-                        <div class="px-4 py-3 border-b border-gray-700">
-                            <h2 class="text-lg font-semibold"><i class="fas fa-chart-radar mr-2"></i>{{ t('providerComparison') }}</h2>
-                        </div>
-                        <div class="p-4">
-                            <div class="radar-container">
-                                <canvas ref="radarChart" height="300"></canvas>
-                            </div>
-                        </div>
+                    <div class="glass-card p-6">
+                        <h2 class="text-lg font-semibold flex items-center mb-6"><i class="fas fa-chart-radar text-indigo-400 mr-3"></i>{{ t('providerComparison') }}</h2>
+                        <div class="flex justify-center"><canvas ref="radarChart" height="300" style="max-width: 350px;"></canvas></div>
                     </div>
-
-                    <!-- Performance Table -->
-                    <div class="bg-gray-800 rounded-lg border border-gray-700">
-                        <div class="px-4 py-3 border-b border-gray-700">
-                            <h2 class="text-lg font-semibold"><i class="fas fa-table mr-2"></i>{{ t('performanceMetrics') }}</h2>
-                        </div>
-                        <div class="p-4">
-                            <table class="w-full text-sm">
-                                <thead>
-                                    <tr class="text-left text-gray-400">
-                                        <th class="pb-2">{{ t('provider') }}</th>
-                                        <th class="pb-2">{{ t('avgLatency') }}</th>
-                                        <th class="pb-2">{{ t('successRate') }}</th>
-                                        <th class="pb-2">{{ t('requests') }}</th>
-                                        <th class="pb-2">{{ t('score') }}</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr v-for="p in sortedProviders" :key="p.name" class="border-t border-gray-700">
-                                        <td class="py-2 font-medium">{{ p.name }}</td>
-                                        <td class="py-2">{{ formatLatency(p.avg_latency_ms) }}</td>
-                                        <td class="py-2" :class="p.success_rate >= 0.9 ? 'text-green-400' : 'text-yellow-400'">
-                                            {{ formatPercent(p.success_rate) }}
-                                        </td>
-                                        <td class="py-2">{{ p.total_requests || 0 }}</td>
-                                        <td class="py-2">
-                                            <div class="flex items-center space-x-2">
-                                                <div class="w-16 bg-gray-700 rounded-full h-2">
-                                                    <div class="h-2 rounded-full"
-                                                         :class="getScoreColor(p.score)"
-                                                         :style="{width: (p.score || 0) + '%'}"></div>
-                                                </div>
-                                                <span class="text-xs">{{ Math.round(p.score || 0) }}</span>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
+                    <div class="glass-card p-6">
+                        <h2 class="text-lg font-semibold flex items-center mb-6"><i class="fas fa-table text-purple-400 mr-3"></i>{{ t('performanceMetrics') }}</h2>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>{{ t('provider') }}</th>
+                                    <th>{{ t('avgLatency') }}</th>
+                                    <th>{{ t('successRate') }}</th>
+                                    <th>{{ t('score') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="p in sortedProviders" :key="p.name">
+                                    <td class="font-medium">{{ p.name }}</td>
+                                    <td>{{ formatLatency(p.avg_latency_ms) }}</td>
+                                    <td :class="p.success_rate >= 0.9 ? 'text-emerald-400' : 'text-amber-400'">{{ formatPercent(p.success_rate) }}</td>
+                                    <td>
+                                        <div class="flex items-center space-x-2">
+                                            <div class="w-16 bg-gray-700 rounded-full h-2"><div class="h-2 rounded-full" :class="getScoreColor(p.score)" :style="{width: (p.score || 0) + '%'}"></div></div>
+                                            <span class="text-xs">{{ Math.round(p.score || 0) }}</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
-
-                    <!-- Request Timeline -->
-                    <div class="lg:col-span-2 bg-gray-800 rounded-lg border border-gray-700">
-                        <div class="px-4 py-3 border-b border-gray-700 flex justify-between items-center">
-                            <h2 class="text-lg font-semibold"><i class="fas fa-clock mr-2"></i>{{ t('requestTimeline') }}</h2>
-                            <select v-model="timelineRange" class="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm">
-                                <option value="1h">{{ t('last1h') }}</option>
-                                <option value="6h">{{ t('last6h') }}</option>
-                                <option value="24h">{{ t('last24h') }}</option>
-                            </select>
-                        </div>
-                        <div class="p-4 timeline-container">
-                            <canvas ref="timelineChart" height="100"></canvas>
-                        </div>
+                </div>
+                <div class="glass-card p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-lg font-semibold flex items-center"><i class="fas fa-clock text-cyan-400 mr-3"></i>{{ t('requestTimeline') }}</h2>
+                        <select v-model="timelineRange" class="input-field w-32">
+                            <option value="1h">{{ t('last1h') }}</option>
+                            <option value="6h">{{ t('last6h') }}</option>
+                            <option value="24h">{{ t('last24h') }}</option>
+                        </select>
                     </div>
-
-                    <!-- Quick Benchmark -->
-                    <div class="lg:col-span-2 bg-gray-800 rounded-lg border border-gray-700">
-                        <div class="px-4 py-3 border-b border-gray-700">
-                            <h2 class="text-lg font-semibold"><i class="fas fa-stopwatch mr-2"></i>{{ t('quickBenchmark') }}</h2>
-                        </div>
-                        <div class="p-4">
-                            <div class="flex items-center space-x-4 mb-4">
-                                <input v-model="benchmarkMessage" type="text"
-                                       class="flex-1 bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm"
-                                       :placeholder="t('enterBenchmark')">
-                                <button @click="runBenchmark" :disabled="benchmarkRunning"
-                                        class="px-4 py-2 bg-blue-600 rounded text-sm hover:bg-blue-700 disabled:opacity-50">
-                                    {{ benchmarkRunning ? t('running') : t('runBenchmark') }}
-                                </button>
-                            </div>
-                            <div v-if="benchmarkResults.length > 0" class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                <div v-for="result in benchmarkResults" :key="result.provider"
-                                     class="bg-gray-700/50 rounded p-3 border border-gray-600/50">
-                                    <div class="font-medium mb-1">{{ result.provider }}</div>
-                                    <div class="text-2xl font-bold" :class="result.success ? 'text-green-400' : 'text-red-400'">
-                                        {{ result.success ? formatLatency(result.latency) : t('failed') }}
-                                    </div>
-                                    <div class="text-xs text-gray-400 mt-1">
-                                        {{ result.success ? t('completed') : result.error }}
-                                    </div>
-                                </div>
-                            </div>
+                    <div class="chart-container" style="height: 120px;"><canvas ref="timelineChart" height="100"></canvas></div>
+                </div>
+                <div class="glass-card p-6">
+                    <h2 class="text-lg font-semibold flex items-center mb-6"><i class="fas fa-stopwatch text-amber-400 mr-3"></i>{{ t('quickBenchmark') }}</h2>
+                    <div class="flex items-center space-x-4 mb-6">
+                        <input v-model="benchmarkMessage" type="text" class="input-field flex-1" :placeholder="t('enterBenchmark')">
+                        <button @click="runBenchmark" :disabled="benchmarkRunning" class="btn-primary">{{ benchmarkRunning ? t('running') : t('runBenchmark') }}</button>
+                    </div>
+                    <div v-if="benchmarkResults.length > 0" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div v-for="result in benchmarkResults" :key="result.provider" class="provider-card text-center">
+                            <div class="font-medium mb-2">{{ result.provider }}</div>
+                            <div class="text-2xl font-bold" :class="result.success ? 'text-emerald-400' : 'text-rose-400'">{{ result.success ? formatLatency(result.latency) : t('failed') }}</div>
+                            <div class="text-xs text-gray-400 mt-1">{{ result.success ? t('completed') : result.error }}</div>
                         </div>
                     </div>
                 </div>
             </div>
         </main>
 
+        <!-- Modals -->
         <!-- Keyboard Shortcuts Modal -->
-        <div v-if="showShortcuts" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50" @click.self="showShortcuts = false">
-            <div class="bg-gray-800 rounded-lg p-6 w-96 border border-gray-700 shadow-xl">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-semibold"><i class="fas fa-keyboard mr-2"></i>{{ t('keyboardShortcuts') }}</h3>
-                    <button @click="showShortcuts = false" class="text-gray-400 hover:text-white">&times;</button>
+        <div v-if="showShortcuts" class="fixed inset-0 modal-backdrop flex items-center justify-center z-50" @click.self="showShortcuts = false">
+            <div class="modal-content p-6 w-96 fade-up">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-semibold flex items-center"><i class="fas fa-keyboard text-indigo-400 mr-3"></i>{{ t('keyboardShortcuts') }}</h3>
+                    <button @click="showShortcuts = false" class="text-gray-400 hover:text-white text-xl">&times;</button>
                 </div>
-                <div class="space-y-2 text-sm">
-                    <div class="flex justify-between py-1 border-b border-gray-700">
-                        <span>{{ t('dashboard') }}</span>
-                        <kbd class="kbd">1</kbd>
-                    </div>
-                    <div class="flex justify-between py-1 border-b border-gray-700">
-                        <span>{{ t('requests') }}</span>
-                        <kbd class="kbd">2</kbd>
-                    </div>
-                    <div class="flex justify-between py-1 border-b border-gray-700">
-                        <span>{{ t('test') }}</span>
-                        <kbd class="kbd">3</kbd>
-                    </div>
-                    <div class="flex justify-between py-1 border-b border-gray-700">
-                        <span>{{ t('compare') }}</span>
-                        <kbd class="kbd">4</kbd>
-                    </div>
-                    <div class="flex justify-between py-1 border-b border-gray-700">
-                        <span>{{ t('keys') }}</span>
-                        <kbd class="kbd">5</kbd>
-                    </div>
-                    <div class="flex justify-between py-1 border-b border-gray-700">
-                        <span>{{ t('config') }}</span>
-                        <kbd class="kbd">6</kbd>
-                    </div>
-                    <div class="flex justify-between py-1 border-b border-gray-700">
-                        <span>{{ t('refresh') }}</span>
-                        <kbd class="kbd">R</kbd>
-                    </div>
-                    <div class="flex justify-between py-1 border-b border-gray-700">
-                        <span>Export</span>
-                        <kbd class="kbd">E</kbd>
-                    </div>
-                    <div class="flex justify-between py-1">
-                        <span>{{ t('closeModal') }}</span>
-                        <kbd class="kbd">Esc</kbd>
-                    </div>
+                <div class="space-y-2">
+                    <div class="flex justify-between py-2 border-b border-gray-700/50"><span>{{ t('dashboard') }}</span><kbd class="kbd">1</kbd></div>
+                    <div class="flex justify-between py-2 border-b border-gray-700/50"><span>{{ t('requests') }}</span><kbd class="kbd">2</kbd></div>
+                    <div class="flex justify-between py-2 border-b border-gray-700/50"><span>{{ t('test') }}</span><kbd class="kbd">3</kbd></div>
+                    <div class="flex justify-between py-2 border-b border-gray-700/50"><span>{{ t('compare') }}</span><kbd class="kbd">4</kbd></div>
+                    <div class="flex justify-between py-2 border-b border-gray-700/50"><span>{{ t('keys') }}</span><kbd class="kbd">5</kbd></div>
+                    <div class="flex justify-between py-2 border-b border-gray-700/50"><span>{{ t('config') }}</span><kbd class="kbd">6</kbd></div>
+                    <div class="flex justify-between py-2 border-b border-gray-700/50"><span>{{ t('refresh') }}</span><kbd class="kbd">R</kbd></div>
+                    <div class="flex justify-between py-2"><span>{{ t('closeModal') }}</span><kbd class="kbd">Esc</kbd></div>
                 </div>
             </div>
         </div>
 
         <!-- Toast Notifications -->
-        <div class="fixed bottom-4 right-4 space-y-2 z-50">
-            <div v-for="(toast, i) in toasts" :key="i"
-                 class="toast px-4 py-2 rounded-lg shadow-lg flex items-center space-x-2"
-                 :class="toast.type === 'success' ? 'bg-green-600' : toast.type === 'error' ? 'bg-red-600' : toast.type === 'warn' ? 'bg-yellow-600' : 'bg-blue-600'">
-                <i :class="toast.type === 'success' ? 'fas fa-check' : toast.type === 'error' ? 'fas fa-times' : toast.type === 'warn' ? 'fas fa-exclamation-triangle' : 'fas fa-info'"></i>
-                <span class="flex-1">{{ toast.message }}</span>
-                <button @click="removeToast(i)" class="ml-2 text-white/70 hover:text-white">&times;</button>
+        <div class="fixed bottom-6 right-6 space-y-3 z-50">
+            <div v-for="(toast, i) in toasts" :key="i" class="slide-in px-5 py-3 rounded-xl shadow-2xl flex items-center space-x-3 backdrop-blur-xl"
+                 :class="toast.type === 'success' ? 'bg-emerald-500/90' : toast.type === 'error' ? 'bg-rose-500/90' : toast.type === 'warn' ? 'bg-amber-500/90' : 'bg-indigo-500/90'">
+                <i :class="toast.type === 'success' ? 'fas fa-check-circle' : toast.type === 'error' ? 'fas fa-times-circle' : toast.type === 'warn' ? 'fas fa-exclamation-triangle' : 'fas fa-info-circle'"></i>
+                <span class="flex-1 font-medium">{{ toast.message }}</span>
+                <button @click="removeToast(i)" class="text-white/70 hover:text-white text-lg">&times;</button>
             </div>
         </div>
 
         <!-- Confirm Dialog -->
-        <div v-if="confirmDialog.show" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50" @click.self="confirmDialog.show = false">
-            <div class="bg-gray-800 rounded-lg p-6 w-96 border border-gray-700 shadow-xl">
-                <h3 class="text-lg font-semibold mb-2">{{ confirmDialog.title }}</h3>
-                <p class="text-gray-400 mb-4">{{ confirmDialog.message }}</p>
-                <div class="flex justify-end space-x-2">
-                    <button @click="confirmDialog.show = false" class="px-4 py-2 bg-gray-700 rounded hover:bg-gray-600">
-                        {{ t('cancelBtn') }}
-                    </button>
-                    <button @click="executeConfirmAction" class="px-4 py-2 bg-red-600 rounded hover:bg-red-700">
-                        {{ t('confirm') }}
-                    </button>
+        <div v-if="confirmDialog.show" class="fixed inset-0 modal-backdrop flex items-center justify-center z-50" @click.self="confirmDialog.show = false">
+            <div class="modal-content p-6 w-96 fade-up">
+                <h3 class="text-lg font-semibold mb-3">{{ confirmDialog.title }}</h3>
+                <p class="text-gray-400 mb-6">{{ confirmDialog.message }}</p>
+                <div class="flex justify-end space-x-3">
+                    <button @click="confirmDialog.show = false" class="btn-secondary">{{ t('cancelBtn') }}</button>
+                    <button @click="executeConfirmAction" class="bg-rose-500 hover:bg-rose-600 text-white px-4 py-2 rounded-xl transition-colors">{{ t('confirm') }}</button>
                 </div>
             </div>
         </div>
 
         <!-- Create Key Modal -->
-        <div v-if="showCreateKeyModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-            <div class="bg-gray-800 rounded-lg p-6 w-96 border border-gray-700 shadow-xl">
-                <h3 class="text-lg font-semibold mb-4">{{ t('createApiKey') }}</h3>
+        <div v-if="showCreateKeyModal" class="fixed inset-0 modal-backdrop flex items-center justify-center z-50">
+            <div class="modal-content p-6 w-96 fade-up">
+                <h3 class="text-lg font-semibold mb-6 flex items-center"><i class="fas fa-key text-amber-400 mr-3"></i>{{ t('createApiKey') }}</h3>
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-sm text-gray-400 mb-1">{{ t('name') }}</label>
-                        <input v-model="newKeyName" type="text"
-                               class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                               placeholder="My API Key">
+                        <label class="block text-sm text-gray-400 mb-2">{{ t('name') }}</label>
+                        <input v-model="newKeyName" type="text" class="input-field" placeholder="My API Key">
                     </div>
                     <div>
-                        <label class="block text-sm text-gray-400 mb-1">{{ t('rateLimitRpm') }}</label>
-                        <input v-model.number="newKeyRateLimit" type="number"
-                               class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                               :placeholder="t('leaveEmpty')">
+                        <label class="block text-sm text-gray-400 mb-2">{{ t('rateLimitRpm') }}</label>
+                        <input v-model.number="newKeyRateLimit" type="number" class="input-field" :placeholder="t('leaveEmpty')">
                     </div>
                 </div>
-                <div class="flex justify-end space-x-2 mt-6">
-                    <button @click="showCreateKeyModal = false" class="px-4 py-2 bg-gray-700 rounded text-sm hover:bg-gray-600">
-                        {{ t('cancelBtn') }}
-                    </button>
-                    <button @click="createKey" class="px-4 py-2 bg-green-600 rounded text-sm hover:bg-green-700">
-                        {{ t('create') }}
-                    </button>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button @click="showCreateKeyModal = false" class="btn-secondary">{{ t('cancelBtn') }}</button>
+                    <button @click="createKey" class="btn-primary">{{ t('create') }}</button>
                 </div>
             </div>
         </div>
 
         <!-- Save Template Modal -->
-        <div v-if="showSaveTemplateModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-            <div class="bg-gray-800 rounded-lg p-6 w-96 border border-gray-700 shadow-xl">
-                <h3 class="text-lg font-semibold mb-4">{{ t('saveTemplate') }}</h3>
+        <div v-if="showSaveTemplateModal" class="fixed inset-0 modal-backdrop flex items-center justify-center z-50">
+            <div class="modal-content p-6 w-96 fade-up">
+                <h3 class="text-lg font-semibold mb-6 flex items-center"><i class="fas fa-save text-emerald-400 mr-3"></i>{{ t('saveTemplate') }}</h3>
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-sm text-gray-400 mb-1">{{ t('templateName') }}</label>
-                        <input v-model="newTemplateName" type="text"
-                               class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                               :placeholder="t('enterTemplateName')">
+                        <label class="block text-sm text-gray-400 mb-2">{{ t('templateName') }}</label>
+                        <input v-model="newTemplateName" type="text" class="input-field" :placeholder="t('enterTemplateName')">
                     </div>
                     <div class="text-sm text-gray-400">
-                        <div class="mb-1">{{ t('templatePreview') }}:</div>
-                        <div class="bg-gray-700 rounded p-2 space-y-1">
+                        <div class="mb-2">{{ t('templatePreview') }}:</div>
+                        <div class="bg-gray-800/50 rounded-xl p-3 space-y-1">
                             <div><span class="text-gray-500">{{ t('provider') }}:</span> {{ testForm.provider || t('autoDefault') }}</div>
                             <div><span class="text-gray-500">{{ t('message') }}:</span> {{ testForm.message.slice(0, 50) }}{{ testForm.message.length > 50 ? '...' : '' }}</div>
-                            <div><span class="text-gray-500">{{ t('stream') }}:</span> {{ testForm.stream ? t('yes') : t('no') }}</div>
                         </div>
                     </div>
                 </div>
-                <div class="flex justify-end space-x-2 mt-6">
-                    <button @click="showSaveTemplateModal = false" class="px-4 py-2 bg-gray-700 rounded text-sm hover:bg-gray-600">
-                        {{ t('cancelBtn') }}
-                    </button>
-                    <button @click="saveTemplate" class="px-4 py-2 bg-green-600 rounded text-sm hover:bg-green-700">
-                        {{ t('save') }}
-                    </button>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button @click="showSaveTemplateModal = false" class="btn-secondary">{{ t('cancelBtn') }}</button>
+                    <button @click="saveTemplate" class="btn-primary">{{ t('save') }}</button>
                 </div>
             </div>
         </div>
 
-        <!-- Manage Templates Modal -->
-        <div v-if="showManageTemplatesModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-            <div class="bg-gray-800 rounded-lg p-6 w-96 border border-gray-700 shadow-xl max-h-[80vh] overflow-auto">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-semibold">{{ t('manageTemplates') }}</h3>
-                    <button @click="showManageTemplatesModal = false" class="text-gray-400 hover:text-white">&times;</button>
+        <!-- Alert Settings Modal -->
+        <div v-if="showAlertSettings" class="fixed inset-0 modal-backdrop flex items-center justify-center z-50" @click.self="showAlertSettings = false">
+            <div class="modal-content p-6 w-[450px] fade-up">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-semibold flex items-center"><i class="fas fa-bell text-amber-400 mr-3"></i>{{ t('alertSettings') }}</h3>
+                    <button @click="showAlertSettings = false" class="text-gray-400 hover:text-white text-xl">&times;</button>
                 </div>
-                <div v-if="testTemplates.length === 0" class="text-center py-4 text-gray-500">
-                    {{ t('noTemplates') }}
-                </div>
-                <div v-else class="space-y-2">
-                    <div v-for="(tpl, i) in testTemplates" :key="i"
-                         class="flex items-center justify-between bg-gray-700/50 rounded p-2">
-                        <div>
-                            <div class="font-medium">{{ tpl.name }}</div>
-                            <div class="text-xs text-gray-400">{{ tpl.provider || t('autoDefault') }} | {{ tpl.message.slice(0, 30) }}...</div>
+                <div class="space-y-4">
+                    <div class="provider-card">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="font-medium">{{ t('highLatencyAlert') }}</span>
+                            <div @click="alerts.highLatency.enabled = !alerts.highLatency.enabled" :class="['toggle-switch', alerts.highLatency.enabled ? 'active' : '']"></div>
                         </div>
-                        <button @click="deleteTemplate(i)" class="px-2 py-1 bg-red-600 rounded text-xs hover:bg-red-700">
-                            <i class="fas fa-trash"></i>
+                        <div class="flex items-center space-x-2 text-sm">
+                            <span class="text-gray-400">{{ t('threshold') }}:</span>
+                            <input type="number" v-model.number="alerts.highLatency.threshold" class="input-field w-24 text-sm">
+                            <span class="text-gray-400">ms</span>
+                        </div>
+                    </div>
+                    <div class="provider-card">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="font-medium">{{ t('lowSuccessRateAlert') }}</span>
+                            <div @click="alerts.lowSuccessRate.enabled = !alerts.lowSuccessRate.enabled" :class="['toggle-switch', alerts.lowSuccessRate.enabled ? 'active' : '']"></div>
+                        </div>
+                        <div class="flex items-center space-x-2 text-sm">
+                            <span class="text-gray-400">{{ t('threshold') }}:</span>
+                            <input type="number" v-model.number="alerts.lowSuccessRate.threshold" step="0.01" min="0" max="1" class="input-field w-24 text-sm">
+                            <span class="text-gray-400">(0-1)</span>
+                        </div>
+                    </div>
+                    <div class="provider-card">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="font-medium">{{ t('queueDepthAlert') }}</span>
+                            <div @click="alerts.queueDepth.enabled = !alerts.queueDepth.enabled" :class="['toggle-switch', alerts.queueDepth.enabled ? 'active' : '']"></div>
+                        </div>
+                        <div class="flex items-center space-x-2 text-sm">
+                            <span class="text-gray-400">{{ t('threshold') }}:</span>
+                            <input type="number" v-model.number="alerts.queueDepth.threshold" class="input-field w-24 text-sm">
+                            <span class="text-gray-400">{{ t('requests') }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-end mt-6">
+                    <button @click="saveAlerts" class="btn-primary">{{ t('save') }}</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Warmup Modal -->
+        <div v-if="showWarmupModal" class="fixed inset-0 modal-backdrop flex items-center justify-center z-50" @click.self="showWarmupModal = false">
+            <div class="modal-content p-6 w-[550px] max-h-[80vh] overflow-auto fade-up">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-semibold flex items-center"><i class="fas fa-fire text-amber-400 mr-3"></i>{{ t('warmupAllCLIs') }}</h3>
+                    <button @click="showWarmupModal = false" class="text-gray-400 hover:text-white text-xl">&times;</button>
+                </div>
+
+                <div class="mb-6">
+                    <p class="text-gray-400 text-sm mb-4">{{ t('warmupDescription') }}</p>
+                    <div class="space-y-2">
+                        <label class="block text-sm text-gray-400 mb-2">{{ t('warmupMessage') }}</label>
+                        <textarea v-model="warmupMessage" class="input-field h-20 resize-none" :placeholder="t('enterWarmupMessage')"></textarea>
+                    </div>
+                </div>
+
+                <!-- Provider Selection -->
+                <div class="mb-6">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-sm text-gray-400">{{ t('selectProviders') }}</span>
+                        <button @click="toggleAllWarmupProviders" class="text-xs text-indigo-400 hover:text-indigo-300">
+                            {{ warmupProviders.every(p => p.selected) ? t('deselectAll') : t('selectAll') }}
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div v-for="provider in warmupProviders" :key="provider.name"
+                             @click="provider.selected = !provider.selected"
+                             :class="['provider-card cursor-pointer transition-all p-3', provider.selected ? 'border-indigo-500/50 bg-indigo-500/10' : '']">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <i :class="['fas', provider.selected ? 'fa-check-circle text-indigo-400' : 'fa-circle text-gray-600']"></i>
+                                    <span class="font-medium">{{ provider.name }}</span>
+                                </div>
+                                <span v-if="provider.status" :class="getWarmupStatusClass(provider.status)" class="text-xs">
+                                    <i :class="getWarmupStatusIcon(provider.status)"></i>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Warmup Results -->
+                <div v-if="warmupResults.length > 0" class="mb-6">
+                    <div class="text-sm text-gray-400 mb-3">{{ t('warmupResults') }}</div>
+                    <div class="space-y-2 max-h-48 overflow-auto">
+                        <div v-for="result in warmupResults" :key="result.provider"
+                             :class="['p-3 rounded-lg border', result.success ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-rose-500/10 border-rose-500/30']">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <i :class="result.success ? 'fas fa-check-circle text-emerald-400' : 'fas fa-times-circle text-rose-400'"></i>
+                                    <span class="font-medium">{{ result.provider }}</span>
+                                </div>
+                                <span class="text-sm" :class="result.success ? 'text-emerald-400' : 'text-rose-400'">
+                                    {{ result.success ? formatLatency(result.latency) : result.error }}
+                                </span>
+                            </div>
+                            <div v-if="result.success && result.response" class="mt-2 text-xs text-gray-400 truncate">
+                                {{ result.response.slice(0, 100) }}{{ result.response.length > 100 ? '...' : '' }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center">
+                    <div class="text-sm text-gray-500">
+                        {{ warmupProviders.filter(p => p.selected).length }} {{ t('providersSelected') }}
+                    </div>
+                    <div class="flex space-x-3">
+                        <button @click="showWarmupModal = false" class="btn-secondary">{{ t('close') }}</button>
+                        <button @click="runWarmup" :disabled="warmupRunning || warmupProviders.filter(p => p.selected).length === 0"
+                                :class="['btn-primary flex items-center space-x-2', warmupRunning ? 'opacity-50 cursor-not-allowed' : '']">
+                            <i :class="warmupRunning ? 'fas fa-spinner fa-spin' : 'fas fa-fire'"></i>
+                            <span>{{ warmupRunning ? t('warming') : t('startWarmup') }}</span>
                         </button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Alert Settings Modal -->
-        <div v-if="showAlertSettings" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50" @click.self="showAlertSettings = false">
-            <div class="bg-gray-800 rounded-lg p-6 w-[450px] border border-gray-700 shadow-xl">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-semibold"><i class="fas fa-bell mr-2"></i>{{ t('alertSettings') }}</h3>
-                    <button @click="showAlertSettings = false" class="text-gray-400 hover:text-white">&times;</button>
-                </div>
-                <div class="space-y-4">
-                    <!-- High Latency Alert -->
-                    <div class="bg-gray-700/50 rounded p-3">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="font-medium">{{ t('highLatencyAlert') }}</span>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" v-model="alerts.highLatency.enabled" class="sr-only peer">
-                                <div class="w-9 h-5 bg-gray-600 peer-checked:bg-green-600 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
-                            </label>
-                        </div>
-                        <div class="flex items-center space-x-2 text-sm">
-                            <span class="text-gray-400">{{ t('threshold') }}:</span>
-                            <input type="number" v-model.number="alerts.highLatency.threshold"
-                                   class="w-20 bg-gray-600 border border-gray-500 rounded px-2 py-1 text-sm">
-                            <span class="text-gray-400">ms</span>
-                        </div>
-                    </div>
-                    <!-- Low Success Rate Alert -->
-                    <div class="bg-gray-700/50 rounded p-3">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="font-medium">{{ t('lowSuccessRateAlert') }}</span>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" v-model="alerts.lowSuccessRate.enabled" class="sr-only peer">
-                                <div class="w-9 h-5 bg-gray-600 peer-checked:bg-green-600 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
-                            </label>
-                        </div>
-                        <div class="flex items-center space-x-2 text-sm">
-                            <span class="text-gray-400">{{ t('threshold') }}:</span>
-                            <input type="number" v-model.number="alerts.lowSuccessRate.threshold" step="0.01" min="0" max="1"
-                                   class="w-20 bg-gray-600 border border-gray-500 rounded px-2 py-1 text-sm">
-                            <span class="text-gray-400">(0-1)</span>
-                        </div>
-                    </div>
-                    <!-- Queue Depth Alert -->
-                    <div class="bg-gray-700/50 rounded p-3">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="font-medium">{{ t('queueDepthAlert') }}</span>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" v-model="alerts.queueDepth.enabled" class="sr-only peer">
-                                <div class="w-9 h-5 bg-gray-600 peer-checked:bg-green-600 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
-                            </label>
-                        </div>
-                        <div class="flex items-center space-x-2 text-sm">
-                            <span class="text-gray-400">{{ t('threshold') }}:</span>
-                            <input type="number" v-model.number="alerts.queueDepth.threshold" min="1"
-                                   class="w-20 bg-gray-600 border border-gray-500 rounded px-2 py-1 text-sm">
-                            <span class="text-gray-400">{{ t('items') }}</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="flex justify-end mt-4">
-                    <button @click="saveAlerts" class="px-4 py-2 bg-blue-600 rounded text-sm hover:bg-blue-700">
-                        {{ t('saveSettings') }}
-                    </button>
-                </div>
-            </div>
-        </div>
-
         <!-- Request Detail Modal -->
-        <div v-if="selectedRequest" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-            <div class="bg-gray-800 rounded-lg p-6 w-2/3 max-w-3xl border border-gray-700 shadow-xl max-h-[80vh] overflow-auto">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-semibold">{{ t('requestDetails') }}</h3>
+        <div v-if="selectedRequest" class="fixed inset-0 modal-backdrop flex items-center justify-center z-50" @click.self="selectedRequest = null">
+            <div class="modal-content p-6 w-[600px] max-h-[80vh] overflow-auto fade-up">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-semibold flex items-center"><i class="fas fa-info-circle text-indigo-400 mr-3"></i>{{ t('requestDetails') }}</h3>
                     <button @click="selectedRequest = null" class="text-gray-400 hover:text-white text-xl">&times;</button>
                 </div>
                 <div class="space-y-4">
-                    <div class="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                            <span class="text-gray-400">{{ t('id') }}:</span>
-                            <span class="ml-2 font-mono text-blue-400">{{ selectedRequest.id }}</span>
-                        </div>
-                        <div>
-                            <span class="text-gray-400">{{ t('provider') }}:</span>
-                            <span class="ml-2">{{ selectedRequest.provider }}</span>
-                        </div>
-                        <div>
-                            <span class="text-gray-400">{{ t('status') }}:</span>
-                            <span class="ml-2" :class="getRequestStatusClass(selectedRequest.status)">{{ selectedRequest.status }}</span>
-                        </div>
-                        <div>
-                            <span class="text-gray-400">{{ t('created') }}:</span>
-                            <span class="ml-2">{{ formatTime(selectedRequest.created_at) }}</span>
-                        </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><span class="text-gray-400 text-sm">{{ t('id') }}:</span><div class="font-mono text-indigo-400">{{ selectedRequest.id }}</div></div>
+                        <div><span class="text-gray-400 text-sm">{{ t('provider') }}:</span><div><span class="badge badge-info">{{ selectedRequest.provider }}</span></div></div>
+                        <div><span class="text-gray-400 text-sm">{{ t('status') }}:</span><div><span :class="getRequestStatusClass(selectedRequest.status)" class="badge">{{ selectedRequest.status }}</span></div></div>
+                        <div><span class="text-gray-400 text-sm">{{ t('created') }}:</span><div>{{ formatTime(selectedRequest.created_at) }}</div></div>
                     </div>
                     <div>
-                        <span class="text-gray-400 block mb-1">{{ t('message') }}:</span>
-                        <pre class="bg-gray-950 rounded p-3 text-sm overflow-auto max-h-32">{{ selectedRequest.message }}</pre>
+                        <span class="text-gray-400 text-sm block mb-2">{{ t('message') }}:</span>
+                        <pre class="bg-gray-900/50 rounded-xl p-4 text-sm overflow-auto max-h-32 font-mono">{{ selectedRequest.message }}</pre>
                     </div>
-                    <div v-if="selectedRequestResponse">
-                        <span class="text-gray-400 block mb-1">{{ t('response') }}:</span>
-                        <pre class="bg-gray-950 rounded p-3 text-sm overflow-auto max-h-64 text-green-300">{{ selectedRequestResponse }}</pre>
+                    <div v-if="selectedRequest.response">
+                        <span class="text-gray-400 text-sm block mb-2">{{ t('response') }}:</span>
+                        <pre class="bg-gray-900/50 rounded-xl p-4 text-sm overflow-auto max-h-48 font-mono text-emerald-300">{{ selectedRequest.response }}</pre>
+                    </div>
+                    <div v-if="selectedRequest.error">
+                        <span class="text-gray-400 text-sm block mb-2">{{ t('error') }}:</span>
+                        <pre class="bg-gray-900/50 rounded-xl p-4 text-sm overflow-auto max-h-32 font-mono text-rose-300">{{ selectedRequest.error }}</pre>
                     </div>
                 </div>
             </div>
@@ -1154,6 +1221,14 @@
                     queueDepth: { enabled: true, threshold: 10 }
                 })));
 
+                // Warmup state
+                const showWarmupModal = ref(false);
+                const warmupRunning = ref(false);
+                const warmupMessage = ref('Hello! Please respond with a brief greeting to confirm you are ready.');
+                const warmupResults = ref([]);
+                const defaultProviderList = ['claude', 'codex', 'gemini', 'opencode', 'iflow', 'kimi', 'qwen', 'deepseek'];
+                const warmupProviders = ref(defaultProviderList.map(name => ({ name, selected: true, status: null })));
+
                 // Cost tracking state
                 const tokenPricing = {
                     claude: { input: 0.003, output: 0.015 },
@@ -1244,12 +1319,22 @@
                         memorySaved: 'Memory Used', clickToDisable: 'Click to disable', clickToEnable: 'Click to enable',
                         failedToToggleProvider: 'Failed to toggle provider',
                         // Phase 8D additions
+                        tokenUsage: 'Token Usage', tokensByProvider: 'Tokens by Provider',
+                        inputTokens: 'Input', outputTokens: 'Output', total: 'Total',
                         estimatedCost: 'Est. Cost', toggleTheme: 'Toggle theme',
                         alertSettings: 'Alert Settings', highLatencyAlert: 'High Latency Alert',
                         lowSuccessRateAlert: 'Low Success Rate Alert', queueDepthAlert: 'Queue Depth Alert',
                         threshold: 'Threshold', items: 'items', saveSettings: 'Save Settings',
                         alertsSaved: 'Alert settings saved', highLatencyDetected: 'High latency detected',
                         lowSuccessRateDetected: 'Low success rate detected', highQueueDepthDetected: 'High queue depth detected',
+                        // Warmup additions
+                        warmup: 'Warmup', warmupAll: 'Warmup All CLIs', warmupAllCLIs: 'Warmup All CLIs',
+                        warmupDescription: 'Send a warmup request to all selected AI providers to initialize their connections and reduce first-request latency.',
+                        warmupMessage: 'Warmup Message', enterWarmupMessage: 'Enter warmup message...',
+                        selectProviders: 'Select Providers', selectAll: 'Select All', deselectAll: 'Deselect All',
+                        providersSelected: 'providers selected', startWarmup: 'Start Warmup', warming: 'Warming...',
+                        warmupResults: 'Results', warmupComplete: 'Warmup complete', warmupFailed: 'Warmup failed',
+                        close: 'Close',
                     },
                     zh: {
                         // Header
@@ -1330,12 +1415,22 @@
                         memorySaved: '内存占用', clickToDisable: '点击禁用', clickToEnable: '点击启用',
                         failedToToggleProvider: '切换提供者状态失败',
                         // Phase 8D additions
+                        tokenUsage: 'Token 用量', tokensByProvider: '各提供者 Token 统计',
+                        inputTokens: '输入', outputTokens: '输出', total: '合计',
                         estimatedCost: '预估成本', toggleTheme: '切换主题',
                         alertSettings: '告警设置', highLatencyAlert: '高延迟告警',
                         lowSuccessRateAlert: '低成功率告警', queueDepthAlert: '队列深度告警',
                         threshold: '阈值', items: '项', saveSettings: '保存设置',
                         alertsSaved: '告警设置已保存', highLatencyDetected: '检测到高延迟',
                         lowSuccessRateDetected: '检测到低成功率', highQueueDepthDetected: '检测到队列深度过高',
+                        // Warmup additions
+                        warmup: '预热', warmupAll: '预热所有 CLI', warmupAllCLIs: '预热所有 CLI',
+                        warmupDescription: '向所有选中的 AI 提供者发送预热请求，初始化连接并减少首次请求延迟。',
+                        warmupMessage: '预热消息', enterWarmupMessage: '输入预热消息...',
+                        selectProviders: '选择提供者', selectAll: '全选', deselectAll: '取消全选',
+                        providersSelected: '个提供者已选中', startWarmup: '开始预热', warming: '预热中...',
+                        warmupResults: '结果', warmupComplete: '预热完成', warmupFailed: '预热失败',
+                        close: '关闭',
                     }
                 };
 
@@ -1405,10 +1500,22 @@
                     })).sort((a, b) => (b.score || 0) - (a.score || 0));
                 });
 
-                // Cost tracking computed properties
+                // Token tracking computed properties
                 const totalTokens = computed(() => {
                     return (status.value.providers || []).reduce((sum, p) => {
                         return sum + (p.total_input_tokens || 0) + (p.total_output_tokens || 0);
+                    }, 0);
+                });
+
+                const totalInputTokens = computed(() => {
+                    return (status.value.providers || []).reduce((sum, p) => {
+                        return sum + (p.total_input_tokens || 0);
+                    }, 0);
+                });
+
+                const totalOutputTokens = computed(() => {
+                    return (status.value.providers || []).reduce((sum, p) => {
+                        return sum + (p.total_output_tokens || 0);
                     }, 0);
                 });
 
@@ -1436,9 +1543,9 @@
                 };
 
                 const getScoreColor = (score) => {
-                    if (score >= 70) return 'bg-green-500';
-                    if (score >= 40) return 'bg-yellow-500';
-                    return 'bg-red-500';
+                    if (score >= 70) return 'bg-emerald-500';
+                    if (score >= 40) return 'bg-amber-500';
+                    return 'bg-rose-500';
                 };
 
                 // WebSocket
@@ -1523,9 +1630,10 @@
                                 datasets: [{
                                     label: 'Requests',
                                     data: [0, 0, 0, 0, 0, 0],
-                                    backgroundColor: 'rgba(59, 130, 246, 0.7)',
-                                    borderColor: 'rgba(59, 130, 246, 1)',
-                                    borderWidth: 1
+                                    backgroundColor: 'rgba(99, 102, 241, 0.7)',
+                                    borderColor: 'rgba(99, 102, 241, 1)',
+                                    borderWidth: 1,
+                                    borderRadius: 6
                                 }]
                             },
                             options: {
@@ -1533,8 +1641,8 @@
                                 maintainAspectRatio: false,
                                 plugins: { legend: { display: false } },
                                 scales: {
-                                    y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' } },
-                                    x: { grid: { display: false } }
+                                    y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } },
+                                    x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
                                 }
                             }
                         });
@@ -1549,18 +1657,20 @@
                                 datasets: [{
                                     data: [0, 0, 0, 0],
                                     backgroundColor: [
-                                        'rgba(34, 197, 94, 0.8)',
-                                        'rgba(239, 68, 68, 0.8)',
-                                        'rgba(59, 130, 246, 0.8)',
-                                        'rgba(234, 179, 8, 0.8)'
-                                    ]
+                                        'rgba(16, 185, 129, 0.8)',
+                                        'rgba(244, 63, 94, 0.8)',
+                                        'rgba(99, 102, 241, 0.8)',
+                                        'rgba(245, 158, 11, 0.8)'
+                                    ],
+                                    borderWidth: 0
                                 }]
                             },
                             options: {
                                 responsive: true,
                                 maintainAspectRatio: false,
+                                cutout: '70%',
                                 plugins: {
-                                    legend: { position: 'bottom', labels: { color: '#9ca3af' } }
+                                    legend: { position: 'bottom', labels: { color: '#9ca3af', padding: 16 } }
                                 }
                             }
                         });
@@ -1584,8 +1694,9 @@
                                         (p.success_rate || 0) * 100,
                                         Math.max(0, 100 - (p.queue_depth || 0) * 10)
                                     ],
-                                    borderColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'][i],
-                                    backgroundColor: ['rgba(59,130,246,0.2)', 'rgba(16,185,129,0.2)', 'rgba(245,158,11,0.2)', 'rgba(239,68,68,0.2)', 'rgba(139,92,246,0.2)'][i],
+                                    borderColor: ['#6366f1', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6'][i],
+                                    backgroundColor: ['rgba(99,102,241,0.15)', 'rgba(16,185,129,0.15)', 'rgba(245,158,11,0.15)', 'rgba(244,63,94,0.15)', 'rgba(139,92,246,0.15)'][i],
+                                    borderWidth: 2
                                 }))
                             },
                             options: {
@@ -1595,7 +1706,7 @@
                                     r: {
                                         beginAtZero: true,
                                         max: 100,
-                                        grid: { color: 'rgba(255,255,255,0.1)' },
+                                        grid: { color: 'rgba(255,255,255,0.05)' },
                                         pointLabels: { color: '#9ca3af' },
                                         ticks: { display: false }
                                     }
@@ -1616,10 +1727,11 @@
                                 datasets: [{
                                     label: 'Requests',
                                     data: [],
-                                    borderColor: '#3b82f6',
-                                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                    borderColor: '#6366f1',
+                                    backgroundColor: 'rgba(99, 102, 241, 0.1)',
                                     fill: true,
-                                    tension: 0.4
+                                    tension: 0.4,
+                                    borderWidth: 2
                                 }]
                             },
                             options: {
@@ -1627,8 +1739,8 @@
                                 maintainAspectRatio: false,
                                 plugins: { legend: { display: false } },
                                 scales: {
-                                    y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' } },
-                                    x: { grid: { display: false } }
+                                    y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } },
+                                    x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
                                 }
                             }
                         });
@@ -1647,8 +1759,9 @@
                             (p.success_rate || 0) * 100,
                             Math.max(0, 100 - (p.queue_depth || 0) * 10)
                         ],
-                        borderColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'][i],
-                        backgroundColor: ['rgba(59,130,246,0.2)', 'rgba(16,185,129,0.2)', 'rgba(245,158,11,0.2)', 'rgba(239,68,68,0.2)', 'rgba(139,92,246,0.2)'][i],
+                        borderColor: ['#6366f1', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6'][i],
+                        backgroundColor: ['rgba(99,102,241,0.15)', 'rgba(16,185,129,0.15)', 'rgba(245,158,11,0.15)', 'rgba(244,63,94,0.15)', 'rgba(139,92,246,0.15)'][i],
+                        borderWidth: 2
                     }));
                     radarChartInstance.update('none');
                 };
@@ -1970,6 +2083,114 @@
                     }
                 };
 
+                // Warmup functions
+                const toggleAllWarmupProviders = () => {
+                    const allSelected = warmupProviders.value.every(p => p.selected);
+                    warmupProviders.value.forEach(p => p.selected = !allSelected);
+                };
+
+                const getWarmupStatusClass = (status) => ({
+                    pending: 'text-gray-400',
+                    running: 'text-amber-400',
+                    success: 'text-emerald-400',
+                    failed: 'text-rose-400'
+                }[status] || 'text-gray-400');
+
+                const getWarmupStatusIcon = (status) => ({
+                    pending: 'fas fa-clock',
+                    running: 'fas fa-spinner fa-spin',
+                    success: 'fas fa-check-circle',
+                    failed: 'fas fa-times-circle'
+                }[status] || 'fas fa-circle');
+
+                const runWarmup = async () => {
+                    warmupRunning.value = true;
+                    warmupResults.value = [];
+
+                    const selectedProviders = warmupProviders.value.filter(p => p.selected);
+
+                    // Reset all statuses
+                    warmupProviders.value.forEach(p => p.status = p.selected ? 'pending' : null);
+
+                    // Run warmup for each selected provider in parallel
+                    const warmupPromises = selectedProviders.map(async (provider) => {
+                        provider.status = 'running';
+                        const startTime = performance.now();
+
+                        try {
+                            const res = await fetch('/api/ask', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    provider: provider.name,
+                                    message: warmupMessage.value,
+                                }),
+                            });
+                            const data = await res.json();
+
+                            if (data.request_id) {
+                                // Poll for result
+                                let attempts = 0;
+                                const pollResult = () => new Promise((resolve) => {
+                                    const check = async () => {
+                                        attempts++;
+                                        try {
+                                            const replyRes = await fetch(`/api/reply/${data.request_id}`);
+                                            if (replyRes.ok) {
+                                                const reply = await replyRes.json();
+                                                if (reply.status === 'completed') {
+                                                    resolve({
+                                                        success: true,
+                                                        latency: reply.latency_ms || (performance.now() - startTime),
+                                                        response: reply.response
+                                                    });
+                                                    return;
+                                                } else if (reply.status === 'failed') {
+                                                    resolve({ success: false, error: reply.error || 'Failed' });
+                                                    return;
+                                                }
+                                            }
+                                        } catch (e) {
+                                            // Continue polling
+                                        }
+                                        if (attempts < 60) setTimeout(check, 1000);
+                                        else resolve({ success: false, error: 'Timeout' });
+                                    };
+                                    setTimeout(check, 500);
+                                });
+
+                                const result = await pollResult();
+                                provider.status = result.success ? 'success' : 'failed';
+                                return { provider: provider.name, ...result };
+                            } else {
+                                provider.status = 'failed';
+                                return { provider: provider.name, success: false, error: data.detail || 'No request ID' };
+                            }
+                        } catch (e) {
+                            provider.status = 'failed';
+                            return { provider: provider.name, success: false, error: e.message };
+                        }
+                    });
+
+                    // Wait for all warmup requests to complete
+                    const results = await Promise.all(warmupPromises);
+                    warmupResults.value = results;
+                    warmupRunning.value = false;
+
+                    const successCount = results.filter(r => r.success).length;
+                    const totalCount = results.length;
+
+                    if (successCount === totalCount) {
+                        showToast('success', `${t('warmupComplete')}: ${successCount}/${totalCount}`);
+                        addLog('success', `Warmup completed: ${successCount}/${totalCount} providers ready`);
+                    } else {
+                        showToast('warn', `${t('warmupComplete')}: ${successCount}/${totalCount}`);
+                        addLog('warn', `Warmup partial: ${successCount}/${totalCount} providers ready`);
+                    }
+
+                    fetchStatus();
+                };
+
                 // Test template functions
                 const saveTemplate = () => {
                     if (!newTemplateName.value.trim()) {
@@ -1990,8 +2211,9 @@
                 };
 
                 const loadTemplate = () => {
-                    if (selectedTemplate.value === '') return;
-                    const tpl = testTemplates.value[selectedTemplate.value];
+                    if (selectedTemplate.value === '' || selectedTemplate.value === null) return;
+                    const index = parseInt(selectedTemplate.value);
+                    const tpl = testTemplates.value[index];
                     if (tpl) {
                         testForm.value.provider = tpl.provider || '';
                         testForm.value.message = tpl.message || '';
@@ -2012,6 +2234,7 @@
                 const toggleTheme = () => {
                     theme.value = theme.value === 'dark' ? 'light' : 'dark';
                     localStorage.setItem('ccb-theme', theme.value);
+                    document.documentElement.className = theme.value;
                 };
 
                 // Provider toggle function
@@ -2195,35 +2418,40 @@
 
                 // Style helpers
                 const getStatusClass = (status) => ({
-                    healthy: 'text-green-400', available: 'text-green-400',
-                    degraded: 'text-yellow-400', unavailable: 'text-red-400', unknown: 'text-gray-400'
+                    healthy: 'text-emerald-400', available: 'text-emerald-400',
+                    degraded: 'text-amber-400', unavailable: 'text-rose-400', unknown: 'text-gray-400'
                 }[status] || 'text-gray-400');
 
                 const getStatusBadgeClass = (status) => ({
-                    healthy: 'bg-green-600/30 text-green-400', available: 'bg-green-600/30 text-green-400',
-                    degraded: 'bg-yellow-600/30 text-yellow-400',
-                    unavailable: 'bg-red-600/30 text-red-400', unknown: 'bg-gray-600/30 text-gray-400'
-                }[status] || 'bg-gray-600/30 text-gray-400');
+                    healthy: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30', 
+                    available: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+                    degraded: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+                    unavailable: 'bg-rose-500/20 text-rose-400 border-rose-500/30', 
+                    unknown: 'bg-gray-500/20 text-gray-400 border-gray-500/30'
+                }[status] || 'bg-gray-500/20 text-gray-400 border-gray-500/30');
 
                 const getRequestStatusClass = (status) => ({
-                    queued: 'text-blue-400', processing: 'text-yellow-400',
-                    completed: 'text-green-400', failed: 'text-red-400',
-                    cancelled: 'text-gray-400', timeout: 'text-orange-400', retrying: 'text-purple-400'
-                }[status] || 'text-gray-400');
+                    queued: 'badge-info', processing: 'badge-warning',
+                    completed: 'badge-success', failed: 'badge-error',
+                    cancelled: 'badge', timeout: 'badge-warning', retrying: 'badge-info'
+                }[status] || 'badge');
 
                 const getStatusDotClass = (status) => ({
-                    queued: 'bg-blue-400', processing: 'bg-yellow-400 pulse-dot',
-                    completed: 'bg-green-400', failed: 'bg-red-400',
-                    cancelled: 'bg-gray-400', timeout: 'bg-orange-400', retrying: 'bg-purple-400'
+                    queued: 'bg-indigo-400', processing: 'bg-amber-400 animate-pulse',
+                    completed: 'bg-emerald-400', failed: 'bg-rose-400',
+                    cancelled: 'bg-gray-400', timeout: 'bg-orange-400', retrying: 'bg-violet-400'
                 }[status] || 'bg-gray-400');
 
                 const getLogClass = (type) => ({
-                    info: 'text-blue-300', success: 'text-green-300',
-                    warn: 'text-yellow-300', error: 'text-red-300'
+                    info: 'text-indigo-300', success: 'text-emerald-300',
+                    warn: 'text-amber-300', error: 'text-rose-300'
                 }[type] || 'text-gray-300');
 
                 // Lifecycle
                 onMounted(() => {
+                    // Initialize theme on page load
+                    document.documentElement.className = theme.value;
+
                     fetchStatus();
                     fetchRequests();
                     fetchApiKeys();
@@ -2270,7 +2498,10 @@
                     toggleProvider, clearCache, cleanupCache,
                     // Phase 8D additions
                     theme, toggleTheme, alerts, showAlertSettings, saveAlerts,
-                    totalTokens, estimatedCost, formatCost, formatNumber, formatBytes,
+                    totalTokens, totalInputTokens, totalOutputTokens, formatNumber, formatBytes,
+                    // Warmup
+                    showWarmupModal, warmupRunning, warmupMessage, warmupResults, warmupProviders,
+                    toggleAllWarmupProviders, getWarmupStatusClass, getWarmupStatusIcon, runWarmup,
                     // Original functions
                     fetchRequests, createKey, toggleKey, deleteKey, cancelRequest, viewRequest,
                     sendTestRequest, exportData, toggleFullscreen, showShortcuts, toasts, showToast,
