@@ -831,6 +831,63 @@
                         <p class="text-xs text-gray-500">{{ t('interactiveApi') }}</p>
                     </div>
                 </div>
+
+                <!-- CLI Reference Section -->
+                <div class="glass-card p-6">
+                    <h2 class="text-lg font-semibold flex items-center mb-6"><i class="fas fa-terminal text-cyan-400 mr-3"></i>{{ t('cliReference') }}</h2>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Async Workflow -->
+                        <div class="bg-gray-800/50 rounded-xl p-5 border border-gray-700/50">
+                            <h3 class="font-medium text-emerald-400 mb-4 flex items-center"><i class="fas fa-bolt mr-2"></i>{{ t('asyncWorkflow') }}</h3>
+                            <div class="space-y-3 font-mono text-sm">
+                                <div class="bg-gray-900/50 rounded-lg p-3">
+                                    <div class="text-gray-400 text-xs mb-1"># Submit request (returns immediately)</div>
+                                    <div class="text-cyan-300">ccb-submit &lt;provider&gt; "message"</div>
+                                </div>
+                                <div class="bg-gray-900/50 rounded-lg p-3">
+                                    <div class="text-gray-400 text-xs mb-1"># {{ t('checkStatus') }}</div>
+                                    <div class="text-cyan-300">ccb-query status &lt;request_id&gt;</div>
+                                </div>
+                                <div class="bg-gray-900/50 rounded-lg p-3">
+                                    <div class="text-gray-400 text-xs mb-1"># {{ t('getResponse') }}</div>
+                                    <div class="text-cyan-300">ccb-query get &lt;request_id&gt;</div>
+                                </div>
+                                <div class="bg-gray-900/50 rounded-lg p-3">
+                                    <div class="text-gray-400 text-xs mb-1"># {{ t('listPending') }}</div>
+                                    <div class="text-cyan-300">ccb-query pending</div>
+                                </div>
+                                <div class="bg-gray-900/50 rounded-lg p-3">
+                                    <div class="text-gray-400 text-xs mb-1"># {{ t('getLatest') }}</div>
+                                    <div class="text-cyan-300">ccb-query latest --provider &lt;name&gt;</div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Provider Commands -->
+                        <div class="bg-gray-800/50 rounded-xl p-5 border border-gray-700/50">
+                            <h3 class="font-medium text-purple-400 mb-4 flex items-center"><i class="fas fa-server mr-2"></i>Provider Commands</h3>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm">
+                                    <thead>
+                                        <tr class="text-gray-400 text-xs">
+                                            <th class="text-left py-2">Provider</th>
+                                            <th class="text-left py-2">{{ t('blockingCall') }}</th>
+                                            <th class="text-left py-2">{{ t('pingProvider') }}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="font-mono text-cyan-300">
+                                        <tr class="border-t border-gray-700/50"><td class="py-2 text-white">Codex</td><td>cask</td><td>cping</td></tr>
+                                        <tr class="border-t border-gray-700/50"><td class="py-2 text-white">Gemini</td><td>gask</td><td>gping</td></tr>
+                                        <tr class="border-t border-gray-700/50"><td class="py-2 text-white">OpenCode</td><td>oask</td><td>oping</td></tr>
+                                        <tr class="border-t border-gray-700/50"><td class="py-2 text-white">iFlow</td><td>iask</td><td>iping</td></tr>
+                                        <tr class="border-t border-gray-700/50"><td class="py-2 text-white">Kimi</td><td>kask</td><td>kping</td></tr>
+                                        <tr class="border-t border-gray-700/50"><td class="py-2 text-white">Qwen</td><td>qask</td><td>qping</td></tr>
+                                        <tr class="border-t border-gray-700/50"><td class="py-2 text-white">DeepSeek</td><td>dskask</td><td>dskping</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Compare Tab -->
@@ -1313,6 +1370,9 @@
                         // Config tab
                         authentication: 'Authentication', rateLimiting: 'Rate Limiting', retryFallback: 'Retry & Fallback',
                         cacheStats: 'Cache Statistics', prometheusMetrics: 'Prometheus Metrics', apiDocs: 'API Documentation',
+                        cliReference: 'CLI Reference', asyncWorkflow: 'Async Workflow', blockingCall: 'Blocking Call',
+                        checkStatus: 'Check Status', getResponse: 'Get Response', listPending: 'List Pending',
+                        getLatest: 'Get Latest', pingProvider: 'Ping Provider',
                         requestsPerMin: 'Requests/min', burstSize: 'Burst Size', retryEnabled: 'Retry Enabled',
                         maxRetries: 'Max Retries', fallbackEnabled: 'Fallback Enabled', misses: 'Misses',
                         totalEntries: 'Total Entries', tokensSaved: 'Tokens Saved', viewRawMetrics: 'View Raw Metrics',
@@ -1409,6 +1469,9 @@
                         // Config tab
                         authentication: '认证', rateLimiting: '速率限制', retryFallback: '重试与降级',
                         cacheStats: '缓存统计', prometheusMetrics: 'Prometheus 指标', apiDocs: 'API 文档',
+                        cliReference: 'CLI 命令参考', asyncWorkflow: '异步工作流', blockingCall: '阻塞调用',
+                        checkStatus: '检查状态', getResponse: '获取响应', listPending: '列出待处理',
+                        getLatest: '获取最新', pingProvider: '检查连接',
                         requestsPerMin: '每分钟请求数', burstSize: '突发大小', retryEnabled: '重试启用',
                         maxRetries: '最大重试次数', fallbackEnabled: '降级启用', misses: '未命中',
                         totalEntries: '总条目', tokensSaved: '节省 Token', viewRawMetrics: '查看原始指标',
