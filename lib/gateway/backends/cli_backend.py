@@ -122,6 +122,18 @@ class CLIBackend(BaseBackend):
         super().__init__(config)
         self._cli_path: Optional[str] = None
 
+    async def _ensure_gemini_token(self) -> None:
+        """Ensure Gemini OAuth token is valid, refresh if needed."""
+        try:
+            from ..gemini_auth import ensure_valid_token
+            success, msg = ensure_valid_token()
+            if not success:
+                print(f"[CCB] Gemini token refresh warning: {msg}")
+        except ImportError:
+            pass  # gemini_auth module not available
+        except Exception as e:
+            print(f"[CCB] Gemini token check error: {e}")
+
     def _find_cli(self) -> Optional[str]:
         """Find the CLI executable."""
         if self._cli_path:
@@ -170,6 +182,10 @@ class CLIBackend(BaseBackend):
             )
 
         try:
+            # For Gemini, ensure OAuth token is valid before executing
+            if self.config.name == "gemini":
+                await self._ensure_gemini_token()
+
             cmd = self._build_command(request.message)
 
             # Set up environment for non-interactive execution
@@ -183,8 +199,11 @@ class CLIBackend(BaseBackend):
             # Enable by default for Gemini since it requires TTY
             use_pty = os.environ.get("CCB_CLI_USE_PTY", "0").lower() in ("1", "true", "yes")
 
-            # For Gemini, use WezTerm execution since it requires real TTY
-            if self.config.name == "gemini":
+            # For Gemini with -p flag, use regular subprocess (no TTY needed)
+            # WezTerm mode is only for interactive Gemini sessions
+            use_wezterm_for_gemini = os.environ.get("CCB_GEMINI_USE_WEZTERM", "0").lower() in ("1", "true", "yes")
+
+            if self.config.name == "gemini" and use_wezterm_for_gemini:
                 debug = os.environ.get("CCB_DEBUG", "0").lower() in ("1", "true", "yes")
                 if debug:
                     print(f"[CCB] Using WezTerm for Gemini, cmd: {cmd}")
