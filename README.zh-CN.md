@@ -23,9 +23,9 @@
   <a href="#-特性">特性</a> •
   <a href="#-快速开始">快速开始</a> •
   <a href="#-ccb-cli">ccb-cli</a> •
+  <a href="#-多-ai-讨论">多AI讨论</a> •
   <a href="#-web-ui">Web UI</a> •
-  <a href="#-api-参考">API</a> •
-  <a href="#-模型切换">模型切换</a>
+  <a href="#-api-参考">API</a>
 </p>
 
 <p align="center">
@@ -79,6 +79,7 @@
 | 无法观察 AI 操作 | **实时监控**，WebSocket + Web UI |
 | 无缓存或重试逻辑 | **内置缓存、重试和降级链** |
 | 看不到 AI 思考过程 | **思考链 & 原始输出捕获** |
+| 无法多 AI 协作讨论 | **多 AI 讨论**，支持多轮迭代 |
 
 ---
 
@@ -102,6 +103,39 @@ ccb-cli <provider> [model] <prompt>
 | **iFlow** | thinking, normal | `ccb-cli iflow "工作流任务"` |
 | **Qwen** | - | `ccb-cli qwen "代码生成"` |
 
+### 🆕 多 AI 讨论 (v0.12)
+
+编排多个 AI Provider 进行协作讨论：
+
+```bash
+# 启动讨论
+ccb-discussion "设计一个分布式缓存系统"
+
+# 指定 Provider
+ccb-discussion -p kimi,qwen,deepseek "API 设计最佳实践"
+
+# 快速模式（2 轮）
+ccb-discussion --quick "代码审查方法"
+
+# 等待完成
+ccb-discussion -w "架构决策"
+```
+
+**讨论流程：**
+```
+第 1 轮: 提案      →   第 2 轮: 互评      →   第 3 轮: 修订
+┌─────────────┐         ┌─────────────┐         ┌─────────────┐
+│ 所有 AI     │   ───►  │ 所有 AI     │   ───►  │ 根据反馈   │
+│ 提出方案    │         │ 互相评审    │         │ 修订方案   │
+└─────────────┘         └─────────────┘         └─────────────┘
+                              │
+                              ▼
+                    ┌─────────────────┐
+                    │ Claude 汇总     │
+                    │ 共识/分歧点     │
+                    └─────────────────┘
+```
+
 ### 核心网关
 
 - **REST API** - `POST /api/ask`, `GET /api/reply/{id}`, `GET /api/status`
@@ -117,6 +151,8 @@ ccb-cli <provider> [model] <prompt>
 - **响应缓存** - SQLite 缓存，支持 TTL 和模式排除
 - **重试与降级** - 指数退避，自动 Provider 降级
 - **并行查询** - 同时查询多个 Provider
+- **多 AI 讨论** - 迭代式协作讨论
+- **统一结果 API** - 统一查询所有 AI 响应
 - **Prometheus 指标** - `/metrics` 端点用于监控
 - **流式响应** - Server-Sent Events 实时响应
 
@@ -240,6 +276,79 @@ ccb-cli iflow thinking "..."    # GLM 带思考
 
 ---
 
+## 🗣️ 多 AI 讨论
+
+### 概述
+
+讨论功能实现真正的多 AI 协作，所有 Provider 能看到并回应彼此的观点，形成多轮迭代讨论。
+
+### CLI 用法
+
+```bash
+# 基本讨论
+ccb-discussion "设计一个微服务架构"
+
+# 指定 Provider
+ccb-discussion -p kimi,qwen,deepseek "最佳缓存策略"
+
+# 快速模式（2 轮，更短超时）
+ccb-discussion --quick "代码审查规范"
+
+# 等待完成并显示结果
+ccb-discussion -w "API 版本控制方案"
+
+# 检查已有讨论的状态
+ccb-discussion -s <session_id>
+
+# 列出最近的讨论
+ccb-discussion -l
+```
+
+### API 用法
+
+```bash
+# 通过 API 启动讨论
+curl -X POST http://localhost:8765/api/discussion/start \
+  -H "Content-Type: application/json" \
+  -d '{"topic": "设计分布式缓存", "provider_group": "@coding"}'
+
+# 获取讨论状态
+curl http://localhost:8765/api/discussion/{session_id}
+
+# 获取讨论的所有消息
+curl http://localhost:8765/api/discussion/{session_id}/messages
+
+# 列出所有讨论
+curl http://localhost:8765/api/discussions
+
+# 获取统一结果（请求 + 讨论）
+curl http://localhost:8765/api/results
+```
+
+### 讨论轮次
+
+| 轮次 | 类型 | 描述 |
+|------|------|------|
+| 1 | **提案** | 每个 AI 提供初始分析/方案 |
+| 2 | **互评** | 每个 AI 评审其他人的方案，给出反馈 |
+| 3 | **修订** | 每个 AI 根据收到的反馈修订方案 |
+| 最终 | **汇总** | 编排者综合共识和分歧点 |
+
+### Provider 分组
+
+```bash
+# 所有可用 Provider
+ccb-discussion -g @all "话题"
+
+# 仅快速 Provider（Kimi, Qwen）
+ccb-discussion -g @fast "话题"
+
+# 代码相关（Kimi, Qwen, DeepSeek, Codex, Gemini）
+ccb-discussion -g @coding "话题"
+```
+
+---
+
 ## 🖥️ Web UI
 
 启动 Gateway 后访问 `http://localhost:8765/`。
@@ -287,6 +396,9 @@ ccb-cli iflow thinking "..."    # GLM 带思考
 | `GET` | `/api/reply/{id}` | 获取响应 |
 | `GET` | `/api/status` | 网关状态 |
 | `GET` | `/api/requests` | 列出请求 |
+| `POST` | `/api/discussion/start` | 启动多 AI 讨论 |
+| `GET` | `/api/discussion/{id}` | 获取讨论状态 |
+| `GET` | `/api/results` | 统一结果查询 |
 | `GET` | `/metrics` | Prometheus 指标 |
 
 ### Provider 分组
@@ -368,7 +480,14 @@ ccb-cli kimi "你好"
 
 ## 🔄 最近更新
 
-### v0.11.x - ccb-cli & 模型切换（最新）
+### v0.12.x - 多 AI 讨论（最新）
+- **讨论执行器** - 编排多轮 AI 讨论
+- **3 轮流程** - 提案 → 互评 → 修订 → 汇总
+- **ccb-discussion CLI** - 讨论命令行界面
+- **统一结果 API** - 统一查询所有 AI 响应
+- **WebSocket 事件** - 实时讨论进度
+
+### v0.11.x - ccb-cli & 模型切换
 - **ccb-cli** - 直接 CLI 工具，支持模型选择
 - **模型快捷方式** - `o3`, `3f`, `mm`, `reasoner`, `thinking`
 - **expect 脚本** - 自动化 CLI 交互

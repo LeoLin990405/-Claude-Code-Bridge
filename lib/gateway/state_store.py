@@ -19,6 +19,11 @@ from .models import (
     ProviderInfo,
     ProviderStatus,
     BackendType,
+    DiscussionStatus,
+    DiscussionSession,
+    DiscussionMessage,
+    DiscussionConfig,
+    MessageType,
 )
 
 
@@ -152,6 +157,51 @@ class StateStore:
             conn.execute("CREATE INDEX IF NOT EXISTS idx_responses_request ON responses(request_id)")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_metrics_provider ON metrics(provider)")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_metrics_timestamp ON metrics(timestamp)")
+
+            # Initialize discussion tables
+            self._init_discussion_tables(conn)
+
+    def _init_discussion_tables(self, conn: sqlite3.Connection) -> None:
+        """Initialize discussion-related tables."""
+        # Discussion sessions table
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS discussion_sessions (
+                id TEXT PRIMARY KEY,
+                topic TEXT NOT NULL,
+                status TEXT NOT NULL DEFAULT 'pending',
+                current_round INTEGER DEFAULT 0,
+                providers TEXT NOT NULL,
+                config TEXT,
+                created_at REAL NOT NULL,
+                updated_at REAL NOT NULL,
+                summary TEXT,
+                metadata TEXT
+            )
+        """)
+
+        # Discussion messages table
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS discussion_messages (
+                id TEXT PRIMARY KEY,
+                session_id TEXT NOT NULL,
+                round_number INTEGER NOT NULL,
+                provider TEXT NOT NULL,
+                message_type TEXT NOT NULL,
+                content TEXT,
+                references_messages TEXT,
+                latency_ms REAL,
+                status TEXT DEFAULT 'pending',
+                created_at REAL NOT NULL,
+                metadata TEXT,
+                FOREIGN KEY (session_id) REFERENCES discussion_sessions(id)
+            )
+        """)
+
+        # Create indexes for discussion tables
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_discussion_sessions_status ON discussion_sessions(status)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_discussion_sessions_created ON discussion_sessions(created_at)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_discussion_messages_session ON discussion_messages(session_id)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_discussion_messages_round ON discussion_messages(session_id, round_number)")
 
     # ==================== Request Operations ====================
 
@@ -550,3 +600,397 @@ class StateStore:
                 "status_counts": status_counts,
                 "queue_depths": queue_depths,
             }
+
+    # ==================== Discussion Operations ====================
+
+    def create_discussion_session(self, session: DiscussionSession) -> DiscussionSession:
+        """Create a new discussion session."""
+        with self._get_connection() as conn:
+            conn.execute("""
+                INSERT INTO discussion_sessions (
+                    id, topic, status, current_round, providers,
+                    config, created_at, updated_at, summary, metadata
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                session.id,
+                session.topic,
+                session.status.value,
+                session.current_round,
+                json.dumps(session.providers),
+                json.dumps(session.config.to_dict()),
+                session.created_at,
+                session.updated_at,
+                session.summary,
+                json.dumps(session.metadata) if session.metadata else None,
+            ))
+        return session
+
+    def get_discussion_session(self, session_id: str) -> Optional[DiscussionSession]:
+        """Get a discussion session by ID."""
+        with self._get_connection() as conn:
+            cursor = conn.execute(
+                "SELECT * FROM discussion_sessions WHERE id = ?",
+                (session_id,)
+            )
+            row = cursor.fetchone()
+            if row:
+                return self._row_to_discussion_session(row)
+        return None
+
+    def update_discussion_session(
+        self,
+        session_id: str,
+        status: Optional[DiscussionStatus] = None,
+        current_round: Optional[int] = None,
+        summary: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> bool:
+        """Update a discussion session."""
+        now = time.time()
+        updates = ["updated_at = ?"]
+        params: List[Any] = [now]
+
+        if status is not None:
+            updates.append("status = ?")
+            params.append(status.value)
+
+        if current_round is not None:
+            updates.append("current_round = ?")
+            params.append(current_round)
+
+        if summary is not None:
+            updates.append("summary = ?")
+            params.append(summary)
+
+        if metadata is not None:
+            updates.append("metadata = ?")
+            params.append(json.dumps(metadata))
+
+        params.append(session_id)
+
+        with self._get_connection() as conn:
+            cursor = conn.execute(
+                f"UPDATE discussion_sessions SET {', '.join(updates)} WHERE id = ?",
+                params
+            )
+            return cursor.rowcount > 0
+
+    def list_discussion_sessions(
+        self,
+        status: Optional[DiscussionStatus] = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> List[DiscussionSession]:
+        """List discussion sessions with optional filtering."""
+        query = "SELECT * FROM discussion_sessions WHERE 1=1"
+        params: List[Any] = []
+
+        if status:
+            query += " AND status = ?"
+            params.append(status.value)
+
+        query += " ORDER BY created_at DESC LIMIT ? OFFSET ?"
+        params.extend([limit, offset])
+
+        with self._get_connection() as conn:
+            cursor = conn.execute(query, params)
+            return [self._row_to_discussion_session(row) for row in cursor.fetchall()]
+
+    def delete_discussion_session(self, session_id: str) -> bool:
+        """Delete a discussion session and its messages."""
+        with self._get_connection() as conn:
+            # Delete messages first
+            conn.execute(
+                "DELETE FROM discussion_messages WHERE session_id = ?",
+                (session_id,)
+            )
+            # Delete session
+            cursor = conn.execute(
+                "DELETE FROM discussion_sessions WHERE id = ?",
+                (session_id,)
+            )
+            return cursor.rowcount > 0
+
+    def _row_to_discussion_session(self, row: sqlite3.Row) -> DiscussionSession:
+        """Convert database row to DiscussionSession."""
+        return DiscussionSession(
+            id=row["id"],
+            topic=row["topic"],
+            status=DiscussionStatus(row["status"]),
+            current_round=row["current_round"],
+            providers=json.loads(row["providers"]),
+            config=DiscussionConfig.from_dict(json.loads(row["config"])) if row["config"] else DiscussionConfig(),
+            created_at=row["created_at"],
+            updated_at=row["updated_at"],
+            summary=row["summary"],
+            metadata=json.loads(row["metadata"]) if row["metadata"] else None,
+        )
+
+    # ==================== Discussion Message Operations ====================
+
+    def create_discussion_message(self, message: DiscussionMessage) -> DiscussionMessage:
+        """Create a new discussion message."""
+        with self._get_connection() as conn:
+            conn.execute("""
+                INSERT INTO discussion_messages (
+                    id, session_id, round_number, provider, message_type,
+                    content, references_messages, latency_ms, status,
+                    created_at, metadata
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                message.id,
+                message.session_id,
+                message.round_number,
+                message.provider,
+                message.message_type.value,
+                message.content,
+                json.dumps(message.references_messages) if message.references_messages else None,
+                message.latency_ms,
+                message.status,
+                message.created_at,
+                json.dumps(message.metadata) if message.metadata else None,
+            ))
+        return message
+
+    def update_discussion_message(
+        self,
+        message_id: str,
+        content: Optional[str] = None,
+        status: Optional[str] = None,
+        latency_ms: Optional[float] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> bool:
+        """Update a discussion message."""
+        updates = []
+        params: List[Any] = []
+
+        if content is not None:
+            updates.append("content = ?")
+            params.append(content)
+
+        if status is not None:
+            updates.append("status = ?")
+            params.append(status)
+
+        if latency_ms is not None:
+            updates.append("latency_ms = ?")
+            params.append(latency_ms)
+
+        if metadata is not None:
+            updates.append("metadata = ?")
+            params.append(json.dumps(metadata))
+
+        if not updates:
+            return False
+
+        params.append(message_id)
+
+        with self._get_connection() as conn:
+            cursor = conn.execute(
+                f"UPDATE discussion_messages SET {', '.join(updates)} WHERE id = ?",
+                params
+            )
+            return cursor.rowcount > 0
+
+    def get_discussion_messages(
+        self,
+        session_id: str,
+        round_number: Optional[int] = None,
+        provider: Optional[str] = None,
+        message_type: Optional[MessageType] = None,
+    ) -> List[DiscussionMessage]:
+        """Get discussion messages with optional filtering."""
+        query = "SELECT * FROM discussion_messages WHERE session_id = ?"
+        params: List[Any] = [session_id]
+
+        if round_number is not None:
+            query += " AND round_number = ?"
+            params.append(round_number)
+
+        if provider is not None:
+            query += " AND provider = ?"
+            params.append(provider)
+
+        if message_type is not None:
+            query += " AND message_type = ?"
+            params.append(message_type.value)
+
+        query += " ORDER BY round_number ASC, created_at ASC"
+
+        with self._get_connection() as conn:
+            cursor = conn.execute(query, params)
+            return [self._row_to_discussion_message(row) for row in cursor.fetchall()]
+
+    def _row_to_discussion_message(self, row: sqlite3.Row) -> DiscussionMessage:
+        """Convert database row to DiscussionMessage."""
+        return DiscussionMessage(
+            id=row["id"],
+            session_id=row["session_id"],
+            round_number=row["round_number"],
+            provider=row["provider"],
+            message_type=MessageType(row["message_type"]),
+            content=row["content"],
+            references_messages=json.loads(row["references_messages"]) if row["references_messages"] else None,
+            latency_ms=row["latency_ms"],
+            status=row["status"],
+            created_at=row["created_at"],
+            metadata=json.loads(row["metadata"]) if row["metadata"] else None,
+        )
+
+    def cleanup_old_discussions(self, max_age_hours: int = 168) -> int:
+        """Remove discussions older than specified age (default 7 days)."""
+        cutoff = time.time() - (max_age_hours * 3600)
+        with self._get_connection() as conn:
+            # Delete messages first
+            conn.execute("""
+                DELETE FROM discussion_messages
+                WHERE session_id IN (
+                    SELECT id FROM discussion_sessions WHERE created_at < ?
+                )
+            """, (cutoff,))
+            # Delete sessions
+            cursor = conn.execute(
+                "DELETE FROM discussion_sessions WHERE created_at < ?",
+                (cutoff,)
+            )
+            return cursor.rowcount
+
+    # ==================== Unified Results Query ====================
+
+    def get_latest_results(
+        self,
+        provider: Optional[str] = None,
+        limit: int = 10,
+        include_discussions: bool = True,
+    ) -> List[Dict[str, Any]]:
+        """
+        Get latest results from all sources (requests + discussions) for Claude to read.
+
+        Returns unified format:
+        {
+            "id": str,
+            "type": "request" | "discussion",
+            "provider": str,
+            "query": str,  # original message/topic
+            "response": str,
+            "status": str,
+            "created_at": float,
+            "latency_ms": float,
+            "metadata": dict
+        }
+        """
+        results = []
+
+        with self._get_connection() as conn:
+            # Get recent request responses
+            query = """
+                SELECT r.id, r.provider, r.message, r.status, r.created_at,
+                       resp.response, resp.latency_ms, resp.metadata, resp.thinking
+                FROM requests r
+                LEFT JOIN responses resp ON r.id = resp.request_id
+                WHERE r.status IN ('completed', 'failed')
+            """
+            params: List[Any] = []
+
+            if provider:
+                query += " AND r.provider = ?"
+                params.append(provider)
+
+            query += " ORDER BY r.created_at DESC LIMIT ?"
+            params.append(limit)
+
+            cursor = conn.execute(query, params)
+            for row in cursor.fetchall():
+                results.append({
+                    "id": row["id"],
+                    "type": "request",
+                    "provider": row["provider"],
+                    "query": row["message"][:200] + "..." if len(row["message"] or "") > 200 else row["message"],
+                    "response": row["response"],
+                    "status": row["status"],
+                    "created_at": row["created_at"],
+                    "latency_ms": row["latency_ms"],
+                    "thinking": row["thinking"] if "thinking" in row.keys() else None,
+                    "metadata": json.loads(row["metadata"]) if row["metadata"] else None,
+                })
+
+            # Get recent discussion summaries
+            if include_discussions:
+                disc_query = """
+                    SELECT id, topic, status, providers, summary, created_at, updated_at
+                    FROM discussion_sessions
+                    WHERE status IN ('completed', 'failed')
+                    ORDER BY created_at DESC
+                    LIMIT ?
+                """
+                cursor = conn.execute(disc_query, (limit,))
+                for row in cursor.fetchall():
+                    results.append({
+                        "id": row["id"],
+                        "type": "discussion",
+                        "provider": json.loads(row["providers"]) if row["providers"] else [],
+                        "query": row["topic"],
+                        "response": row["summary"],
+                        "status": row["status"],
+                        "created_at": row["created_at"],
+                        "latency_ms": (row["updated_at"] - row["created_at"]) * 1000 if row["updated_at"] else None,
+                        "metadata": {"providers": json.loads(row["providers"]) if row["providers"] else []},
+                    })
+
+        # Sort by created_at descending
+        results.sort(key=lambda x: x["created_at"], reverse=True)
+        return results[:limit]
+
+    def get_result_by_id(self, result_id: str) -> Optional[Dict[str, Any]]:
+        """Get a specific result by ID (request or discussion)."""
+        # Try request first
+        with self._get_connection() as conn:
+            cursor = conn.execute("""
+                SELECT r.id, r.provider, r.message, r.status, r.created_at,
+                       resp.response, resp.error, resp.latency_ms, resp.metadata,
+                       resp.thinking, resp.raw_output
+                FROM requests r
+                LEFT JOIN responses resp ON r.id = resp.request_id
+                WHERE r.id = ?
+            """, (result_id,))
+            row = cursor.fetchone()
+            if row:
+                return {
+                    "id": row["id"],
+                    "type": "request",
+                    "provider": row["provider"],
+                    "query": row["message"],
+                    "response": row["response"],
+                    "error": row["error"],
+                    "status": row["status"],
+                    "created_at": row["created_at"],
+                    "latency_ms": row["latency_ms"],
+                    "thinking": row["thinking"] if "thinking" in row.keys() else None,
+                    "raw_output": row["raw_output"] if "raw_output" in row.keys() else None,
+                    "metadata": json.loads(row["metadata"]) if row["metadata"] else None,
+                }
+
+            # Try discussion
+            cursor = conn.execute("""
+                SELECT id, topic, status, providers, summary, created_at, updated_at, metadata
+                FROM discussion_sessions
+                WHERE id = ?
+            """, (result_id,))
+            row = cursor.fetchone()
+            if row:
+                # Also get all messages
+                messages = self.get_discussion_messages(result_id)
+                return {
+                    "id": row["id"],
+                    "type": "discussion",
+                    "provider": json.loads(row["providers"]) if row["providers"] else [],
+                    "query": row["topic"],
+                    "response": row["summary"],
+                    "status": row["status"],
+                    "created_at": row["created_at"],
+                    "latency_ms": (row["updated_at"] - row["created_at"]) * 1000 if row["updated_at"] else None,
+                    "messages": [m.to_dict() for m in messages],
+                    "metadata": json.loads(row["metadata"]) if row["metadata"] else None,
+                }
+
+        return None

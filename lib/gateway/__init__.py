@@ -43,11 +43,18 @@ from .models import (
     ProviderInfo,
     GatewayStats,
     WebSocketEvent,
+    # Discussion models
+    DiscussionStatus,
+    DiscussionSession,
+    DiscussionMessage,
+    DiscussionConfig,
+    MessageType,
 )
 from .state_store import StateStore
 from .request_queue import RequestQueue, AsyncRequestQueue
 from .gateway_config import GatewayConfig, ProviderConfig
 from .gateway_server import GatewayServer, run_gateway
+from .discussion import DiscussionExecutor, DiscussionPromptBuilder
 
 __all__ = [
     # Models
@@ -59,6 +66,12 @@ __all__ = [
     "ProviderInfo",
     "GatewayStats",
     "WebSocketEvent",
+    # Discussion models
+    "DiscussionStatus",
+    "DiscussionSession",
+    "DiscussionMessage",
+    "DiscussionConfig",
+    "MessageType",
     # Storage
     "StateStore",
     # Queue
@@ -70,4 +83,7 @@ __all__ = [
     # Server
     "GatewayServer",
     "run_gateway",
+    # Discussion
+    "DiscussionExecutor",
+    "DiscussionPromptBuilder",
 ]

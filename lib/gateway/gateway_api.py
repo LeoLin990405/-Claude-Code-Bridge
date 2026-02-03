@@ -32,6 +32,11 @@ from .models import (
     GatewayResponse,
     GatewayStats,
     WebSocketEvent,
+    DiscussionStatus,
+    DiscussionSession,
+    DiscussionMessage,
+    DiscussionConfig,
+    MessageType,
 )
 from .state_store import StateStore
 from .request_queue import RequestQueue
@@ -118,6 +123,40 @@ if HAS_FASTAPI:
         rate_limit_rpm: Optional[int] = None
         enabled: bool = True
 
+    # ==================== Discussion API Models ====================
+
+    class StartDiscussionRequest(BaseModel):
+        """Request body for starting a discussion."""
+        topic: str = Field(..., description="The discussion topic")
+        providers: Optional[List[str]] = Field(None, description="List of providers or None for default")
+        provider_group: Optional[str] = Field(None, description="Provider group like @all, @fast, @coding")
+        max_rounds: int = Field(3, description="Maximum discussion rounds (1-3)")
+        round_timeout_s: float = Field(120.0, description="Timeout per round in seconds")
+        provider_timeout_s: float = Field(60.0, description="Timeout per provider in seconds")
+        run_async: bool = Field(True, description="Run discussion asynchronously")
+
+    class DiscussionResponse(BaseModel):
+        """Response body for discussion operations."""
+        session_id: str
+        topic: str
+        status: str
+        current_round: int
+        providers: List[str]
+        created_at: float
+        summary: Optional[str] = None
+
+    class DiscussionMessageResponse(BaseModel):
+        """Response body for a discussion message."""
+        id: str
+        session_id: str
+        round_number: int
+        provider: str
+        message_type: str
+        content: Optional[str] = None
+        status: str
+        latency_ms: Optional[float] = None
+        created_at: float
+
 
 class WebSocketManager:
     """Manages WebSocket connections for real-time updates."""
@@ -175,6 +214,7 @@ def create_api(
     rate_limiter=None,
     metrics=None,
     api_key_store=None,
+    discussion_executor=None,
 ) -> "FastAPI":
     """
     Create the FastAPI application with all routes.
@@ -192,6 +232,7 @@ def create_api(
         rate_limiter: Optional rate limiter instance
         metrics: Optional metrics collector instance
         api_key_store: Optional API key store instance
+        discussion_executor: Optional discussion executor instance
 
     Returns:
         Configured FastAPI application
@@ -830,6 +871,197 @@ def create_api(
             "allow_localhost": config.auth.allow_localhost,
             "public_paths": config.auth.public_paths,
         }
+
+    # ==================== Discussion Endpoints ====================
+
+    @app.post("/api/discussion/start", response_model=DiscussionResponse)
+    async def start_discussion(request: StartDiscussionRequest) -> DiscussionResponse:
+        """
+        Start a new multi-AI discussion session.
+
+        Supports:
+        - Explicit provider list: providers=["kimi", "qwen", "deepseek"]
+        - Provider groups: provider_group="@all", "@fast", "@coding"
+        """
+        if not discussion_executor:
+            raise HTTPException(
+                status_code=400,
+                detail="Discussion feature not enabled",
+            )
+
+        # Resolve providers
+        providers = request.providers
+        if not providers and request.provider_group:
+            providers = discussion_executor.resolve_provider_group(request.provider_group)
+
+        if not providers:
+            # Default to all available providers
+            providers = list(discussion_executor.backends.keys())
+
+        if len(providers) < 2:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Need at least 2 providers for discussion, got {len(providers)}",
+            )
+
+        # Create config
+        disc_config = DiscussionConfig(
+            max_rounds=min(request.max_rounds, 3),
+            round_timeout_s=request.round_timeout_s,
+            provider_timeout_s=request.provider_timeout_s,
+        )
+
+        try:
+            # Start session
+            session = await discussion_executor.start_discussion(
+                topic=request.topic,
+                providers=providers,
+                config=disc_config,
+            )
+
+            # Run discussion asynchronously if requested
+            if request.run_async:
+                asyncio.create_task(
+                    discussion_executor.run_full_discussion(session.id)
+                )
+
+            return DiscussionResponse(
+                session_id=session.id,
+                topic=session.topic,
+                status=session.status.value,
+                current_round=session.current_round,
+                providers=session.providers,
+                created_at=session.created_at,
+                summary=session.summary,
+            )
+
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to start discussion: {e}")
+
+    @app.get("/api/discussion/{session_id}", response_model=DiscussionResponse)
+    async def get_discussion(session_id: str) -> DiscussionResponse:
+        """Get discussion session status and details."""
+        session = store.get_discussion_session(session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Discussion not found")
+
+        return DiscussionResponse(
+            session_id=session.id,
+            topic=session.topic,
+            status=session.status.value,
+            current_round=session.current_round,
+            providers=session.providers,
+            created_at=session.created_at,
+            summary=session.summary,
+        )
+
+    @app.get("/api/discussion/{session_id}/messages")
+    async def get_discussion_messages(
+        session_id: str,
+        round_number: Optional[int] = Query(None, description="Filter by round number"),
+        provider: Optional[str] = Query(None, description="Filter by provider"),
+    ) -> List[Dict[str, Any]]:
+        """Get messages from a discussion session."""
+        session = store.get_discussion_session(session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Discussion not found")
+
+        message_type = None
+        messages = store.get_discussion_messages(
+            session_id=session_id,
+            round_number=round_number,
+            provider=provider,
+            message_type=message_type,
+        )
+
+        return [m.to_dict() for m in messages]
+
+    @app.delete("/api/discussion/{session_id}")
+    async def cancel_discussion(session_id: str) -> Dict[str, Any]:
+        """Cancel an ongoing discussion."""
+        if not discussion_executor:
+            raise HTTPException(
+                status_code=400,
+                detail="Discussion feature not enabled",
+            )
+
+        success = await discussion_executor.cancel_discussion(session_id)
+        if not success:
+            raise HTTPException(
+                status_code=404,
+                detail="Discussion not found or already completed",
+            )
+
+        return {"cancelled": True, "session_id": session_id}
+
+    @app.get("/api/discussions")
+    async def list_discussions(
+        status: Optional[str] = Query(None, description="Filter by status"),
+        limit: int = Query(50, le=100),
+        offset: int = Query(0, ge=0),
+    ) -> List[Dict[str, Any]]:
+        """List discussion sessions."""
+        status_enum = DiscussionStatus(status) if status else None
+        sessions = store.list_discussion_sessions(
+            status=status_enum,
+            limit=limit,
+            offset=offset,
+        )
+        return [s.to_dict() for s in sessions]
+
+    @app.get("/api/discussion-groups")
+    async def get_discussion_groups() -> Dict[str, List[str]]:
+        """Get available provider groups for discussions."""
+        if not discussion_executor:
+            return {"all": list(config.providers.keys())}
+        return discussion_executor.get_provider_groups()
+
+    # ==================== Unified Results Endpoints ====================
+
+    @app.get("/api/results")
+    async def get_latest_results(
+        provider: Optional[str] = Query(None, description="Filter by provider"),
+        limit: int = Query(10, le=50, description="Maximum results to return"),
+        include_discussions: bool = Query(True, description="Include discussion summaries"),
+    ) -> List[Dict[str, Any]]:
+        """
+        Get latest results from all sources (requests + discussions).
+
+        This is the unified endpoint for Claude to read AI responses.
+        Returns results sorted by creation time (newest first).
+        """
+        return store.get_latest_results(
+            provider=provider,
+            limit=limit,
+            include_discussions=include_discussions,
+        )
+
+    @app.get("/api/results/{result_id}")
+    async def get_result_by_id(result_id: str) -> Dict[str, Any]:
+        """
+        Get a specific result by ID.
+
+        Works for both regular requests and discussion sessions.
+        For discussions, includes all messages from the conversation.
+        """
+        result = store.get_result_by_id(result_id)
+        if not result:
+            raise HTTPException(status_code=404, detail="Result not found")
+        return result
+
+    @app.get("/api/results/provider/{provider_name}")
+    async def get_provider_results(
+        provider_name: str,
+        limit: int = Query(10, le=50),
+    ) -> List[Dict[str, Any]]:
+        """Get latest results from a specific provider."""
+        return store.get_latest_results(
+            provider=provider_name,
+            limit=limit,
+            include_discussions=False,
+        )
 
     # ==================== WebSocket Endpoint ====================
 

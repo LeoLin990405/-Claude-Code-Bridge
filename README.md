@@ -23,9 +23,9 @@
   <a href="#-features">Features</a> •
   <a href="#-quick-start">Quick Start</a> •
   <a href="#-ccb-cli">ccb-cli</a> •
+  <a href="#-multi-ai-discussion">Discussion</a> •
   <a href="#-web-ui">Web UI</a> •
-  <a href="#-api-reference">API</a> •
-  <a href="#-model-switching">Model Switching</a>
+  <a href="#-api-reference">API</a>
 </p>
 
 <p align="center">
@@ -79,6 +79,7 @@
 | No visibility into AI operations | **Real-time monitoring** with WebSocket + Web UI |
 | No caching or retry logic | **Built-in caching, retry, and fallback chains** |
 | Can't see AI thinking process | **Thinking chain & raw output capture** |
+| No collaborative AI discussion | **Multi-AI Discussion** with iterative rounds |
 
 ---
 
@@ -102,6 +103,39 @@ ccb-cli <provider> [model] <prompt>
 | **iFlow** | thinking, normal | `ccb-cli iflow "workflow task"` |
 | **Qwen** | - | `ccb-cli qwen "code generation"` |
 
+### 🆕 Multi-AI Discussion (v0.12)
+
+Orchestrate collaborative discussions across multiple AI providers:
+
+```bash
+# Start a discussion
+ccb-discussion "Design a distributed cache system"
+
+# With specific providers
+ccb-discussion -p kimi,qwen,deepseek "API design best practices"
+
+# Quick mode (2 rounds)
+ccb-discussion --quick "Code review approach"
+
+# Wait for completion
+ccb-discussion -w "Architecture decision"
+```
+
+**Discussion Flow:**
+```
+Round 1: Proposal    →   Round 2: Review    →   Round 3: Revision
+┌─────────────┐         ┌─────────────┐         ┌─────────────┐
+│ All AIs     │   ───►  │ All AIs see │   ───►  │ Revise based│
+│ propose     │         │ & review    │         │ on feedback │
+└─────────────┘         └─────────────┘         └─────────────┘
+                              │
+                              ▼
+                    ┌─────────────────┐
+                    │ Claude Summary  │
+                    │ Consensus/Gaps  │
+                    └─────────────────┘
+```
+
 ### Core Gateway
 
 - **REST API** - `POST /api/ask`, `GET /api/reply/{id}`, `GET /api/status`
@@ -117,6 +151,8 @@ ccb-cli <provider> [model] <prompt>
 - **Response Caching** - SQLite cache with TTL and pattern exclusion
 - **Retry & Fallback** - Exponential backoff, automatic provider fallback
 - **Parallel Queries** - Query multiple providers simultaneously
+- **Multi-AI Discussion** - Iterative collaborative discussions
+- **Unified Results API** - Query all AI responses uniformly
 - **Prometheus Metrics** - `/metrics` endpoint for monitoring
 - **Streaming** - Server-Sent Events for real-time responses
 
@@ -240,6 +276,79 @@ ccb-cli iflow thinking "..."    # GLM with thinking
 
 ---
 
+## 🗣️ Multi-AI Discussion
+
+### Overview
+
+The discussion feature enables true multi-AI collaboration where all providers can see and respond to each other's perspectives through iterative rounds.
+
+### CLI Usage
+
+```bash
+# Basic discussion
+ccb-discussion "Design a microservices architecture"
+
+# Specify providers
+ccb-discussion -p kimi,qwen,deepseek "Best caching strategy"
+
+# Quick mode (2 rounds, faster timeouts)
+ccb-discussion --quick "Code review guidelines"
+
+# Wait for completion and show results
+ccb-discussion -w "API versioning approach"
+
+# Check status of existing discussion
+ccb-discussion -s <session_id>
+
+# List recent discussions
+ccb-discussion -l
+```
+
+### API Usage
+
+```bash
+# Start discussion via API
+curl -X POST http://localhost:8765/api/discussion/start \
+  -H "Content-Type: application/json" \
+  -d '{"topic": "Design distributed cache", "provider_group": "@coding"}'
+
+# Get discussion status
+curl http://localhost:8765/api/discussion/{session_id}
+
+# Get all messages from discussion
+curl http://localhost:8765/api/discussion/{session_id}/messages
+
+# List all discussions
+curl http://localhost:8765/api/discussions
+
+# Get unified results (requests + discussions)
+curl http://localhost:8765/api/results
+```
+
+### Discussion Rounds
+
+| Round | Type | Description |
+|-------|------|-------------|
+| 1 | **Proposal** | Each AI provides initial analysis/solution |
+| 2 | **Review** | Each AI reviews others' proposals, gives feedback |
+| 3 | **Revision** | Each AI revises based on feedback received |
+| Final | **Summary** | Orchestrator synthesizes consensus and gaps |
+
+### Provider Groups
+
+```bash
+# All available providers
+ccb-discussion -g @all "topic"
+
+# Fast providers only (Kimi, Qwen)
+ccb-discussion -g @fast "topic"
+
+# Coding-focused (Kimi, Qwen, DeepSeek, Codex, Gemini)
+ccb-discussion -g @coding "topic"
+```
+
+---
+
 ## 🖥️ Web UI
 
 Access at `http://localhost:8765/` after starting Gateway.
@@ -287,6 +396,9 @@ Access at `http://localhost:8765/` after starting Gateway.
 | `GET` | `/api/reply/{id}` | Get response |
 | `GET` | `/api/status` | Gateway status |
 | `GET` | `/api/requests` | List requests |
+| `POST` | `/api/discussion/start` | Start multi-AI discussion |
+| `GET` | `/api/discussion/{id}` | Get discussion status |
+| `GET` | `/api/results` | Unified results query |
 | `GET` | `/metrics` | Prometheus metrics |
 
 ### Provider Groups
@@ -368,7 +480,14 @@ ccb-cli kimi "Hello"
 
 ## 🔄 Recent Updates
 
-### v0.11.x - ccb-cli & Model Switching (Latest)
+### v0.12.x - Multi-AI Discussion (Latest)
+- **Discussion Executor** - Orchestrate multi-round AI discussions
+- **3-Round Flow** - Proposal → Review → Revision → Summary
+- **ccb-discussion CLI** - Command-line interface for discussions
+- **Unified Results API** - Query all AI responses uniformly
+- **WebSocket Events** - Real-time discussion progress
+
+### v0.11.x - ccb-cli & Model Switching
 - **ccb-cli** - Direct CLI tool with model selection
 - **Model shortcuts** - `o3`, `3f`, `mm`, `reasoner`, `thinking`
 - **expect scripts** - Automated CLI interaction

@@ -247,3 +247,168 @@ class CacheEntry:
             "metadata": self.metadata,
         }
 
+
+# ==================== Discussion Models ====================
+
+
+class DiscussionStatus(Enum):
+    """Discussion session lifecycle states."""
+    PENDING = "pending"
+    ROUND_1 = "round_1"  # Proposal round
+    ROUND_2 = "round_2"  # Review round
+    ROUND_3 = "round_3"  # Revision round
+    SUMMARIZING = "summarizing"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+
+
+class MessageType(Enum):
+    """Types of discussion messages."""
+    PROPOSAL = "proposal"  # Initial proposal in round 1
+    REVIEW = "review"  # Review/feedback in round 2
+    REVISION = "revision"  # Revised proposal in round 3
+    SUMMARY = "summary"  # Final summary by orchestrator
+
+
+@dataclass
+class DiscussionConfig:
+    """Configuration for a discussion session."""
+    max_rounds: int = 3
+    round_timeout_s: float = 120.0  # Timeout per round
+    provider_timeout_s: float = 60.0  # Timeout per provider
+    min_providers: int = 2  # Minimum providers required
+    summary_provider: Optional[str] = None  # Provider for final summary (None = Claude)
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary."""
+        return {
+            "max_rounds": self.max_rounds,
+            "round_timeout_s": self.round_timeout_s,
+            "provider_timeout_s": self.provider_timeout_s,
+            "min_providers": self.min_providers,
+            "summary_provider": self.summary_provider,
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "DiscussionConfig":
+        """Create from dictionary."""
+        return cls(**data)
+
+
+@dataclass
+class DiscussionMessage:
+    """A message in a discussion session."""
+    id: str
+    session_id: str
+    round_number: int
+    provider: str
+    message_type: MessageType
+    content: Optional[str] = None
+    references_messages: Optional[List[str]] = None  # IDs of messages this references
+    latency_ms: Optional[float] = None
+    status: str = "pending"  # pending, completed, failed, timeout
+    created_at: float = field(default_factory=time.time)
+    metadata: Optional[Dict[str, Any]] = None
+
+    @classmethod
+    def create(
+        cls,
+        session_id: str,
+        round_number: int,
+        provider: str,
+        message_type: MessageType,
+        references: Optional[List[str]] = None,
+    ) -> "DiscussionMessage":
+        """Create a new discussion message."""
+        return cls(
+            id=str(uuid.uuid4())[:12],
+            session_id=session_id,
+            round_number=round_number,
+            provider=provider,
+            message_type=message_type,
+            references_messages=references,
+            created_at=time.time(),
+        )
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary."""
+        return {
+            "id": self.id,
+            "session_id": self.session_id,
+            "round_number": self.round_number,
+            "provider": self.provider,
+            "message_type": self.message_type.value,
+            "content": self.content,
+            "references_messages": self.references_messages,
+            "latency_ms": self.latency_ms,
+            "status": self.status,
+            "created_at": self.created_at,
+            "metadata": self.metadata,
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "DiscussionMessage":
+        """Create from dictionary."""
+        data = data.copy()
+        data["message_type"] = MessageType(data["message_type"])
+        return cls(**data)
+
+
+@dataclass
+class DiscussionSession:
+    """A multi-AI discussion session."""
+    id: str
+    topic: str
+    status: DiscussionStatus
+    current_round: int
+    providers: List[str]
+    config: DiscussionConfig
+    created_at: float
+    updated_at: float
+    summary: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+    @classmethod
+    def create(
+        cls,
+        topic: str,
+        providers: List[str],
+        config: Optional[DiscussionConfig] = None,
+    ) -> "DiscussionSession":
+        """Create a new discussion session."""
+        now = time.time()
+        return cls(
+            id=str(uuid.uuid4())[:12],
+            topic=topic,
+            status=DiscussionStatus.PENDING,
+            current_round=0,
+            providers=providers,
+            config=config or DiscussionConfig(),
+            created_at=now,
+            updated_at=now,
+        )
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary."""
+        return {
+            "id": self.id,
+            "topic": self.topic,
+            "status": self.status.value,
+            "current_round": self.current_round,
+            "providers": self.providers,
+            "config": self.config.to_dict(),
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+            "summary": self.summary,
+            "metadata": self.metadata,
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "DiscussionSession":
+        """Create from dictionary."""
+        data = data.copy()
+        data["status"] = DiscussionStatus(data["status"])
+        data["config"] = DiscussionConfig.from_dict(data["config"])
+        return cls(**data)
+

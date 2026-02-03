@@ -35,6 +35,7 @@ from .parallel import ParallelExecutor, ParallelConfig, AggregationStrategy
 from .auth import AuthMiddleware, APIKeyStore
 from .rate_limiter import RateLimiter, RateLimitMiddleware
 from .metrics import GatewayMetrics
+from .discussion import DiscussionExecutor
 
 
 class GatewayServer:
@@ -77,6 +78,7 @@ class GatewayServer:
         self.stream_manager: Optional[StreamManager] = None
         self.parallel_executor: Optional[ParallelExecutor] = None
         self.retry_executor: Optional[RetryExecutor] = None
+        self.discussion_executor: Optional[DiscussionExecutor] = None
 
         # Security and observability
         self.auth_middleware: Optional[AuthMiddleware] = None
@@ -146,6 +148,14 @@ class GatewayServer:
                 retry_config,
                 self.backends,
                 list(self.backends.keys()),
+            )
+
+        # Discussion executor (always enabled if backends available)
+        if self.backends:
+            self.discussion_executor = DiscussionExecutor(
+                store=self.store,
+                backends=self.backends,
+                gateway_config=self.config,
             )
 
     def _init_security_features(self) -> None:
@@ -412,7 +422,10 @@ class GatewayServer:
         # Broadcast WebSocket event (wrapped in try-except to prevent status overwrite)
         try:
             if self._app and hasattr(self._app.state, 'ws_manager'):
-                resp_preview = result.response[:100] if result.response and len(result.response) > 100 else result.response
+                # Send more content for monitoring (up to 1000 chars)
+                resp_preview = result.response[:1000] if result.response and len(result.response) > 1000 else result.response
+                thinking_preview = result.thinking[:500] if result.thinking and len(result.thinking) > 500 else result.thinking
+                raw_preview = result.raw_output[:500] if result.raw_output and len(result.raw_output) > 500 else result.raw_output
                 await self._app.state.ws_manager.broadcast(WebSocketEvent(
                     type="request_completed",
                     data={
@@ -421,6 +434,10 @@ class GatewayServer:
                         "success": True,
                         "latency_ms": latency_ms,
                         "response": resp_preview,
+                        "thinking": thinking_preview,
+                        "raw_output": raw_preview,
+                        "has_thinking": bool(result.thinking),
+                        "has_raw_output": bool(result.raw_output),
                         "retry_info": retry_info,
                     },
                 ))
@@ -533,9 +550,15 @@ class GatewayServer:
             rate_limiter=self.rate_limiter,
             metrics=self.metrics,
             api_key_store=self.api_key_store,
+            discussion_executor=self.discussion_executor,
         )
         # Store backends on app for streaming access
         self._app.state.backends = self.backends
+
+        # Set up WebSocket broadcast for discussion executor
+        if self.discussion_executor and hasattr(self._app.state, 'ws_manager'):
+            self.discussion_executor.ws_broadcast = self._app.state.ws_manager.broadcast
+
         return self._app
 
     async def start(self) -> None:
@@ -556,6 +579,7 @@ class GatewayServer:
         print(f"  Cache: {'enabled' if self.config.cache.enabled else 'disabled'}")
         print(f"  Streaming: {'enabled' if self.config.streaming.enabled else 'disabled'}")
         print(f"  Parallel: {'enabled' if self.config.parallel.enabled else 'disabled'}")
+        print(f"  Discussion: {'enabled' if self.discussion_executor else 'disabled'}")
         print(f"  Auth: {'enabled' if self.config.auth and self.config.auth.enabled else 'disabled'}")
         print(f"  Rate Limit: {'enabled' if self.config.rate_limit and self.config.rate_limit.enabled else 'disabled'}")
         print(f"  Metrics: enabled")
