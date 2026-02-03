@@ -166,9 +166,17 @@ Round 1: Proposal    →   Round 2: Review    →   Round 3: Revision
 - **Rate Limiting** - Token bucket algorithm, per-key limits
 - **Response Caching** - SQLite cache with TTL and pattern exclusion
 - **Retry & Fallback** - Exponential backoff, automatic provider fallback
+- **Smart Fallback** - Reliability-based provider selection
 - **Parallel Queries** - Query multiple providers simultaneously
 - **Multi-AI Discussion** - Iterative collaborative discussions
+- **Discussion Templates** - Pre-built templates for common scenarios
+- **Discussion Export** - Export to Markdown, JSON, HTML, or Obsidian
 - **Unified Results API** - Query all AI responses uniformly
+- **Cost Tracking** - Token usage and cost monitoring per provider
+- **Smart Routing** - Keyword-based automatic provider selection
+- **Auth Status Monitoring** - Track provider authentication state
+- **macOS Notifications** - System alerts for long operations
+- **Shell Completion** - Bash/Zsh auto-completion for ccb-cli
 - **Prometheus Metrics** - `/metrics` endpoint for monitoring
 - **Streaming** - Server-Sent Events for real-time responses
 
@@ -322,6 +330,67 @@ ccb-discussion -s <session_id>
 
 # List recent discussions
 ccb-discussion -l
+
+# Export discussion to markdown
+ccb-discussion -e <session_id> -f md > discussion.md
+
+# Export to HTML file
+ccb-discussion -e <session_id> -f html -o report.html
+```
+
+### Discussion Templates
+
+Built-in templates for common scenarios:
+
+| Template | ID | Description |
+|----------|-----|-------------|
+| Architecture Review | `arch-review` | Review system architecture decisions |
+| Code Review | `code-review` | Collaborative code review |
+| API Design | `api-design` | Design API endpoints and contracts |
+| Bug Analysis | `bug-analysis` | Diagnose and analyze bugs |
+| Performance Optimization | `perf-optimization` | Plan performance improvements |
+
+```bash
+# Use template via API
+curl -X POST http://localhost:8765/api/discussion/templates/arch-review/use \
+  -H "Content-Type: application/json" \
+  -d '{
+    "variables": {
+      "subject": "Payment Service",
+      "context": "Microservice handling Stripe integration"
+    }
+  }'
+```
+
+### Continue Discussion
+
+Continue a completed discussion with follow-up questions:
+
+```bash
+curl -X POST http://localhost:8765/api/discussion/{session_id}/continue \
+  -H "Content-Type: application/json" \
+  -d '{
+    "follow_up_topic": "Focus on security implications",
+    "additional_context": "Particularly concerned about JWT handling",
+    "max_rounds": 2
+  }'
+```
+
+### Export & Integration
+
+```bash
+# Export to Markdown
+curl "http://localhost:8765/api/discussion/{id}/export?format=md"
+
+# Export to JSON (full data)
+curl "http://localhost:8765/api/discussion/{id}/export?format=json"
+
+# Export to HTML (styled document)
+curl "http://localhost:8765/api/discussion/{id}/export?format=html"
+
+# Export to Obsidian vault
+curl -X POST http://localhost:8765/api/discussion/{id}/export-obsidian \
+  -d '{"vault_path": "~/Obsidian/MyVault", "folder": "AI Discussions"}'
 ```
 
 ### API Usage
@@ -415,7 +484,7 @@ Access at `http://localhost:8765/` after starting Gateway.
 
 ## 📡 API Reference
 
-### Endpoints
+### Core Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -423,10 +492,41 @@ Access at `http://localhost:8765/` after starting Gateway.
 | `GET` | `/api/reply/{id}` | Get response |
 | `GET` | `/api/status` | Gateway status |
 | `GET` | `/api/requests` | List requests |
-| `POST` | `/api/discussion/start` | Start multi-AI discussion |
-| `GET` | `/api/discussion/{id}` | Get discussion status |
 | `GET` | `/api/results` | Unified results query |
 | `GET` | `/metrics` | Prometheus metrics |
+
+### Discussion Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/discussion/start` | Start multi-AI discussion |
+| `GET` | `/api/discussion/{id}` | Get discussion status |
+| `GET` | `/api/discussion/{id}/messages` | Get discussion messages |
+| `GET` | `/api/discussion/{id}/export` | Export discussion (md/json/html) |
+| `POST` | `/api/discussion/{id}/continue` | Continue completed discussion |
+| `POST` | `/api/discussion/{id}/export-obsidian` | Export to Obsidian vault |
+
+### Template Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/discussion/templates` | List all templates |
+| `POST` | `/api/discussion/templates` | Create custom template |
+| `GET` | `/api/discussion/templates/{id}` | Get template details |
+| `POST` | `/api/discussion/templates/{id}/use` | Start discussion from template |
+
+### Operations Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/providers/{name}/auth-status` | Check provider auth status |
+| `POST` | `/api/providers/{name}/check-auth` | Actively verify auth |
+| `GET` | `/api/providers/reliability` | Get all reliability scores |
+| `GET` | `/api/costs/summary` | Cost summary (today/week/month) |
+| `GET` | `/api/costs/by-provider` | Cost breakdown by provider |
+| `GET` | `/api/costs/by-day` | Daily cost breakdown |
+| `POST` | `/api/route` | Get smart routing recommendation |
+| `GET` | `/api/route/rules` | List routing rules |
 
 ### Provider Groups
 
@@ -507,7 +607,43 @@ ccb-cli kimi "Hello"
 
 ## 🔄 Recent Updates
 
-### v0.13.x - Gateway Auto-Start (Latest)
+### v0.14.x - Advanced Features (Latest)
+
+**Phase 6 - Discussion Enhancements:**
+- **Discussion Export** - Export discussions to Markdown, JSON, or HTML
+- **WebSocket Real-time** - `discussion_provider_started/completed` events for live updates
+- **Discussion Templates** - 5 built-in templates (Architecture Review, Code Review, API Design, Bug Analysis, Performance Optimization)
+- **Discussion Continuation** - Continue from completed discussions with follow-up topics
+
+**Phase 7 - Operations & Monitoring:**
+- **Shell Auto-completion** - Bash/Zsh completion for ccb-cli (providers, models, agents)
+- **Provider Auth Status** - Track authentication state, detect auth failures
+- **Cost Tracking Dashboard** - Token usage and cost tracking per provider
+- **Smart Fallback** - Reliability-based provider selection with `ProviderReliabilityScore`
+
+**Phase 8 - Integrations:**
+- **macOS Notifications** - System notifications for long-running operations
+- **Smart Auto-routing** - Keyword-based automatic provider selection (`POST /api/route`)
+- **Obsidian Integration** - Export discussions to Obsidian vault with YAML frontmatter
+
+```bash
+# New CLI features
+ccb-discussion -e <session_id> -f md > discussion.md  # Export discussion
+ccb-discussion -e <session_id> -f html -o report.html  # HTML export
+
+# Shell completion (add to ~/.bashrc or ~/.zshrc)
+source ~/.local/share/codex-dual/bin/ccb-cli-completion.bash  # Bash
+source ~/.local/share/codex-dual/bin/ccb-cli-completion.zsh   # Zsh
+
+# New API endpoints
+curl "http://localhost:8765/api/discussion/{id}/export?format=md"
+curl -X POST "http://localhost:8765/api/discussion/templates/arch-review/use" \
+  -d '{"variables": {"subject": "My API", "context": "REST microservice"}}'
+curl "http://localhost:8765/api/costs/summary"
+curl -X POST "http://localhost:8765/api/route" -d '{"message": "React component"}'
+```
+
+### v0.13.x - Gateway Auto-Start
 - **Auto-start Gateway** - ccb-cli automatically starts Gateway when not running
 - **launchd service** - macOS auto-start on login with KeepAlive
 - **Unified architecture** - All ccb-cli calls route through Gateway for caching/monitoring
