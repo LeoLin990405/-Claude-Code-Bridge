@@ -132,7 +132,7 @@ if HAS_FASTAPI:
         provider_group: Optional[str] = Field(None, description="Provider group like @all, @fast, @coding")
         max_rounds: int = Field(3, description="Maximum discussion rounds (1-3)")
         round_timeout_s: float = Field(120.0, description="Timeout per round in seconds")
-        provider_timeout_s: float = Field(60.0, description="Timeout per provider in seconds")
+        provider_timeout_s: float = Field(120.0, description="Timeout per provider in seconds")
         run_async: bool = Field(True, description="Run discussion asynchronously")
 
     class DiscussionResponse(BaseModel):

@@ -276,7 +276,7 @@ class DiscussionConfig:
     """Configuration for a discussion session."""
     max_rounds: int = 3
     round_timeout_s: float = 120.0  # Timeout per round
-    provider_timeout_s: float = 60.0  # Timeout per provider
+    provider_timeout_s: float = 120.0  # Timeout per provider
     min_providers: int = 2  # Minimum providers required
     summary_provider: Optional[str] = None  # Provider for final summary (None = Claude)
 
