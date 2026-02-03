@@ -37,10 +37,14 @@ from .models import (
     DiscussionMessage,
     DiscussionConfig,
     MessageType,
+    AuthStatus,
 )
 from .state_store import StateStore
 from .request_queue import RequestQueue
 from .gateway_config import GatewayConfig
+from .discussion import DiscussionExporter, ObsidianExporter
+from .retry import detect_auth_failure, ProviderReliabilityScore, ReliabilityTracker
+from .router import SmartRouter, auto_route, RoutingDecision
 
 
 # Pydantic models for API
@@ -157,6 +161,33 @@ if HAS_FASTAPI:
         latency_ms: Optional[float] = None
         created_at: float
 
+    class CreateTemplateRequest(BaseModel):
+        """Request body for creating a discussion template."""
+        name: str = Field(..., description="Unique template name")
+        topic_template: str = Field(..., description="Template with placeholders like {subject}")
+        description: Optional[str] = Field(None, description="Template description")
+        default_providers: Optional[List[str]] = Field(None, description="Default providers list")
+        default_config: Optional[Dict[str, Any]] = Field(None, description="Default discussion config")
+        category: Optional[str] = Field(None, description="Template category")
+
+    class UseTemplateRequest(BaseModel):
+        """Request body for using a template to start a discussion."""
+        variables: Dict[str, str] = Field(default_factory=dict, description="Variables to fill in template")
+        providers: Optional[List[str]] = Field(None, description="Override default providers")
+        config: Optional[Dict[str, Any]] = Field(None, description="Override default config")
+        run_async: bool = Field(True, description="Run discussion asynchronously")
+
+    class ContinueDiscussionRequest(BaseModel):
+        """Request body for continuing a discussion."""
+        follow_up_topic: str = Field(..., description="The follow-up topic to discuss")
+        additional_context: Optional[str] = Field(None, description="Additional context")
+        max_rounds: int = Field(2, description="Number of rounds for continuation")
+
+    class ExportObsidianRequest(BaseModel):
+        """Request body for exporting to Obsidian."""
+        vault_path: str = Field(..., description="Path to Obsidian vault")
+        folder: str = Field("CCB Discussions", description="Subfolder within vault")
+
 
 class WebSocketManager:
     """Manages WebSocket connections for real-time updates."""
@@ -215,6 +246,7 @@ def create_api(
     metrics=None,
     api_key_store=None,
     discussion_executor=None,
+    reliability_tracker: Optional[ReliabilityTracker] = None,
 ) -> "FastAPI":
     """
     Create the FastAPI application with all routes.
@@ -936,6 +968,266 @@ def create_api(
             "public_paths": config.auth.public_paths,
         }
 
+    # ==================== Provider Auth Status Endpoints ====================
+
+    @app.get("/api/providers/{provider_name}/auth-status")
+    async def get_provider_auth_status(provider_name: str) -> Dict[str, Any]:
+        """
+        Get authentication status for a provider.
+
+        Returns auth status based on recent request history.
+        """
+        if provider_name not in config.providers:
+            raise HTTPException(status_code=404, detail=f"Provider not found: {provider_name}")
+
+        # Get reliability data if tracker is available
+        if reliability_tracker:
+            score = reliability_tracker.get_score(provider_name)
+            if score.needs_reauth:
+                auth_status = AuthStatus.NEEDS_REAUTH
+            elif score.auth_failure_count > 0:
+                auth_status = AuthStatus.INVALID
+            elif score.total_requests == 0:
+                auth_status = AuthStatus.UNKNOWN
+            else:
+                auth_status = AuthStatus.VALID
+
+            return {
+                "provider": provider_name,
+                "auth_status": auth_status.value,
+                "auth_failure_count": score.auth_failure_count,
+                "last_auth_failure": score.last_auth_failure,
+                "needs_reauth": score.needs_reauth,
+                "reliability_score": score.reliability_score,
+            }
+
+        # Fallback: check metrics from store
+        provider_metrics = store.get_provider_metrics(provider_name, hours=24)
+
+        return {
+            "provider": provider_name,
+            "auth_status": AuthStatus.UNKNOWN.value,
+            "success_rate": provider_metrics.get("success_rate", 1.0),
+            "total_requests": provider_metrics.get("total_requests", 0),
+        }
+
+    @app.post("/api/providers/{provider_name}/check-auth")
+    async def check_provider_auth(provider_name: str) -> Dict[str, Any]:
+        """
+        Actively check authentication status for a provider.
+
+        Sends a test request to verify credentials.
+        """
+        if provider_name not in config.providers:
+            raise HTTPException(status_code=404, detail=f"Provider not found: {provider_name}")
+
+        # Create a simple test request
+        test_request = GatewayRequest.create(
+            provider=provider_name,
+            message="ping",
+            timeout_s=30.0,
+            metadata={"auth_check": True},
+        )
+
+        # Try to execute via backend
+        backend = getattr(app.state, 'backends', {}).get(provider_name)
+        if not backend:
+            return {
+                "provider": provider_name,
+                "auth_status": AuthStatus.UNKNOWN.value,
+                "error": "Backend not available",
+            }
+
+        try:
+            result = await asyncio.wait_for(
+                backend.execute(test_request),
+                timeout=30.0,
+            )
+
+            if result.success:
+                # Update reliability tracker
+                if reliability_tracker:
+                    await reliability_tracker.record_success(provider_name)
+
+                return {
+                    "provider": provider_name,
+                    "auth_status": AuthStatus.VALID.value,
+                    "message": "Authentication successful",
+                }
+            else:
+                is_auth_failure = detect_auth_failure(result.error or "")
+                if reliability_tracker:
+                    await reliability_tracker.record_failure(
+                        provider_name,
+                        result.error or "",
+                    )
+
+                return {
+                    "provider": provider_name,
+                    "auth_status": AuthStatus.INVALID.value if is_auth_failure else AuthStatus.UNKNOWN.value,
+                    "error": result.error,
+                    "is_auth_failure": is_auth_failure,
+                }
+
+        except asyncio.TimeoutError:
+            return {
+                "provider": provider_name,
+                "auth_status": AuthStatus.UNKNOWN.value,
+                "error": "Request timed out",
+            }
+        except Exception as e:
+            return {
+                "provider": provider_name,
+                "auth_status": AuthStatus.UNKNOWN.value,
+                "error": str(e),
+            }
+
+    @app.post("/api/providers/{provider_name}/reset-auth")
+    async def reset_provider_auth(provider_name: str) -> Dict[str, Any]:
+        """
+        Reset auth failure count for a provider.
+
+        Call this after re-authenticating with a provider.
+        """
+        if provider_name not in config.providers:
+            raise HTTPException(status_code=404, detail=f"Provider not found: {provider_name}")
+
+        if reliability_tracker:
+            await reliability_tracker.reset_auth(provider_name)
+
+        return {
+            "provider": provider_name,
+            "message": "Auth failures reset",
+            "auth_status": AuthStatus.UNKNOWN.value,
+        }
+
+    @app.get("/api/providers/reliability")
+    async def get_all_provider_reliability() -> Dict[str, Any]:
+        """Get reliability scores for all providers."""
+        if not reliability_tracker:
+            return {"error": "Reliability tracking not enabled", "providers": {}}
+
+        return {
+            "providers": reliability_tracker.get_all_scores(),
+        }
+
+    # ==================== Cost Tracking Endpoints ====================
+
+    @app.get("/api/costs/summary")
+    async def get_cost_summary(
+        days: int = Query(30, description="Number of days to include"),
+    ) -> Dict[str, Any]:
+        """
+        Get cost summary for the specified period.
+
+        Returns total tokens used and costs, plus today/week breakdowns.
+        """
+        return store.get_cost_summary(days=days)
+
+    @app.get("/api/costs/by-provider")
+    async def get_costs_by_provider(
+        days: int = Query(30, description="Number of days to include"),
+    ) -> List[Dict[str, Any]]:
+        """Get cost breakdown by provider."""
+        return store.get_cost_by_provider(days=days)
+
+    @app.get("/api/costs/by-day")
+    async def get_costs_by_day(
+        days: int = Query(7, description="Number of days to include"),
+    ) -> List[Dict[str, Any]]:
+        """Get daily cost breakdown."""
+        return store.get_cost_by_day(days=days)
+
+    @app.get("/api/costs/pricing")
+    async def get_provider_pricing() -> Dict[str, Any]:
+        """Get pricing configuration per provider (per million tokens)."""
+        return {
+            "pricing": store.PROVIDER_PRICING,
+            "unit": "USD per million tokens",
+        }
+
+    @app.post("/api/costs/record")
+    async def record_token_cost(
+        provider: str = Query(..., description="Provider name"),
+        input_tokens: int = Query(0, description="Input token count"),
+        output_tokens: int = Query(0, description="Output token count"),
+        request_id: Optional[str] = Query(None, description="Associated request ID"),
+        model: Optional[str] = Query(None, description="Model name"),
+    ) -> Dict[str, Any]:
+        """
+        Record token usage for cost tracking.
+
+        Usually called automatically by backends after request completion.
+        """
+        store.record_token_cost(
+            provider=provider,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            request_id=request_id,
+            model=model,
+        )
+        return {"recorded": True, "provider": provider}
+
+    # ==================== Smart Routing Endpoints ====================
+
+    @app.post("/api/route")
+    async def route_message(
+        message: str = Query(..., description="Message to route"),
+    ) -> Dict[str, Any]:
+        """
+        Get routing recommendation for a message.
+
+        Uses keyword matching to suggest the best provider.
+        """
+        available = list(config.providers.keys())
+        decision = auto_route(message, available_providers=available)
+
+        return {
+            "provider": decision.provider,
+            "model": decision.model,
+            "confidence": decision.confidence,
+            "matched_keywords": decision.matched_keywords,
+            "rule_description": decision.rule_description,
+        }
+
+    @app.get("/api/route/rules")
+    async def get_routing_rules() -> List[Dict[str, Any]]:
+        """Get all configured routing rules."""
+        available = list(config.providers.keys())
+        router = SmartRouter(available_providers=available)
+        return router.get_rules()
+
+    # ==================== Obsidian Integration Endpoints ====================
+
+    @app.post("/api/discussion/{session_id}/export-obsidian")
+    async def export_to_obsidian(
+        session_id: str,
+        request: ExportObsidianRequest,
+    ) -> Dict[str, Any]:
+        """
+        Export a discussion to an Obsidian vault.
+
+        Creates a markdown file with YAML frontmatter, tags, and callouts
+        compatible with Obsidian's features.
+        """
+        exporter = ObsidianExporter(store)
+
+        try:
+            file_path = exporter.export_to_vault(
+                session_id=session_id,
+                vault_path=request.vault_path,
+                folder=request.folder,
+            )
+            return {
+                "success": True,
+                "file_path": file_path,
+                "session_id": session_id,
+            }
+        except ValueError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Export failed: {e}")
+
     # ==================== Discussion Endpoints ====================
 
     @app.post("/api/discussion/start", response_model=DiscussionResponse)
@@ -1081,6 +1373,240 @@ def create_api(
         if not discussion_executor:
             return {"all": list(config.providers.keys())}
         return discussion_executor.get_provider_groups()
+
+    @app.get("/api/discussion/{session_id}/export")
+    async def export_discussion(
+        session_id: str,
+        format: str = Query("md", description="Export format: md, json, or html"),
+        include_metadata: bool = Query(True, description="Include metadata in export"),
+    ):
+        """
+        Export a discussion to Markdown, JSON, or HTML format.
+
+        Formats:
+        - md: Markdown with YAML frontmatter
+        - json: Full JSON export with all data
+        - html: Styled HTML document
+        """
+        exporter = DiscussionExporter(store)
+
+        try:
+            content = exporter.export(session_id, format=format, include_metadata=include_metadata)
+        except ValueError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+
+        # Set appropriate content type
+        content_types = {
+            "md": "text/markdown",
+            "json": "application/json",
+            "html": "text/html",
+        }
+        content_type = content_types.get(format, "text/plain")
+
+        # Generate filename
+        session = store.get_discussion_session(session_id)
+        topic_slug = session.topic[:30].replace(" ", "_").replace("/", "-") if session else session_id
+        filename = f"discussion_{topic_slug}.{format}"
+
+        return Response(
+            content=content,
+            media_type=content_type,
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"',
+            },
+        )
+
+    # ==================== Discussion Template Endpoints ====================
+
+    @app.post("/api/discussion/templates")
+    async def create_template(request: CreateTemplateRequest) -> Dict[str, Any]:
+        """Create a new discussion template."""
+        try:
+            template = store.create_discussion_template(
+                name=request.name,
+                topic_template=request.topic_template,
+                description=request.description,
+                default_providers=request.default_providers,
+                default_config=request.default_config,
+                category=request.category,
+            )
+            return template
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=str(e))
+
+    @app.get("/api/discussion/templates")
+    async def list_templates(
+        category: Optional[str] = Query(None, description="Filter by category"),
+        include_builtin: bool = Query(True, description="Include built-in templates"),
+    ) -> List[Dict[str, Any]]:
+        """List all discussion templates."""
+        return store.list_discussion_templates(
+            category=category,
+            include_builtin=include_builtin,
+        )
+
+    @app.get("/api/discussion/templates/{template_id}")
+    async def get_template(template_id: str) -> Dict[str, Any]:
+        """Get a specific discussion template."""
+        template = store.get_discussion_template(template_id)
+        if not template:
+            raise HTTPException(status_code=404, detail="Template not found")
+        return template
+
+    @app.put("/api/discussion/templates/{template_id}")
+    async def update_template(
+        template_id: str,
+        request: CreateTemplateRequest,
+    ) -> Dict[str, Any]:
+        """Update a discussion template (non-builtin only)."""
+        success = store.update_discussion_template(
+            template_id=template_id,
+            name=request.name,
+            topic_template=request.topic_template,
+            description=request.description,
+            default_providers=request.default_providers,
+            default_config=request.default_config,
+            category=request.category,
+        )
+        if not success:
+            raise HTTPException(
+                status_code=404,
+                detail="Template not found or is a built-in template",
+            )
+        return store.get_discussion_template(template_id)
+
+    @app.delete("/api/discussion/templates/{template_id}")
+    async def delete_template(template_id: str) -> Dict[str, Any]:
+        """Delete a discussion template (non-builtin only)."""
+        success = store.delete_discussion_template(template_id)
+        if not success:
+            raise HTTPException(
+                status_code=404,
+                detail="Template not found or is a built-in template",
+            )
+        return {"deleted": True, "template_id": template_id}
+
+    @app.post("/api/discussion/templates/{template_id}/use")
+    async def use_template(
+        template_id: str,
+        request: UseTemplateRequest,
+    ) -> DiscussionResponse:
+        """
+        Use a template to start a new discussion.
+
+        Variables in the template (like {subject}, {context}) will be replaced
+        with values from the request.
+        """
+        if not discussion_executor:
+            raise HTTPException(
+                status_code=400,
+                detail="Discussion feature not enabled",
+            )
+
+        template = store.get_discussion_template(template_id)
+        if not template:
+            raise HTTPException(status_code=404, detail="Template not found")
+
+        # Fill in template variables
+        topic = template["topic_template"]
+        for key, value in request.variables.items():
+            topic = topic.replace(f"{{{key}}}", value)
+
+        # Use provided or default providers
+        providers = request.providers or template.get("default_providers")
+        if not providers:
+            providers = list(discussion_executor.backends.keys())
+
+        # Merge configs
+        default_config = template.get("default_config") or {}
+        override_config = request.config or {}
+        merged_config = {**default_config, **override_config}
+
+        disc_config = DiscussionConfig(
+            max_rounds=merged_config.get("max_rounds", 3),
+            round_timeout_s=merged_config.get("round_timeout_s", 120.0),
+            provider_timeout_s=merged_config.get("provider_timeout_s", 120.0),
+        )
+
+        try:
+            # Increment usage count
+            store.increment_template_usage(template_id)
+
+            # Start session
+            session = await discussion_executor.start_discussion(
+                topic=topic,
+                providers=providers,
+                config=disc_config,
+            )
+
+            # Store template reference in metadata
+            store.update_discussion_session(
+                session.id,
+                metadata={"template_id": template_id, "template_name": template["name"]},
+            )
+
+            # Run discussion asynchronously if requested
+            if request.run_async:
+                asyncio.create_task(
+                    discussion_executor.run_full_discussion(session.id)
+                )
+
+            return DiscussionResponse(
+                session_id=session.id,
+                topic=session.topic,
+                status=session.status.value,
+                current_round=session.current_round,
+                providers=session.providers,
+                created_at=session.created_at,
+                summary=session.summary,
+            )
+
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+
+    @app.post("/api/discussion/{session_id}/continue")
+    async def continue_discussion_endpoint(
+        session_id: str,
+        request: ContinueDiscussionRequest,
+    ) -> DiscussionResponse:
+        """
+        Continue a completed discussion with a follow-up topic.
+
+        Creates a new discussion session linked to the parent,
+        with context from the previous discussion.
+        """
+        if not discussion_executor:
+            raise HTTPException(
+                status_code=400,
+                detail="Discussion feature not enabled",
+            )
+
+        try:
+            # Create continuation session
+            session = await discussion_executor.continue_discussion(
+                session_id=session_id,
+                follow_up_topic=request.follow_up_topic,
+                additional_context=request.additional_context,
+                max_rounds=request.max_rounds,
+            )
+
+            # Run the discussion
+            asyncio.create_task(
+                discussion_executor.run_full_discussion(session.id)
+            )
+
+            return DiscussionResponse(
+                session_id=session.id,
+                topic=request.follow_up_topic,
+                status=session.status.value,
+                current_round=session.current_round,
+                providers=session.providers,
+                created_at=session.created_at,
+                summary=None,
+            )
+
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
 
     # ==================== Unified Results Endpoints ====================
 

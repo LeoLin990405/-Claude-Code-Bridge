@@ -49,6 +49,15 @@ class ProviderStatus(Enum):
     UNKNOWN = "unknown"
 
 
+class AuthStatus(Enum):
+    """Provider authentication status."""
+    VALID = "valid"              # Auth is valid and working
+    EXPIRED = "expired"          # Auth token has expired
+    INVALID = "invalid"          # Auth credentials are invalid
+    NEEDS_REAUTH = "needs_reauth"  # Requires re-authentication
+    UNKNOWN = "unknown"          # Status not yet checked
+
+
 @dataclass
 class GatewayRequest:
     """Represents a request to the gateway."""

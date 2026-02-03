@@ -20,6 +20,8 @@ PROVIDER_GROUP="@coding"
 MAX_ROUNDS=3
 WAIT_FOR_COMPLETION=false
 QUICK_MODE=false
+EXPORT_FORMAT="md"
+OUTPUT_FILE=""
 
 usage() {
     echo "Usage: ccb-discussion [OPTIONS] \"topic\""
@@ -34,6 +36,9 @@ usage() {
     echo "  -w, --wait              Wait for discussion to complete"
     echo "  -s, --status ID         Check status of existing discussion"
     echo "  -l, --list              List recent discussions"
+    echo "  -e, --export ID         Export discussion (use with -f for format)"
+    echo "  -f, --format FMT        Export format: md, json, html [default: md]"
+    echo "  -o, --output FILE       Output file for export (default: stdout)"
     echo "  -h, --help              Show this help message"
     echo ""
     echo "Examples:"
@@ -42,6 +47,8 @@ usage() {
     echo "  ccb-discussion -g @fast --quick \"Quick code review approach\""
     echo "  ccb-discussion -s abc123def456  # Check status"
     echo "  ccb-discussion -l               # List discussions"
+    echo "  ccb-discussion -e abc123 -f md > discussion.md  # Export to markdown"
+    echo "  ccb-discussion -e abc123 -f html -o report.html # Export to HTML file"
 }
 
 check_gateway() {
@@ -217,6 +224,21 @@ list_discussions() {
     echo "$response" | jq -r '.[] | "\(.id) | \(.status) | \(.topic[0:50])..."'
 }
 
+export_discussion() {
+    local session_id="$1"
+    local format="${2:-md}"
+    local output_file="$3"
+
+    local url="${GATEWAY_URL}/api/discussion/${session_id}/export?format=${format}"
+
+    if [ -n "$output_file" ]; then
+        curl -s "$url" > "$output_file"
+        echo -e "${GREEN}Exported to: $output_file${NC}"
+    else
+        curl -s "$url"
+    fi
+}
+
 # Parse arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -250,6 +272,19 @@ while [[ $# -gt 0 ]]; do
             check_gateway
             list_discussions
             exit 0
+            ;;
+        -e|--export)
+            check_gateway
+            export_discussion "$2" "$EXPORT_FORMAT" "$OUTPUT_FILE"
+            exit 0
+            ;;
+        -f|--format)
+            EXPORT_FORMAT="$2"
+            shift 2
+            ;;
+        -o|--output)
+            OUTPUT_FILE="$2"
+            shift 2
             ;;
         -h|--help)
             usage

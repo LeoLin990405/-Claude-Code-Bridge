@@ -161,6 +161,28 @@ class StateStore:
             # Initialize discussion tables
             self._init_discussion_tables(conn)
 
+            # Initialize cost tracking table
+            self._init_cost_tracking_table(conn)
+
+    def _init_cost_tracking_table(self, conn: sqlite3.Connection) -> None:
+        """Initialize token cost tracking table."""
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS token_costs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                provider TEXT NOT NULL,
+                request_id TEXT,
+                input_tokens INTEGER,
+                output_tokens INTEGER,
+                cost_usd REAL,
+                model TEXT,
+                timestamp REAL NOT NULL
+            )
+        """)
+
+        # Create indexes
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_token_costs_provider ON token_costs(provider)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_token_costs_timestamp ON token_costs(timestamp)")
+
     def _init_discussion_tables(self, conn: sqlite3.Connection) -> None:
         """Initialize discussion-related tables."""
         # Discussion sessions table
@@ -175,9 +197,16 @@ class StateStore:
                 created_at REAL NOT NULL,
                 updated_at REAL NOT NULL,
                 summary TEXT,
-                metadata TEXT
+                metadata TEXT,
+                parent_session_id TEXT
             )
         """)
+
+        # Add parent_session_id column if it doesn't exist (migration)
+        try:
+            conn.execute("ALTER TABLE discussion_sessions ADD COLUMN parent_session_id TEXT")
+        except sqlite3.OperationalError:
+            pass  # Column already exists
 
         # Discussion messages table
         conn.execute("""
@@ -197,11 +226,104 @@ class StateStore:
             )
         """)
 
+        # Discussion templates table
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS discussion_templates (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL UNIQUE,
+                description TEXT,
+                topic_template TEXT NOT NULL,
+                default_providers TEXT,
+                default_config TEXT,
+                category TEXT,
+                created_at REAL NOT NULL,
+                updated_at REAL NOT NULL,
+                usage_count INTEGER DEFAULT 0,
+                is_builtin INTEGER DEFAULT 0
+            )
+        """)
+
         # Create indexes for discussion tables
         conn.execute("CREATE INDEX IF NOT EXISTS idx_discussion_sessions_status ON discussion_sessions(status)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_discussion_sessions_created ON discussion_sessions(created_at)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_discussion_messages_session ON discussion_messages(session_id)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_discussion_messages_round ON discussion_messages(session_id, round_number)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_discussion_templates_category ON discussion_templates(category)")
+
+        # Initialize built-in templates
+        self._init_builtin_templates(conn)
+
+    def _init_builtin_templates(self, conn: sqlite3.Connection) -> None:
+        """Initialize built-in discussion templates."""
+        builtin_templates = [
+            {
+                "id": "arch-review",
+                "name": "Architecture Review",
+                "description": "Review and discuss system architecture decisions",
+                "topic_template": "Review the architecture for: {subject}\n\nContext:\n{context}\n\nFocus areas:\n- Scalability\n- Maintainability\n- Security\n- Performance",
+                "default_providers": '["kimi", "qwen", "deepseek"]',
+                "default_config": '{"max_rounds": 3, "provider_timeout_s": 120}',
+                "category": "engineering",
+            },
+            {
+                "id": "code-review",
+                "name": "Code Review",
+                "description": "Collaborative code review with multiple AI perspectives",
+                "topic_template": "Review the following code:\n\n```{language}\n{code}\n```\n\nFocus on:\n- Code quality and best practices\n- Potential bugs or issues\n- Performance considerations\n- Security vulnerabilities",
+                "default_providers": '["kimi", "qwen", "deepseek"]',
+                "default_config": '{"max_rounds": 2, "provider_timeout_s": 90}',
+                "category": "engineering",
+            },
+            {
+                "id": "api-design",
+                "name": "API Design",
+                "description": "Design and review API endpoints and contracts",
+                "topic_template": "Design an API for: {subject}\n\nRequirements:\n{requirements}\n\nConsider:\n- RESTful principles\n- Error handling\n- Versioning strategy\n- Authentication/Authorization",
+                "default_providers": '["kimi", "qwen", "deepseek"]',
+                "default_config": '{"max_rounds": 3, "provider_timeout_s": 120}',
+                "category": "engineering",
+            },
+            {
+                "id": "bug-analysis",
+                "name": "Bug Analysis",
+                "description": "Analyze and diagnose bugs collaboratively",
+                "topic_template": "Analyze this bug:\n\nSymptoms:\n{symptoms}\n\nReproduction steps:\n{steps}\n\nRelevant code:\n```\n{code}\n```\n\nIdentify:\n- Root cause\n- Impact assessment\n- Recommended fix\n- Prevention strategies",
+                "default_providers": '["kimi", "qwen", "deepseek"]',
+                "default_config": '{"max_rounds": 2, "provider_timeout_s": 90}',
+                "category": "debugging",
+            },
+            {
+                "id": "perf-optimization",
+                "name": "Performance Optimization",
+                "description": "Discuss and plan performance improvements",
+                "topic_template": "Optimize performance for: {subject}\n\nCurrent metrics:\n{metrics}\n\nBottlenecks identified:\n{bottlenecks}\n\nPropose:\n- Quick wins\n- Long-term improvements\n- Trade-offs to consider",
+                "default_providers": '["kimi", "qwen", "deepseek"]',
+                "default_config": '{"max_rounds": 3, "provider_timeout_s": 120}',
+                "category": "engineering",
+            },
+        ]
+
+        now = time.time()
+        for template in builtin_templates:
+            try:
+                conn.execute("""
+                    INSERT OR IGNORE INTO discussion_templates (
+                        id, name, description, topic_template, default_providers,
+                        default_config, category, created_at, updated_at, is_builtin
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+                """, (
+                    template["id"],
+                    template["name"],
+                    template["description"],
+                    template["topic_template"],
+                    template["default_providers"],
+                    template["default_config"],
+                    template["category"],
+                    now,
+                    now,
+                ))
+            except sqlite3.IntegrityError:
+                pass  # Template already exists
 
     # ==================== Request Operations ====================
 
@@ -851,6 +973,323 @@ class StateStore:
             # Delete sessions
             cursor = conn.execute(
                 "DELETE FROM discussion_sessions WHERE created_at < ?",
+                (cutoff,)
+            )
+            return cursor.rowcount
+
+    # ==================== Discussion Template Operations ====================
+
+    def create_discussion_template(
+        self,
+        name: str,
+        topic_template: str,
+        description: Optional[str] = None,
+        default_providers: Optional[List[str]] = None,
+        default_config: Optional[Dict[str, Any]] = None,
+        category: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Create a new discussion template."""
+        import uuid
+        template_id = str(uuid.uuid4())[:12]
+        now = time.time()
+
+        with self._get_connection() as conn:
+            conn.execute("""
+                INSERT INTO discussion_templates (
+                    id, name, description, topic_template, default_providers,
+                    default_config, category, created_at, updated_at, is_builtin
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+            """, (
+                template_id,
+                name,
+                description,
+                topic_template,
+                json.dumps(default_providers) if default_providers else None,
+                json.dumps(default_config) if default_config else None,
+                category,
+                now,
+                now,
+            ))
+
+        return self.get_discussion_template(template_id)
+
+    def get_discussion_template(self, template_id: str) -> Optional[Dict[str, Any]]:
+        """Get a discussion template by ID."""
+        with self._get_connection() as conn:
+            cursor = conn.execute(
+                "SELECT * FROM discussion_templates WHERE id = ?",
+                (template_id,)
+            )
+            row = cursor.fetchone()
+            if row:
+                return self._row_to_template(row)
+        return None
+
+    def get_discussion_template_by_name(self, name: str) -> Optional[Dict[str, Any]]:
+        """Get a discussion template by name."""
+        with self._get_connection() as conn:
+            cursor = conn.execute(
+                "SELECT * FROM discussion_templates WHERE name = ?",
+                (name,)
+            )
+            row = cursor.fetchone()
+            if row:
+                return self._row_to_template(row)
+        return None
+
+    def list_discussion_templates(
+        self,
+        category: Optional[str] = None,
+        include_builtin: bool = True,
+    ) -> List[Dict[str, Any]]:
+        """List discussion templates with optional filtering."""
+        query = "SELECT * FROM discussion_templates WHERE 1=1"
+        params: List[Any] = []
+
+        if category:
+            query += " AND category = ?"
+            params.append(category)
+
+        if not include_builtin:
+            query += " AND is_builtin = 0"
+
+        query += " ORDER BY usage_count DESC, name ASC"
+
+        with self._get_connection() as conn:
+            cursor = conn.execute(query, params)
+            return [self._row_to_template(row) for row in cursor.fetchall()]
+
+    def update_discussion_template(
+        self,
+        template_id: str,
+        name: Optional[str] = None,
+        description: Optional[str] = None,
+        topic_template: Optional[str] = None,
+        default_providers: Optional[List[str]] = None,
+        default_config: Optional[Dict[str, Any]] = None,
+        category: Optional[str] = None,
+    ) -> bool:
+        """Update a discussion template."""
+        updates = ["updated_at = ?"]
+        params: List[Any] = [time.time()]
+
+        if name is not None:
+            updates.append("name = ?")
+            params.append(name)
+        if description is not None:
+            updates.append("description = ?")
+            params.append(description)
+        if topic_template is not None:
+            updates.append("topic_template = ?")
+            params.append(topic_template)
+        if default_providers is not None:
+            updates.append("default_providers = ?")
+            params.append(json.dumps(default_providers))
+        if default_config is not None:
+            updates.append("default_config = ?")
+            params.append(json.dumps(default_config))
+        if category is not None:
+            updates.append("category = ?")
+            params.append(category)
+
+        params.append(template_id)
+
+        with self._get_connection() as conn:
+            # Don't allow updating builtin templates
+            cursor = conn.execute(
+                f"UPDATE discussion_templates SET {', '.join(updates)} WHERE id = ? AND is_builtin = 0",
+                params
+            )
+            return cursor.rowcount > 0
+
+    def delete_discussion_template(self, template_id: str) -> bool:
+        """Delete a discussion template (only non-builtin)."""
+        with self._get_connection() as conn:
+            cursor = conn.execute(
+                "DELETE FROM discussion_templates WHERE id = ? AND is_builtin = 0",
+                (template_id,)
+            )
+            return cursor.rowcount > 0
+
+    def increment_template_usage(self, template_id: str) -> None:
+        """Increment the usage count for a template."""
+        with self._get_connection() as conn:
+            conn.execute(
+                "UPDATE discussion_templates SET usage_count = usage_count + 1 WHERE id = ?",
+                (template_id,)
+            )
+
+    def _row_to_template(self, row: sqlite3.Row) -> Dict[str, Any]:
+        """Convert database row to template dictionary."""
+        return {
+            "id": row["id"],
+            "name": row["name"],
+            "description": row["description"],
+            "topic_template": row["topic_template"],
+            "default_providers": json.loads(row["default_providers"]) if row["default_providers"] else None,
+            "default_config": json.loads(row["default_config"]) if row["default_config"] else None,
+            "category": row["category"],
+            "created_at": row["created_at"],
+            "updated_at": row["updated_at"],
+            "usage_count": row["usage_count"],
+            "is_builtin": bool(row["is_builtin"]),
+        }
+
+    # ==================== Token Cost Tracking Operations ====================
+
+    # Pricing per million tokens (USD)
+    PROVIDER_PRICING = {
+        "deepseek": {"input": 0.14, "output": 0.28},
+        "codex": {"input": 2.50, "output": 10.00},  # o3 pricing
+        "gemini": {"input": 0.075, "output": 0.30},
+        "claude": {"input": 3.00, "output": 15.00},
+        "kimi": {"input": 0.0, "output": 0.0},  # Free tier
+        "qwen": {"input": 0.0, "output": 0.0},  # Free tier
+        "iflow": {"input": 0.0, "output": 0.0},
+        "opencode": {"input": 0.0, "output": 0.0},
+    }
+
+    def record_token_cost(
+        self,
+        provider: str,
+        input_tokens: int,
+        output_tokens: int,
+        request_id: Optional[str] = None,
+        model: Optional[str] = None,
+    ) -> None:
+        """Record token usage and calculate cost."""
+        # Calculate cost
+        pricing = self.PROVIDER_PRICING.get(provider.lower(), {"input": 0, "output": 0})
+        cost_usd = (
+            (input_tokens * pricing["input"] / 1_000_000) +
+            (output_tokens * pricing["output"] / 1_000_000)
+        )
+
+        with self._get_connection() as conn:
+            conn.execute("""
+                INSERT INTO token_costs (
+                    provider, request_id, input_tokens, output_tokens,
+                    cost_usd, model, timestamp
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (
+                provider,
+                request_id,
+                input_tokens,
+                output_tokens,
+                cost_usd,
+                model,
+                time.time(),
+            ))
+
+    def get_cost_summary(self, days: int = 30) -> Dict[str, Any]:
+        """Get cost summary for the specified period."""
+        cutoff = time.time() - (days * 86400)
+
+        with self._get_connection() as conn:
+            # Total costs
+            cursor = conn.execute("""
+                SELECT
+                    SUM(input_tokens) as total_input,
+                    SUM(output_tokens) as total_output,
+                    SUM(cost_usd) as total_cost,
+                    COUNT(*) as total_requests
+                FROM token_costs
+                WHERE timestamp > ?
+            """, (cutoff,))
+            row = cursor.fetchone()
+
+            # Today's costs
+            today_start = time.time() - (time.time() % 86400)
+            cursor = conn.execute("""
+                SELECT SUM(cost_usd) as today_cost
+                FROM token_costs
+                WHERE timestamp > ?
+            """, (today_start,))
+            today_row = cursor.fetchone()
+
+            # This week's costs
+            week_start = time.time() - (7 * 86400)
+            cursor = conn.execute("""
+                SELECT SUM(cost_usd) as week_cost
+                FROM token_costs
+                WHERE timestamp > ?
+            """, (week_start,))
+            week_row = cursor.fetchone()
+
+            return {
+                "period_days": days,
+                "total_input_tokens": row["total_input"] or 0,
+                "total_output_tokens": row["total_output"] or 0,
+                "total_cost_usd": row["total_cost"] or 0.0,
+                "total_requests": row["total_requests"] or 0,
+                "today_cost_usd": today_row["today_cost"] or 0.0,
+                "week_cost_usd": week_row["week_cost"] or 0.0,
+            }
+
+    def get_cost_by_provider(self, days: int = 30) -> List[Dict[str, Any]]:
+        """Get cost breakdown by provider."""
+        cutoff = time.time() - (days * 86400)
+
+        with self._get_connection() as conn:
+            cursor = conn.execute("""
+                SELECT
+                    provider,
+                    SUM(input_tokens) as total_input,
+                    SUM(output_tokens) as total_output,
+                    SUM(cost_usd) as total_cost,
+                    COUNT(*) as request_count
+                FROM token_costs
+                WHERE timestamp > ?
+                GROUP BY provider
+                ORDER BY total_cost DESC
+            """, (cutoff,))
+
+            return [
+                {
+                    "provider": row["provider"],
+                    "total_input_tokens": row["total_input"] or 0,
+                    "total_output_tokens": row["total_output"] or 0,
+                    "total_cost_usd": row["total_cost"] or 0.0,
+                    "request_count": row["request_count"] or 0,
+                }
+                for row in cursor.fetchall()
+            ]
+
+    def get_cost_by_day(self, days: int = 7) -> List[Dict[str, Any]]:
+        """Get daily cost breakdown."""
+        cutoff = time.time() - (days * 86400)
+
+        with self._get_connection() as conn:
+            cursor = conn.execute("""
+                SELECT
+                    DATE(timestamp, 'unixepoch', 'localtime') as date,
+                    SUM(input_tokens) as total_input,
+                    SUM(output_tokens) as total_output,
+                    SUM(cost_usd) as total_cost,
+                    COUNT(*) as request_count
+                FROM token_costs
+                WHERE timestamp > ?
+                GROUP BY DATE(timestamp, 'unixepoch', 'localtime')
+                ORDER BY date DESC
+            """, (cutoff,))
+
+            return [
+                {
+                    "date": row["date"],
+                    "total_input_tokens": row["total_input"] or 0,
+                    "total_output_tokens": row["total_output"] or 0,
+                    "total_cost_usd": row["total_cost"] or 0.0,
+                    "request_count": row["request_count"] or 0,
+                }
+                for row in cursor.fetchall()
+            ]
+
+    def cleanup_old_costs(self, max_age_days: int = 90) -> int:
+        """Remove cost records older than specified age."""
+        cutoff = time.time() - (max_age_days * 86400)
+        with self._get_connection() as conn:
+            cursor = conn.execute(
+                "DELETE FROM token_costs WHERE timestamp < ?",
                 (cutoff,)
             )
             return cursor.rowcount
