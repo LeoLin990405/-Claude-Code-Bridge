@@ -1,0 +1,280 @@
+#!/bin/bash
+# ccb-discussion - CLI for multi-AI collaborative discussions
+# Usage: ccb-discussion "topic" [--providers kimi,qwen,deepseek] [--quick] [--wait]
+
+set -e
+
+GATEWAY_URL="${CCB_GATEWAY_URL:-http://localhost:8765}"
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
+
+# Default values
+PROVIDERS=""
+PROVIDER_GROUP="@coding"
+MAX_ROUNDS=3
+WAIT_FOR_COMPLETION=false
+QUICK_MODE=false
+
+usage() {
+    echo "Usage: ccb-discussion [OPTIONS] \"topic\""
+    echo ""
+    echo "Start a multi-AI collaborative discussion on a topic."
+    echo ""
+    echo "Options:"
+    echo "  -p, --providers LIST    Comma-separated list of providers (e.g., kimi,qwen,deepseek)"
+    echo "  -g, --group GROUP       Provider group (@all, @fast, @coding) [default: @coding]"
+    echo "  -r, --rounds N          Maximum discussion rounds (1-3) [default: 3]"
+    echo "  -q, --quick             Quick mode: 2 rounds, shorter timeouts"
+    echo "  -w, --wait              Wait for discussion to complete"
+    echo "  -s, --status ID         Check status of existing discussion"
+    echo "  -l, --list              List recent discussions"
+    echo "  -h, --help              Show this help message"
+    echo ""
+    echo "Examples:"
+    echo "  ccb-discussion \"Design a distributed cache system\""
+    echo "  ccb-discussion -p kimi,qwen,deepseek \"Best practices for API design\""
+    echo "  ccb-discussion -g @fast --quick \"Quick code review approach\""
+    echo "  ccb-discussion -s abc123def456  # Check status"
+    echo "  ccb-discussion -l               # List discussions"
+}
+
+check_gateway() {
+    if ! curl -s "${GATEWAY_URL}/api/health" > /dev/null 2>&1; then
+        echo -e "${RED}Error: Gateway not available at ${GATEWAY_URL}${NC}"
+        echo "Start the gateway with: python3 -m lib.gateway.gateway_server"
+        exit 1
+    fi
+}
+
+start_discussion() {
+    local topic="$1"
+
+    # Build request JSON
+    local json_data
+    if [ -n "$PROVIDERS" ]; then
+        # Convert comma-separated to JSON array
+        local providers_json=$(echo "$PROVIDERS" | sed 's/,/","/g' | sed 's/^/["/' | sed 's/$/"]/')
+        json_data=$(cat <<EOF
+{
+    "topic": "$topic",
+    "providers": $providers_json,
+    "max_rounds": $MAX_ROUNDS,
+    "run_async": true
+}
+EOF
+)
+    else
+        json_data=$(cat <<EOF
+{
+    "topic": "$topic",
+    "provider_group": "$PROVIDER_GROUP",
+    "max_rounds": $MAX_ROUNDS,
+    "run_async": true
+}
+EOF
+)
+    fi
+
+    echo -e "${CYAN}Starting discussion...${NC}"
+    echo -e "${BLUE}Topic:${NC} $topic"
+
+    # Start discussion
+    local response
+    response=$(curl -s -X POST "${GATEWAY_URL}/api/discussion/start" \
+        -H "Content-Type: application/json" \
+        -d "$json_data")
+
+    local session_id=$(echo "$response" | jq -r '.session_id // empty')
+
+    if [ -z "$session_id" ]; then
+        echo -e "${RED}Error starting discussion:${NC}"
+        echo "$response" | jq .
+        exit 1
+    fi
+
+    local providers=$(echo "$response" | jq -r '.providers | join(", ")')
+    echo -e "${GREEN}Discussion started!${NC}"
+    echo -e "${BLUE}Session ID:${NC} $session_id"
+    echo -e "${BLUE}Providers:${NC} $providers"
+    echo ""
+
+    if [ "$WAIT_FOR_COMPLETION" = true ]; then
+        wait_for_discussion "$session_id"
+    else
+        echo -e "${YELLOW}Discussion running in background.${NC}"
+        echo "Check status: ccb-discussion -s $session_id"
+        echo "Or monitor via WebSocket: wscat -c ws://localhost:8765/api/ws"
+    fi
+}
+
+wait_for_discussion() {
+    local session_id="$1"
+    local max_wait=600  # 10 minutes max
+    local elapsed=0
+    local interval=5
+
+    echo -e "${CYAN}Waiting for discussion to complete...${NC}"
+
+    while [ $elapsed -lt $max_wait ]; do
+        local response=$(curl -s "${GATEWAY_URL}/api/discussion/${session_id}")
+        local disc_status=$(echo "$response" | jq -r '.status')
+        local current_round=$(echo "$response" | jq -r '.current_round')
+
+        case "$disc_status" in
+            "completed")
+                echo -e "\n${GREEN}Discussion completed!${NC}"
+                show_discussion_result "$session_id"
+                return 0
+                ;;
+            "failed")
+                echo -e "\n${RED}Discussion failed!${NC}"
+                echo "$response" | jq .
+                return 1
+                ;;
+            "cancelled")
+                echo -e "\n${YELLOW}Discussion was cancelled.${NC}"
+                return 1
+                ;;
+            *)
+                printf "\r${CYAN}Status: %s | Round: %s | Elapsed: %ds${NC}    " "$disc_status" "$current_round" "$elapsed"
+                sleep $interval
+                elapsed=$((elapsed + interval))
+                ;;
+        esac
+    done
+
+    echo -e "\n${YELLOW}Timeout waiting for discussion. Check status manually.${NC}"
+    return 1
+}
+
+show_discussion_result() {
+    local session_id="$1"
+
+    # Get session details
+    local session=$(curl -s "${GATEWAY_URL}/api/discussion/${session_id}")
+    local topic=$(echo "$session" | jq -r '.topic')
+    local summary=$(echo "$session" | jq -r '.summary // "No summary available"')
+    local providers=$(echo "$session" | jq -r '.providers | join(", ")')
+
+    echo ""
+    echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
+    echo -e "${BLUE}Discussion Summary${NC}"
+    echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
+    echo -e "${CYAN}Topic:${NC} $topic"
+    echo -e "${CYAN}Participants:${NC} $providers"
+    echo ""
+    echo -e "${GREEN}Summary:${NC}"
+    echo "$summary"
+    echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
+
+    # Get messages
+    echo ""
+    echo -e "${YELLOW}View full discussion messages:${NC}"
+    echo "  curl ${GATEWAY_URL}/api/discussion/${session_id}/messages | jq ."
+}
+
+check_status() {
+    local session_id="$1"
+
+    local response=$(curl -s "${GATEWAY_URL}/api/discussion/${session_id}")
+
+    if echo "$response" | jq -e '.session_id' > /dev/null 2>&1; then
+        local disc_status=$(echo "$response" | jq -r '.status')
+        local topic=$(echo "$response" | jq -r '.topic')
+        local current_round=$(echo "$response" | jq -r '.current_round')
+        local providers=$(echo "$response" | jq -r '.providers | join(", ")')
+
+        echo -e "${BLUE}Session:${NC} $session_id"
+        echo -e "${BLUE}Topic:${NC} $topic"
+        echo -e "${BLUE}Status:${NC} $disc_status"
+        echo -e "${BLUE}Current Round:${NC} $current_round"
+        echo -e "${BLUE}Providers:${NC} $providers"
+
+        if [ "$disc_status" = "completed" ]; then
+            local summary=$(echo "$response" | jq -r '.summary // "No summary"')
+            echo ""
+            echo -e "${GREEN}Summary:${NC}"
+            echo "$summary"
+        fi
+    else
+        echo -e "${RED}Discussion not found: $session_id${NC}"
+        exit 1
+    fi
+}
+
+list_discussions() {
+    local response=$(curl -s "${GATEWAY_URL}/api/discussions?limit=10")
+
+    echo -e "${BLUE}Recent Discussions:${NC}"
+    echo ""
+
+    echo "$response" | jq -r '.[] | "\(.id) | \(.status) | \(.topic[0:50])..."'
+}
+
+# Parse arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -p|--providers)
+            PROVIDERS="$2"
+            shift 2
+            ;;
+        -g|--group)
+            PROVIDER_GROUP="$2"
+            shift 2
+            ;;
+        -r|--rounds)
+            MAX_ROUNDS="$2"
+            shift 2
+            ;;
+        -q|--quick)
+            QUICK_MODE=true
+            MAX_ROUNDS=2
+            shift
+            ;;
+        -w|--wait)
+            WAIT_FOR_COMPLETION=true
+            shift
+            ;;
+        -s|--status)
+            check_gateway
+            check_status "$2"
+            exit 0
+            ;;
+        -l|--list)
+            check_gateway
+            list_discussions
+            exit 0
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        -*)
+            echo "Unknown option: $1"
+            usage
+            exit 1
+            ;;
+        *)
+            TOPIC="$1"
+            shift
+            ;;
+    esac
+done
+
+# Validate topic
+if [ -z "$TOPIC" ]; then
+    echo -e "${RED}Error: Topic is required${NC}"
+    echo ""
+    usage
+    exit 1
+fi
+
+# Check gateway and start discussion
+check_gateway
+start_discussion "$TOPIC"
