@@ -85,9 +85,25 @@
 
 ## ✨ 特性
 
+### 🆕 Gateway 自动启动 (v0.13)
+
+使用 ccb-cli 时 Gateway 自动启动 - 无需手动启动：
+
+```bash
+# 首次调用自动启动 Gateway
+ccb-cli kimi "你好"
+# ⚡ Gateway 未运行，正在启动...
+# ✓ Gateway 已启动 (PID: 12345)
+# Kimi 响应...
+
+# macOS: 使用 launchd 开机自启
+cp config/com.ccb.gateway.plist ~/Library/LaunchAgents/
+launchctl load ~/Library/LaunchAgents/com.ccb.gateway.plist
+```
+
 ### 🆕 ccb-cli (v0.11)
 
-直接 CLI 工具，支持模型选择 - 无需 Gateway：
+直接 CLI 工具，支持模型选择 - 通过 Gateway 路由：
 
 ```bash
 ccb-cli <provider> [model] <prompt>
@@ -170,13 +186,13 @@ ccb-discussion -w "架构决策"
 
 ### 方式 1: ccb-cli（推荐）
 
-无需 Gateway - 直接 CLI 访问，支持模型选择：
+Gateway 自动启动 - 直接运行命令即可：
 
 ```bash
 # 安装（已包含在 ccb-dual 中）
 # 脚本位置 ~/.ccb_config/scripts/ccb-cli
 
-# 快速中文问答
+# 快速中文问答（Gateway 按需自动启动）
 ccb-cli kimi "什么是递归"
 
 # 复杂算法用 o3
@@ -197,9 +213,13 @@ ccb-cli kimi thinking "逐步分析这个问题"
 完整功能的异步 API，支持缓存、重试和监控：
 
 ```bash
-# 启动 Gateway
+# Gateway 由 ccb-cli 自动启动，或手动启动：
 cd ~/.local/share/codex-dual
 python3 -m lib.gateway.gateway_server --port 8765
+
+# 或安装为 launchd 服务（macOS 开机自启）：
+cp config/com.ccb.gateway.plist ~/Library/LaunchAgents/
+launchctl load ~/Library/LaunchAgents/com.ccb.gateway.plist
 
 # 提交请求
 curl -X POST http://localhost:8765/api/ask \
@@ -480,7 +500,12 @@ ccb-cli kimi "你好"
 
 ## 🔄 最近更新
 
-### v0.12.x - 多 AI 讨论（最新）
+### v0.13.x - Gateway 自动启动（最新）
+- **Gateway 自动启动** - ccb-cli 未运行时自动启动 Gateway
+- **launchd 服务** - macOS 登录时自动启动，支持 KeepAlive
+- **统一架构** - 所有 ccb-cli 调用通过 Gateway 路由，享受缓存/监控
+
+### v0.12.x - 多 AI 讨论
 - **讨论执行器** - 编排多轮 AI 讨论
 - **3 轮流程** - 提案 → 互评 → 修订 → 汇总
 - **ccb-discussion CLI** - 讨论命令行界面

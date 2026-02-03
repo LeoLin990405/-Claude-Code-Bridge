@@ -85,9 +85,25 @@
 
 ## ✨ Features
 
+### 🆕 Gateway Auto-Start (v0.13)
+
+Gateway starts automatically when you use ccb-cli - no manual startup needed:
+
+```bash
+# First call auto-starts Gateway
+ccb-cli kimi "Hello"
+# ⚡ Gateway not running, starting...
+# ✓ Gateway started (PID: 12345)
+# Response from Kimi...
+
+# macOS: Auto-start on boot with launchd
+cp config/com.ccb.gateway.plist ~/Library/LaunchAgents/
+launchctl load ~/Library/LaunchAgents/com.ccb.gateway.plist
+```
+
 ### 🆕 ccb-cli (v0.11)
 
-Direct CLI tool with model selection - no Gateway required:
+Direct CLI tool with model selection - routes through Gateway:
 
 ```bash
 ccb-cli <provider> [model] <prompt>
@@ -170,13 +186,13 @@ Round 1: Proposal    →   Round 2: Review    →   Round 3: Revision
 
 ### Method 1: ccb-cli (Recommended)
 
-No Gateway required - direct CLI access with model selection:
+Gateway auto-starts - just run commands directly:
 
 ```bash
 # Install (already included in ccb-dual)
 # Scripts at ~/.ccb_config/scripts/ccb-cli
 
-# Quick Chinese Q&A
+# Quick Chinese Q&A (Gateway auto-starts if needed)
 ccb-cli kimi "什么是递归"
 
 # Complex algorithm with o3
@@ -197,9 +213,13 @@ ccb-cli kimi thinking "Analyze this problem step by step"
 Full-featured async API with caching, retry, and monitoring:
 
 ```bash
-# Start Gateway
+# Gateway auto-starts with ccb-cli, or start manually:
 cd ~/.local/share/codex-dual
 python3 -m lib.gateway.gateway_server --port 8765
+
+# Or install as launchd service (macOS auto-start on boot):
+cp config/com.ccb.gateway.plist ~/Library/LaunchAgents/
+launchctl load ~/Library/LaunchAgents/com.ccb.gateway.plist
 
 # Submit request
 curl -X POST http://localhost:8765/api/ask \
@@ -480,7 +500,12 @@ ccb-cli kimi "Hello"
 
 ## 🔄 Recent Updates
 
-### v0.12.x - Multi-AI Discussion (Latest)
+### v0.13.x - Gateway Auto-Start (Latest)
+- **Auto-start Gateway** - ccb-cli automatically starts Gateway when not running
+- **launchd service** - macOS auto-start on login with KeepAlive
+- **Unified architecture** - All ccb-cli calls route through Gateway for caching/monitoring
+
+### v0.12.x - Multi-AI Discussion
 - **Discussion Executor** - Orchestrate multi-round AI discussions
 - **3-Round Flow** - Proposal → Review → Revision → Summary
 - **ccb-discussion CLI** - Command-line interface for discussions
