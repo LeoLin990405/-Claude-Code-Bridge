@@ -385,11 +385,18 @@ Access at `http://localhost:8765/` after starting Gateway.
 |-----|----------|-------------|
 | **Dashboard** | `1` | Gateway stats, provider status, activity logs |
 | **Monitor** | `2` | Real-time AI output streaming (Grid/Focus view) |
-| **Requests** | `3` | Request history with search and filters |
-| **Test** | `4` | Interactive API testing console |
-| **Compare** | `5` | Side-by-side provider comparison |
-| **API Keys** | `6` | API key management |
-| **Config** | `7` | Gateway configuration viewer |
+| **Discussions** | `3` | Multi-AI discussion monitoring and management |
+| **Requests** | `4` | Request history with search and filters |
+| **Test** | `5` | Interactive API testing console |
+| **Compare** | `6` | Side-by-side provider comparison |
+| **API Keys** | `7` | API key management |
+| **Config** | `8` | Gateway configuration viewer |
+
+<p align="center">
+  <img src="screenshots/discussions.png" alt="Discussions" width="700">
+  <br>
+  <em>Discussions - Monitor multi-AI collaborative discussions in real-time</em>
+</p>
 
 <p align="center">
   <img src="screenshots/monitor.png" alt="Live Monitor" width="700">
@@ -401,7 +408,7 @@ Access at `http://localhost:8765/` after starting Gateway.
 
 - **Dark/Light Theme** - Toggle with `D` key
 - **i18n Support** - English and Chinese
-- **Keyboard Shortcuts** - `1-7` tabs, `R` refresh, `?` help
+- **Keyboard Shortcuts** - `1-8` tabs, `R` refresh, `?` help
 - **Real-time Updates** - WebSocket-powered live data
 
 ---
