@@ -603,7 +603,7 @@
                     </div>
 
                     <!-- Provider Output Panels -->
-                    <div :class="monitorLayout === 'grid' ? 'grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4' : ''">
+                    <div v-if="monitorProviders.length > 0" :class="monitorLayout === 'grid' ? 'grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4' : ''">
                         <template v-if="monitorLayout === 'grid'">
                             <div v-for="provider in monitorProviders" :key="provider.name"
                                  class="bg-gray-900/50 rounded-xl border border-gray-700/50 overflow-hidden"
@@ -666,8 +666,8 @@
                         </template>
                     </div>
 
-                    <!-- Empty State -->
-                    <div v-if="Object.keys(monitorStreams).length === 0 && liveRequests.length === 0"
+                    <!-- Empty State - only show when no providers available -->
+                    <div v-if="monitorProviders.length === 0"
                          class="text-center py-16 text-gray-500">
                         <i class="fas fa-satellite-dish text-5xl mb-4"></i>
                         <p class="text-lg">{{ t('noActiveStreams') }}</p>
@@ -770,6 +770,28 @@
 
             <!-- Test Tab -->
             <div v-show="activeTab === 'test'" class="space-y-6">
+                <!-- Gateway Mode Banner -->
+                <div class="bg-gradient-to-r from-indigo-900/30 to-purple-900/30 rounded-xl p-4 border border-indigo-500/30">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-rocket text-indigo-400 text-xl"></i>
+                            <div>
+                                <h3 class="font-semibold text-white">Gateway Mode Active</h3>
+                                <p class="text-sm text-gray-400">All requests go through Gateway API with caching, retry, and monitoring</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <div class="text-right">
+                                <div class="text-xs text-gray-400">Sync API</div>
+                                <code class="text-xs text-cyan-400">/api/ask?wait=true</code>
+                            </div>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <span class="text-sm text-gray-400">Wait Mode</span>
+                                <div @click="testForm.waitMode = !testForm.waitMode" :class="['toggle-switch', testForm.waitMode ? 'active' : '']"></div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div class="glass-card p-6">
                         <div class="flex items-center justify-between mb-6">
@@ -809,6 +831,10 @@
                                         </optgroup>
                                     </select>
                                 </div>
+                                <div v-if="testForm.waitMode">
+                                    <label class="block text-sm text-gray-400 mb-2">Timeout (seconds)</label>
+                                    <input type="number" v-model.number="testForm.timeout" class="input-field" min="10" max="300" placeholder="120">
+                                </div>
                             </div>
                             <div>
                                 <label class="block text-sm text-gray-400 mb-2">{{ t('message') }}</label>
@@ -816,17 +842,20 @@
                             </div>
                             <div class="flex items-center space-x-6">
                                 <label class="flex items-center space-x-2 cursor-pointer">
-                                    <input type="checkbox" v-model="testForm.stream" class="w-4 h-4 rounded border-gray-600 bg-gray-700 text-indigo-500 focus:ring-indigo-500">
-                                    <span class="text-sm">{{ t('stream') }}</span>
+                                    <input type="checkbox" v-model="testForm.stream" class="w-4 h-4 rounded border-gray-600 bg-gray-700 text-indigo-500 focus:ring-indigo-500" :disabled="testForm.waitMode">
+                                    <span class="text-sm" :class="testForm.waitMode ? 'text-gray-600' : ''">{{ t('stream') }}</span>
                                 </label>
                                 <label class="flex items-center space-x-2 cursor-pointer">
                                     <input type="checkbox" v-model="testForm.cacheBypass" class="w-4 h-4 rounded border-gray-600 bg-gray-700 text-indigo-500 focus:ring-indigo-500">
                                     <span class="text-sm">{{ t('bypassCache') }}</span>
                                 </label>
+                                <label class="flex items-center space-x-2 cursor-pointer" v-if="testForm.waitMode">
+                                    <span class="px-2 py-1 bg-amber-500/20 text-amber-400 text-xs rounded-full">Sync Mode</span>
+                                </label>
                             </div>
                             <button @click="sendTestRequest" :disabled="testSending" class="w-full btn-primary py-3 text-base">
                                 <i v-if="testSending" class="fas fa-spinner fa-spin mr-2"></i>
-                                {{ testSending ? t('sending') : t('sendTest') }}
+                                {{ testSending ? (testForm.waitMode ? 'Waiting for response...' : t('sending')) : (testForm.waitMode ? 'Send (Sync)' : t('sendTest')) }}
                             </button>
                         </div>
                     </div>
@@ -1005,53 +1034,123 @@
                 <!-- CLI Reference Section -->
                 <div class="glass-card p-6">
                     <h2 class="text-lg font-semibold flex items-center mb-6"><i class="fas fa-terminal text-cyan-400 mr-3"></i>{{ t('cliReference') }}</h2>
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- ccb-cli Gateway Mode (NEW - Primary) -->
+                        <div class="bg-gradient-to-br from-indigo-900/30 to-purple-900/30 rounded-xl p-5 border border-indigo-500/30">
+                            <h3 class="font-medium text-indigo-400 mb-4 flex items-center">
+                                <i class="fas fa-rocket mr-2"></i>ccb-cli (Gateway Mode)
+                                <span class="ml-2 px-2 py-0.5 bg-emerald-500/20 text-emerald-400 text-xs rounded-full">Recommended</span>
+                            </h3>
+                            <div class="space-y-3 font-mono text-sm">
+                                <div class="bg-gray-900/50 rounded-lg p-3">
+                                    <div class="text-gray-400 text-xs mb-1"># Unified CLI - All calls go through Gateway</div>
+                                    <div class="text-cyan-300">ccb-cli &lt;provider&gt; [model] "message"</div>
+                                </div>
+                                <div class="bg-gray-900/50 rounded-lg p-3">
+                                    <div class="text-gray-400 text-xs mb-1"># Examples with model shortcuts</div>
+                                    <div class="text-cyan-300">ccb-cli kimi "你好"</div>
+                                    <div class="text-cyan-300">ccb-cli kimi thinking "分析问题"</div>
+                                    <div class="text-cyan-300">ccb-cli codex o3 "设计算法"</div>
+                                    <div class="text-cyan-300">ccb-cli gemini 3f "React 组件"</div>
+                                    <div class="text-cyan-300">ccb-cli deepseek chat "快速问答"</div>
+                                </div>
+                                <div class="bg-gray-900/50 rounded-lg p-3">
+                                    <div class="text-gray-400 text-xs mb-1"># Direct mode (bypass Gateway)</div>
+                                    <div class="text-cyan-300">CCB_DIRECT_MODE=1 ccb-cli kimi "msg"</div>
+                                </div>
+                            </div>
+                            <div class="mt-4 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
+                                <div class="text-xs text-emerald-400 flex items-center">
+                                    <i class="fas fa-check-circle mr-2"></i>
+                                    Features: Caching, Retry, Monitoring, Logging
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Sync API Mode -->
+                        <div class="bg-gray-800/50 rounded-xl p-5 border border-gray-700/50">
+                            <h3 class="font-medium text-amber-400 mb-4 flex items-center"><i class="fas fa-sync mr-2"></i>Sync API (wait=true)</h3>
+                            <div class="space-y-3 font-mono text-sm">
+                                <div class="bg-gray-900/50 rounded-lg p-3">
+                                    <div class="text-gray-400 text-xs mb-1"># Sync call - wait for completion</div>
+                                    <div class="text-cyan-300 text-xs">curl -X POST "/api/ask?wait=true" \</div>
+                                    <div class="text-cyan-300 text-xs ml-2">-d '{"provider":"kimi","message":"hi"}'</div>
+                                </div>
+                                <div class="bg-gray-900/50 rounded-lg p-3">
+                                    <div class="text-gray-400 text-xs mb-1"># With timeout (seconds)</div>
+                                    <div class="text-cyan-300 text-xs">/api/ask?wait=true&timeout=120</div>
+                                </div>
+                                <div class="bg-gray-900/50 rounded-lg p-3">
+                                    <div class="text-gray-400 text-xs mb-1"># Response includes full result</div>
+                                    <div class="text-emerald-300 text-xs">{"status":"completed",</div>
+                                    <div class="text-emerald-300 text-xs ml-1">"response":"Hello!",</div>
+                                    <div class="text-emerald-300 text-xs ml-1">"latency_ms":1234}</div>
+                                </div>
+                            </div>
+                        </div>
                         <!-- Async Workflow -->
                         <div class="bg-gray-800/50 rounded-xl p-5 border border-gray-700/50">
                             <h3 class="font-medium text-emerald-400 mb-4 flex items-center"><i class="fas fa-bolt mr-2"></i>{{ t('asyncWorkflow') }}</h3>
                             <div class="space-y-3 font-mono text-sm">
                                 <div class="bg-gray-900/50 rounded-lg p-3">
-                                    <div class="text-gray-400 text-xs mb-1"># Submit request (returns immediately)</div>
-                                    <div class="text-cyan-300">ccb-submit &lt;provider&gt; "message"</div>
+                                    <div class="text-gray-400 text-xs mb-1"># Submit (returns immediately)</div>
+                                    <div class="text-cyan-300">ccb-submit &lt;provider&gt; "msg"</div>
                                 </div>
                                 <div class="bg-gray-900/50 rounded-lg p-3">
                                     <div class="text-gray-400 text-xs mb-1"># {{ t('checkStatus') }}</div>
-                                    <div class="text-cyan-300">ccb-query status &lt;request_id&gt;</div>
+                                    <div class="text-cyan-300">ccb-query status &lt;id&gt;</div>
                                 </div>
                                 <div class="bg-gray-900/50 rounded-lg p-3">
                                     <div class="text-gray-400 text-xs mb-1"># {{ t('getResponse') }}</div>
-                                    <div class="text-cyan-300">ccb-query get &lt;request_id&gt;</div>
+                                    <div class="text-cyan-300">ccb-query get &lt;id&gt;</div>
                                 </div>
                                 <div class="bg-gray-900/50 rounded-lg p-3">
                                     <div class="text-gray-400 text-xs mb-1"># {{ t('listPending') }}</div>
                                     <div class="text-cyan-300">ccb-query pending</div>
                                 </div>
-                                <div class="bg-gray-900/50 rounded-lg p-3">
-                                    <div class="text-gray-400 text-xs mb-1"># {{ t('getLatest') }}</div>
-                                    <div class="text-cyan-300">ccb-query latest --provider &lt;name&gt;</div>
-                                </div>
                             </div>
                         </div>
-                        <!-- Provider Commands -->
+                    </div>
+                    <!-- Model Shortcuts Reference -->
+                    <div class="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <div class="bg-gray-800/50 rounded-xl p-5 border border-gray-700/50">
-                            <h3 class="font-medium text-purple-400 mb-4 flex items-center"><i class="fas fa-server mr-2"></i>Provider Commands</h3>
+                            <h3 class="font-medium text-purple-400 mb-4 flex items-center"><i class="fas fa-magic mr-2"></i>Model Shortcuts</h3>
                             <div class="overflow-x-auto">
                                 <table class="w-full text-sm">
                                     <thead>
                                         <tr class="text-gray-400 text-xs">
                                             <th class="text-left py-2">Provider</th>
-                                            <th class="text-left py-2">{{ t('blockingCall') }}</th>
-                                            <th class="text-left py-2">{{ t('pingProvider') }}</th>
+                                            <th class="text-left py-2">Shortcuts</th>
+                                            <th class="text-left py-2">Speed</th>
                                         </tr>
                                     </thead>
                                     <tbody class="font-mono text-cyan-300">
-                                        <tr class="border-t border-gray-700/50"><td class="py-2 text-white">Codex</td><td>cask</td><td>cping</td></tr>
-                                        <tr class="border-t border-gray-700/50"><td class="py-2 text-white">Gemini</td><td>gask</td><td>gping</td></tr>
-                                        <tr class="border-t border-gray-700/50"><td class="py-2 text-white">OpenCode</td><td>oask</td><td>oping</td></tr>
-                                        <tr class="border-t border-gray-700/50"><td class="py-2 text-white">iFlow</td><td>iask</td><td>iping</td></tr>
-                                        <tr class="border-t border-gray-700/50"><td class="py-2 text-white">Kimi</td><td>kask</td><td>kping</td></tr>
-                                        <tr class="border-t border-gray-700/50"><td class="py-2 text-white">Qwen</td><td>qask</td><td>qping</td></tr>
-                                        <tr class="border-t border-gray-700/50"><td class="py-2 text-white">DeepSeek</td><td>dskask</td><td>dskping</td></tr>
+                                        <tr class="border-t border-gray-700/50"><td class="py-2 text-white">Kimi</td><td>thinking, normal</td><td class="text-emerald-400">🚀 Fast</td></tr>
+                                        <tr class="border-t border-gray-700/50"><td class="py-2 text-white">Qwen</td><td>-</td><td class="text-emerald-400">🚀 Fast</td></tr>
+                                        <tr class="border-t border-gray-700/50"><td class="py-2 text-white">DeepSeek</td><td>reasoner, chat</td><td class="text-amber-400">⚡ Medium</td></tr>
+                                        <tr class="border-t border-gray-700/50"><td class="py-2 text-white">iFlow</td><td>thinking, normal</td><td class="text-amber-400">⚡ Medium</td></tr>
+                                        <tr class="border-t border-gray-700/50"><td class="py-2 text-white">OpenCode</td><td>mm, kimi, ds, glm</td><td class="text-amber-400">⚡ Medium</td></tr>
+                                        <tr class="border-t border-gray-700/50"><td class="py-2 text-white">Codex</td><td>o3, o4-mini, gpt-4o</td><td class="text-rose-400">🐢 Slow</td></tr>
+                                        <tr class="border-t border-gray-700/50"><td class="py-2 text-white">Gemini</td><td>3f, 3p, 2.5f, 2.5p</td><td class="text-rose-400">🐢 Slow</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="bg-gray-800/50 rounded-xl p-5 border border-gray-700/50">
+                            <h3 class="font-medium text-cyan-400 mb-4 flex items-center"><i class="fas fa-users mr-2"></i>Provider Groups</h3>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm">
+                                    <thead>
+                                        <tr class="text-gray-400 text-xs">
+                                            <th class="text-left py-2">Group</th>
+                                            <th class="text-left py-2">Providers</th>
+                                            <th class="text-left py-2">Use Case</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="text-gray-300">
+                                        <tr class="border-t border-gray-700/50"><td class="py-2 font-mono text-indigo-400">@all</td><td class="text-xs">All 7 providers</td><td class="text-xs">Comprehensive</td></tr>
+                                        <tr class="border-t border-gray-700/50"><td class="py-2 font-mono text-emerald-400">@fast</td><td class="text-xs">Kimi, Qwen</td><td class="text-xs">Quick responses</td></tr>
+                                        <tr class="border-t border-gray-700/50"><td class="py-2 font-mono text-purple-400">@coding</td><td class="text-xs">Kimi, Qwen, DS, Codex, Gemini</td><td class="text-xs">Code tasks</td></tr>
+                                        <tr class="border-t border-gray-700/50"><td class="py-2 font-mono text-amber-400">@chinese</td><td class="text-xs">Kimi, Qwen, DeepSeek</td><td class="text-xs">Chinese NLP</td></tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -1441,7 +1540,9 @@
                     provider: '',
                     message: 'Hello! Please respond with a short greeting.',
                     stream: false,
-                    cacheBypass: false
+                    cacheBypass: false,
+                    waitMode: true,
+                    timeout: 120
                 });
                 const testSending = ref(false);
                 const testResult = ref(null);
@@ -1932,12 +2033,18 @@
                             if (monitorStreams.value[provider]) {
                                 monitorStreams.value[provider].active = false;
                             }
-                            addMonitorOutput(provider, `[${reqId}] Completed in ${latency}`, 'success');
-                            // Add response preview if available
-                            if (data.response) {
-                                const preview = data.response.slice(0, 500) + (data.response.length > 500 ? '...' : '');
-                                addMonitorOutput(provider, preview, 'default');
+                            addMonitorOutput(provider, `━━━ [${reqId}] Completed in ${latency} ━━━`, 'success');
+                            // Add thinking chain if available
+                            if (data.thinking) {
+                                addMonitorOutput(provider, `🧠 [Thinking Chain]`, 'thinking');
+                                addMonitorOutput(provider, data.thinking, 'thinking');
                             }
+                            // Add full response
+                            if (data.response) {
+                                addMonitorOutput(provider, `📝 [Response]`, 'info');
+                                addMonitorOutput(provider, data.response, 'default');
+                            }
+                            addMonitorOutput(provider, '', 'default'); // Empty line separator
                         }
                         fetchRequests();
                         fetchStatus();
@@ -2291,7 +2398,24 @@
                     let message = testForm.value.message;
 
                     try {
-                        const endpoint = testForm.value.stream ? '/api/ask/stream' : '/api/ask';
+                        // Build endpoint URL with wait mode parameters
+                        let endpoint = '/api/ask';
+                        const params = new URLSearchParams();
+
+                        if (testForm.value.waitMode) {
+                            params.append('wait', 'true');
+                            params.append('timeout', String(testForm.value.timeout || 120));
+                        }
+
+                        if (testForm.value.stream && !testForm.value.waitMode) {
+                            endpoint = '/api/ask/stream';
+                        }
+
+                        const queryString = params.toString();
+                        if (queryString) {
+                            endpoint += '?' + queryString;
+                        }
+
                         const res = await fetch(endpoint, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -2301,13 +2425,30 @@
                                 cache_bypass: testForm.value.cacheBypass,
                             }),
                         });
-                        
+
                         const data = await res.json();
                         const latency = Math.round(performance.now() - startTime);
-                        
-                        if (data.request_id) {
+
+                        if (testForm.value.waitMode) {
+                            // Sync mode: response is inline
+                            testResult.value = {
+                                success: data.status === 'completed',
+                                requestId: data.request_id,
+                                response: data.response,
+                                error: data.error,
+                                latency: data.latency_ms ? Math.round(data.latency_ms) : latency,
+                                cached: data.cached
+                            };
+                            testSending.value = false;
+                            if (data.status === 'completed') {
+                                addLog('success', `Test completed in ${testResult.value.latency}ms`);
+                            } else {
+                                addLog('error', `Test failed: ${data.error || data.status}`);
+                            }
+                        } else if (data.request_id) {
+                            // Async mode: poll for result
                             addLog('info', `Test request sent: ${data.request_id.slice(0, 11)}`);
-                            
+
                             let attempts = 0;
                             const pollResult = async () => {
                                 attempts++;

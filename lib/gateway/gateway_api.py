@@ -277,8 +277,12 @@ def create_api(
 
     # ==================== REST Endpoints ====================
 
-    @app.post("/api/ask", response_model=AskResponse)
-    async def ask(request: AskRequest) -> AskResponse:
+    @app.post("/api/ask")
+    async def ask(
+        request: AskRequest,
+        wait: bool = Query(False, description="Wait for completion before returning"),
+        timeout: float = Query(300.0, description="Wait timeout in seconds (only used when wait=true)"),
+    ):
         """
         Submit a request to an AI provider.
 
@@ -287,6 +291,10 @@ def create_api(
         - Provider groups: provider="@all", "@fast", "@coding"
         - Auto-routing: provider=None (uses router or default)
         - Cache bypass: cache_bypass=True
+        - Synchronous wait: wait=true&timeout=300 (waits for completion)
+
+        When wait=true, returns full response inline instead of just request_id.
+        This is useful for CLI tools that want synchronous behavior.
         """
         # Determine provider(s)
         provider_spec = request.provider
@@ -330,6 +338,19 @@ def create_api(
                     tokens_used=cached.tokens_used,
                     metadata={"cached": True},
                 ))
+
+                # If wait=true, return full response with cached content
+                if wait:
+                    return {
+                        "request_id": gw_request.id,
+                        "provider": providers[0],
+                        "status": "completed",
+                        "cached": True,
+                        "parallel": False,
+                        "response": cached.response,
+                        "error": None,
+                        "latency_ms": 0.0,
+                    }
 
                 return AskResponse(
                     request_id=gw_request.id,
@@ -379,6 +400,49 @@ def create_api(
                 "parallel": is_parallel,
             },
         ))
+
+        # If wait=true, poll until completion or timeout
+        if wait:
+            deadline = time.time() + timeout
+            poll_interval = 0.5  # Start with 500ms
+            max_poll_interval = 2.0  # Max 2s between polls
+
+            while time.time() < deadline:
+                await asyncio.sleep(poll_interval)
+                req = store.get_request(gw_request.id)
+
+                if not req:
+                    break
+
+                if req.status in (RequestStatus.COMPLETED, RequestStatus.FAILED, RequestStatus.TIMEOUT):
+                    response = store.get_response(gw_request.id)
+                    return {
+                        "request_id": gw_request.id,
+                        "provider": provider_spec,
+                        "status": req.status.value,
+                        "cached": False,
+                        "parallel": is_parallel,
+                        "response": response.response if response else None,
+                        "error": response.error if response else None,
+                        "latency_ms": response.latency_ms if response else None,
+                        "thinking": response.thinking if response else None,
+                        "raw_output": response.raw_output if response else None,
+                    }
+
+                # Exponential backoff for polling
+                poll_interval = min(poll_interval * 1.5, max_poll_interval)
+
+            # Timeout reached
+            return {
+                "request_id": gw_request.id,
+                "provider": provider_spec,
+                "status": "timeout",
+                "cached": False,
+                "parallel": is_parallel,
+                "response": None,
+                "error": f"Request did not complete within {timeout}s timeout",
+                "latency_ms": None,
+            }
 
         return AskResponse(
             request_id=gw_request.id,
