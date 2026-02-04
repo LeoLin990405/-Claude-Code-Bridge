@@ -1,0 +1,404 @@
+#!/usr/bin/env python3
+"""
+CCB Memory Sync - Google Drive Integration
+
+Sync CCB memory database to Google Drive using rclone.
+"""
+import os
+import sys
+import json
+import subprocess
+import hashlib
+from pathlib import Path
+from datetime import datetime
+from typing import Dict, List, Any, Optional
+
+
+class CCBSync:
+    """Google Drive sync manager for CCB memory."""
+
+    def __init__(self):
+        self.ccb_dir = Path.home() / ".ccb"
+        self.ccb_dir.mkdir(parents=True, exist_ok=True)
+
+        self.config_file = self.ccb_dir / "sync_config.json"
+        self.log_file = self.ccb_dir / "sync_log.json"
+
+        self.config = self._load_config()
+        self.log = self._load_log()
+
+    def _load_config(self) -> Dict[str, Any]:
+        """Load sync configuration."""
+        if self.config_file.exists():
+            with open(self.config_file) as f:
+                return json.load(f)
+
+        # Default config
+        default_config = {
+            "enabled": True,
+            "provider": "rclone",
+            "remote_name": "gdrive",
+            "remote_path": "CCB-Memory",
+            "auto_sync": False,
+            "sync_interval": 3600,
+            "conflict_resolution": "ask",
+            "encryption": False,
+            "files_to_sync": [
+                "ccb_memory.db",
+                "registry_cache.json",
+                "memory_config.json"
+            ],
+            "last_sync": None
+        }
+
+        with open(self.config_file, 'w') as f:
+            json.dump(default_config, f, indent=2)
+
+        return default_config
+
+    def _load_log(self) -> Dict[str, Any]:
+        """Load sync log."""
+        if self.log_file.exists():
+            with open(self.log_file) as f:
+                return json.load(f)
+        return {"syncs": []}
+
+    def _save_config(self):
+        """Save configuration."""
+        with open(self.config_file, 'w') as f:
+            json.dump(self.config, f, indent=2)
+
+    def _save_log(self):
+        """Save sync log."""
+        with open(self.log_file, 'w') as f:
+            json.dump(self.log, f, indent=2)
+
+    def _check_rclone(self) -> bool:
+        """Check if rclone is installed."""
+        try:
+            subprocess.run(["rclone", "version"], capture_output=True, check=True)
+            return True
+        except (FileNotFoundError, subprocess.CalledProcessError):
+            return False
+
+    def _check_remote(self) -> bool:
+        """Check if remote is configured."""
+        try:
+            result = subprocess.run(
+                ["rclone", "listremotes"],
+                capture_output=True,
+                text=True,
+                check=True
+            )
+            remotes = result.stdout.strip().split('\n')
+            remote_name = f"{self.config['remote_name']}:"
+            return remote_name in remotes
+        except subprocess.CalledProcessError:
+            return False
+
+    def _file_hash(self, filepath: Path) -> str:
+        """Calculate file hash."""
+        if not filepath.exists():
+            return ""
+
+        hasher = hashlib.md5()
+        with open(filepath, 'rb') as f:
+            for chunk in iter(lambda: f.read(8192), b""):
+                hasher.update(chunk)
+        return hasher.hexdigest()
+
+    def _log_sync(self, direction: str, files: List[str], status: str, error: Optional[str] = None):
+        """Log sync operation."""
+        entry = {
+            "timestamp": datetime.now().isoformat(),
+            "direction": direction,
+            "files_synced": files,
+            "status": status,
+            "error": error
+        }
+
+        self.log["syncs"].append(entry)
+
+        # Keep only last 100 entries
+        if len(self.log["syncs"]) > 100:
+            self.log["syncs"] = self.log["syncs"][-100:]
+
+        self._save_log()
+
+    def init(self, pull: bool = False):
+        """Initialize sync."""
+        print("🔧 Initializing CCB Sync...")
+
+        # Check rclone
+        if not self._check_rclone():
+            print("\n❌ rclone is not installed")
+            print("\nInstall rclone:")
+            print("  macOS:  brew install rclone")
+            print("  Linux:  sudo apt install rclone")
+            print("  Manual: https://rclone.org/install/")
+            return False
+
+        print("✓ rclone installed")
+
+        # Check remote configuration
+        if not self._check_remote():
+            print(f"\n⚠️  Remote '{self.config['remote_name']}' not configured")
+            print("\nConfigure Google Drive:")
+            print("  1. Run: rclone config")
+            print("  2. Choose: n (New remote)")
+            print(f"  3. Name: {self.config['remote_name']}")
+            print("  4. Storage: drive (Google Drive)")
+            print("  5. Follow OAuth flow")
+            print("\nThen run: ccb-sync init")
+            return False
+
+        print(f"✓ Remote '{self.config['remote_name']}' configured")
+
+        # Create remote directory
+        remote_full = f"{self.config['remote_name']}:{self.config['remote_path']}"
+        try:
+            subprocess.run(
+                ["rclone", "mkdir", remote_full],
+                check=True,
+                capture_output=True
+            )
+            print(f"✓ Remote directory created: {remote_full}")
+        except subprocess.CalledProcessError as e:
+            print(f"⚠️  Directory creation failed (may already exist)")
+
+        # Initial sync
+        if pull:
+            print("\n📥 Pulling from Google Drive...")
+            self.pull()
+        else:
+            print("\n📤 Pushing to Google Drive...")
+            self.push()
+
+        print("\n✅ Sync initialized successfully!")
+        print(f"\nConfig: {self.config_file}")
+        print(f"Log:    {self.log_file}")
+        return True
+
+    def push(self, force: bool = False):
+        """Push local files to Google Drive."""
+        if not self._check_rclone() or not self._check_remote():
+            print("❌ Sync not initialized. Run: ccb-sync init")
+            return False
+
+        print("📤 Pushing to Google Drive...")
+
+        remote_full = f"{self.config['remote_name']}:{self.config['remote_path']}"
+        synced_files = []
+        failed_files = []
+
+        for filename in self.config['files_to_sync']:
+            local_file = self.ccb_dir / filename
+            if not local_file.exists():
+                print(f"⚠️  {filename} not found, skipping")
+                continue
+
+            print(f"  • {filename} ... ", end='', flush=True)
+
+            try:
+                # Copy file to remote
+                subprocess.run(
+                    ["rclone", "copy", str(local_file), remote_full, "--update"],
+                    check=True,
+                    capture_output=True
+                )
+                print("✓")
+                synced_files.append(filename)
+            except subprocess.CalledProcessError as e:
+                print(f"✗ ({e})")
+                failed_files.append(filename)
+
+        # Update last sync time
+        if synced_files:
+            self.config['last_sync'] = datetime.now().isoformat()
+            self._save_config()
+
+        # Log
+        status = "success" if not failed_files else "partial"
+        self._log_sync("push", synced_files, status)
+
+        if synced_files:
+            print(f"\n✅ Pushed {len(synced_files)} file(s)")
+        if failed_files:
+            print(f"❌ Failed: {', '.join(failed_files)}")
+
+        return len(failed_files) == 0
+
+    def pull(self, force: bool = False):
+        """Pull files from Google Drive to local."""
+        if not self._check_rclone() or not self._check_remote():
+            print("❌ Sync not initialized. Run: ccb-sync init")
+            return False
+
+        print("📥 Pulling from Google Drive...")
+
+        remote_full = f"{self.config['remote_name']}:{self.config['remote_path']}"
+        synced_files = []
+        failed_files = []
+
+        for filename in self.config['files_to_sync']:
+            remote_file = f"{remote_full}/{filename}"
+
+            # Check if remote file exists
+            try:
+                result = subprocess.run(
+                    ["rclone", "ls", remote_file],
+                    capture_output=True,
+                    text=True,
+                    check=True
+                )
+                if not result.stdout.strip():
+                    print(f"⚠️  {filename} not found on remote, skipping")
+                    continue
+            except subprocess.CalledProcessError:
+                print(f"⚠️  {filename} not found on remote, skipping")
+                continue
+
+            print(f"  • {filename} ... ", end='', flush=True)
+
+            try:
+                # Copy file from remote
+                subprocess.run(
+                    ["rclone", "copy", remote_file, str(self.ccb_dir), "--update"],
+                    check=True,
+                    capture_output=True
+                )
+                print("✓")
+                synced_files.append(filename)
+            except subprocess.CalledProcessError as e:
+                print(f"✗ ({e})")
+                failed_files.append(filename)
+
+        # Update last sync time
+        if synced_files:
+            self.config['last_sync'] = datetime.now().isoformat()
+            self._save_config()
+
+        # Log
+        status = "success" if not failed_files else "partial"
+        self._log_sync("pull", synced_files, status)
+
+        if synced_files:
+            print(f"\n✅ Pulled {len(synced_files)} file(s)")
+        if failed_files:
+            print(f"❌ Failed: {', '.join(failed_files)}")
+
+        return len(failed_files) == 0
+
+    def status(self):
+        """Show sync status."""
+        print("📊 CCB Sync Status")
+        print("=" * 50)
+
+        # Configuration
+        print(f"\nProvider: {self.config['provider']}")
+        print(f"Remote:   {self.config['remote_name']}:{self.config['remote_path']}")
+        print(f"Enabled:  {self.config['enabled']}")
+        print(f"Auto:     {self.config['auto_sync']}")
+
+        # Last sync
+        if self.config.get('last_sync'):
+            print(f"Last sync: {self.config['last_sync']}")
+        else:
+            print("Last sync: Never")
+
+        # Files
+        print(f"\nFiles to sync ({len(self.config['files_to_sync'])}):")
+        for filename in self.config['files_to_sync']:
+            local_file = self.ccb_dir / filename
+            if local_file.exists():
+                size = local_file.stat().st_size
+                size_mb = size / (1024 * 1024)
+                print(f"  ✓ {filename} ({size_mb:.2f} MB)")
+            else:
+                print(f"  ✗ {filename} (not found)")
+
+        # Recent syncs
+        if self.log["syncs"]:
+            print(f"\nRecent syncs ({len(self.log['syncs'][-5:])}):")
+            for sync in self.log["syncs"][-5:]:
+                direction_icon = "📤" if sync['direction'] == 'push' else "📥"
+                status_icon = "✓" if sync['status'] == 'success' else "✗"
+                print(f"  {status_icon} {direction_icon} {sync['timestamp'][:19]} - {len(sync['files_synced'])} files")
+
+    def auto(self):
+        """Auto sync (for scheduled tasks)."""
+        if not self.config.get('auto_sync', False):
+            return
+
+        # Silent push
+        try:
+            self.push()
+        except Exception as e:
+            self._log_sync("auto", [], "error", str(e))
+
+    def show_log(self, limit: int = 20):
+        """Show sync log."""
+        print(f"📋 Sync Log (last {limit})")
+        print("=" * 70)
+
+        if not self.log["syncs"]:
+            print("No sync history")
+            return
+
+        for sync in self.log["syncs"][-limit:]:
+            direction_icon = "📤" if sync['direction'] == 'push' else "📥"
+            status_icon = "✓" if sync['status'] == 'success' else "✗"
+
+            print(f"\n{status_icon} {direction_icon} {sync['timestamp'][:19]}")
+            print(f"   Files: {', '.join(sync['files_synced'])}")
+            if sync.get('error'):
+                print(f"   Error: {sync['error']}")
+
+
+def main():
+    """CLI for sync operations."""
+    import sys
+
+    sync = CCBSync()
+
+    if len(sys.argv) < 2:
+        print("Usage: ccb-sync [init|push|pull|status|log|auto]")
+        print("\nCommands:")
+        print("  init       Initialize sync (first time setup)")
+        print("  init --pull Initialize and pull from cloud")
+        print("  push       Push local files to Google Drive")
+        print("  pull       Pull files from Google Drive")
+        print("  status     Show sync status")
+        print("  log        Show sync history")
+        print("  auto       Auto sync (for scheduled tasks)")
+        sys.exit(1)
+
+    command = sys.argv[1]
+
+    if command == "init":
+        pull = "--pull" in sys.argv
+        sync.init(pull=pull)
+
+    elif command == "push":
+        sync.push()
+
+    elif command == "pull":
+        sync.pull()
+
+    elif command == "status":
+        sync.status()
+
+    elif command == "log":
+        limit = int(sys.argv[2]) if len(sys.argv) > 2 else 20
+        sync.show_log(limit)
+
+    elif command == "auto":
+        sync.auto()
+
+    else:
+        print(f"Unknown command: {command}")
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
