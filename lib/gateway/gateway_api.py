@@ -1814,6 +1814,17 @@ def create_api(
             status_code=200
         )
 
+    @app.get("/web", response_class=HTMLResponse)
+    async def serve_dashboard_web():
+        """Serve the Web UI dashboard at /web path."""
+        index_path = WEB_UI_DIR / "index.html"
+        if index_path.exists():
+            return FileResponse(index_path, media_type="text/html")
+        return HTMLResponse(
+            content="<h1>CCB Gateway</h1><p>Web UI not found. API is running at /api/</p>",
+            status_code=200
+        )
+
     # Mount static files if web directory exists
     if WEB_UI_DIR.exists():
         app.mount("/static", StaticFiles(directory=str(WEB_UI_DIR)), name="static")
