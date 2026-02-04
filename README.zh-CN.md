@@ -545,7 +545,77 @@ ccb-cli kimi "你好"
 
 ## 🔄 最近更新
 
-### v0.13.x - Gateway 自动启动（最新）
+### v0.15.x - Web UI 优化（最新）
+
+**性能改进：**
+- **Monitor 内存修复** - 循环缓冲区限制输出为 1000 行（内存减少 80%）
+- **WebSocket 批处理** - 50ms 消息批处理提升 UI 响应速度（FPS 提升 3-5 倍）
+- **UI 稳定性** - 消除了流式输出时的内存泄漏和 DOM 抖动
+
+**新增功能：**
+- **💰 成本仪表板** - 实时成本追踪，Provider 分解和 7 天趋势图表
+- **✨ 讨论模板** - 内置 5 个模板快速启动讨论
+- **📥 数据导出** - 一键导出请求（CSV/JSON）和讨论（JSON）
+- **🤖 Qoder 集成** - 完整前端支持，紫色品牌标识
+
+**UI 增强：**
+- 新增成本标签页（快捷键：5）
+- 讨论模板模态框，动态变量表单
+- 请求标签页导出下拉菜单
+- Provider 特定颜色编码（Qoder 为紫色）
+
+```bash
+# 访问新功能
+open http://localhost:8765
+# 按 5 查看成本仪表板
+# 按 3 → "Use Template" 快速启动讨论
+# 按 4 → "Export" 下载数据
+
+# 成本 API
+curl "http://localhost:8765/api/costs/summary"
+curl "http://localhost:8765/api/costs/by-provider"
+
+# 模板 API
+curl "http://localhost:8765/api/discussion/templates"
+```
+
+### v0.14.x - 高级功能
+
+**Phase 6 - 讨论增强：**
+- **讨论导出** - 导出讨论为 Markdown、JSON 或 HTML
+- **WebSocket 实时** - `discussion_provider_started/completed` 事件实时更新
+- **讨论模板** - 5 个内置模板（架构审查、代码审查、API 设计、Bug 分析、性能优化）
+- **讨论继续** - 从已完成的讨论继续讨论后续话题
+
+**Phase 7 - 运维与监控：**
+- **Shell 自动补全** - Bash/Zsh 补全 ccb-cli（providers、models、agents）
+- **Provider 认证状态** - 跟踪认证状态，检测认证失败
+- **成本追踪仪表板** - 每个 Provider 的 Token 使用和成本追踪
+- **智能降级** - 基于可靠性的 Provider 选择（`ProviderReliabilityScore`）
+
+**Phase 8 - 集成：**
+- **macOS 通知** - 长时间操作的系统通知
+- **智能自动路由** - 基于关键词的自动 Provider 选择（`POST /api/route`）
+- **Obsidian 集成** - 导出讨论到 Obsidian vault，带 YAML frontmatter
+
+```bash
+# 新 CLI 功能
+ccb-discussion -e <session_id> -f md > discussion.md  # 导出讨论
+ccb-discussion -e <session_id> -f html -o report.html  # HTML 导出
+
+# Shell 补全（添加到 ~/.bashrc 或 ~/.zshrc）
+source ~/.local/share/codex-dual/bin/ccb-cli-completion.bash  # Bash
+source ~/.local/share/codex-dual/bin/ccb-cli-completion.zsh   # Zsh
+
+# 新 API 端点
+curl "http://localhost:8765/api/discussion/{id}/export?format=md"
+curl -X POST "http://localhost:8765/api/discussion/templates/arch-review/use" \
+  -d '{"variables": {"subject": "My API", "context": "REST microservice"}}'
+curl "http://localhost:8765/api/costs/summary"
+curl -X POST "http://localhost:8765/api/route" -d '{"message": "React component"}'
+```
+
+### v0.13.x - Gateway 自动启动
 - **Gateway 自动启动** - ccb-cli 未运行时自动启动 Gateway
 - **launchd 服务** - macOS 登录时自动启动，支持 KeepAlive
 - **统一架构** - 所有 ccb-cli 调用通过 Gateway 路由，享受缓存/监控

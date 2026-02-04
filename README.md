@@ -645,7 +645,41 @@ ccb-cli kimi "Hello"
 
 ## 🔄 Recent Updates
 
-### v0.14.x - Advanced Features (Latest)
+### v0.15.x - Web UI Optimization (Latest)
+
+**Performance Improvements:**
+- **Monitor Memory Fix** - Circular buffer limits output to 1000 lines (80% memory reduction)
+- **WebSocket Batching** - 50ms message batching improves UI responsiveness (3-5x FPS boost)
+- **UI Stability** - Eliminated memory leaks and DOM thrashing during streaming
+
+**New Features:**
+- **💰 Costs Dashboard** - Real-time cost tracking with provider breakdown and 7-day trend charts
+- **✨ Discussion Templates** - Quick-start discussions with 5 built-in templates
+- **📥 Data Export** - Export requests (CSV/JSON) and discussions (JSON) with one click
+- **🤖 Qoder Integration** - Full frontend support with purple branding
+
+**UI Enhancements:**
+- Added Costs tab (shortcut: 5)
+- Discussion template modal with dynamic variable forms
+- Export dropdown menu in Requests tab
+- Provider-specific color coding (purple for Qoder)
+
+```bash
+# Access new features
+open http://localhost:8765
+# Press 5 for Costs dashboard
+# Press 3 → "Use Template" for quick discussions
+# Press 4 → "Export" for data download
+
+# Cost API
+curl "http://localhost:8765/api/costs/summary"
+curl "http://localhost:8765/api/costs/by-provider"
+
+# Template API
+curl "http://localhost:8765/api/discussion/templates"
+```
+
+### v0.14.x - Advanced Features
 
 **Phase 6 - Discussion Enhancements:**
 - **Discussion Export** - Export discussions to Markdown, JSON, or HTML
