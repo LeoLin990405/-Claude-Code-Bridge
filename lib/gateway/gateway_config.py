@@ -415,6 +415,15 @@ class GatewayConfig:
             timeout_s=300.0,
         )
 
+        # Qoder (CLI) - use 'qodercli' command with -p flag for non-interactive mode
+        self.providers["qoder"] = ProviderConfig(
+            name="qoder",
+            backend_type=BackendType.CLI_EXEC,
+            cli_command="qodercli",
+            cli_args=["-p"],
+            timeout_s=120.0,
+        )
+
     def get_provider(self, name: str) -> Optional[ProviderConfig]:
         """Get provider configuration by name."""
         return self.providers.get(name)
