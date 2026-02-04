@@ -844,6 +844,8 @@ ccb-submit discuss -p kimi,gemini,iflow -r 3 \
 ### Features
 
 - 📊 **Live Metrics** - Request count, success rate, latency
+- 🧠 **Memory Management** - Session-based conversation history with full-text search
+- 🛠️ **Skills Discovery** - Find and recommend relevant skills for your tasks
 - 📋 **Request Queue** - Pending, processing, completed
 - 🔴 **Live Logs** - Real-time event stream via WebSocket
 - 🤖 **Provider Status** - Health checks for all providers
@@ -854,14 +856,36 @@ ccb-submit discuss -p kimi,gemini,iflow -r 3 \
 <details>
 <summary><b>Dashboard Overview</b></summary>
 
-<img src="screenshots/dashboard.png" alt="Dashboard" width="700">
+<img src="screenshots/webui-dashboard.png" alt="Dashboard" width="700">
+
+Real-time metrics, provider status, and system health monitoring.
 
 </details>
 
 <details>
-<summary><b>Request Queue</b></summary>
+<summary><b>Memory Tab - Session Management</b></summary>
 
-<img src="screenshots/queue.png" alt="Queue" width="700">
+<img src="screenshots/webui-memory.png" alt="Memory Management" width="700">
+
+Session-based conversation history with FTS5 full-text search. View all conversations grouped by sessions, search across messages, and track provider usage.
+
+</details>
+
+<details>
+<summary><b>Skills Tab - Discovery & Recommendations</b></summary>
+
+<img src="screenshots/webui-skills.png" alt="Skills Discovery" width="700">
+
+Smart skills discovery powered by Vercel Skills CLI. Find relevant skills for your tasks, view usage statistics, and get installation recommendations.
+
+</details>
+
+<details>
+<summary><b>Monitor Tab - Real-time Streams</b></summary>
+
+<img src="screenshots/webui-monitor.png" alt="Monitor" width="700">
+
+Real-time provider monitoring with live output streams and performance tracking.
 
 </details>
 
@@ -880,6 +904,13 @@ ccb-submit discuss -p kimi,gemini,iflow -r 3 \
 | GET | `/api/query/{id}` | Query request status |
 | GET | `/api/pending` | List pending requests |
 | POST | `/api/cancel/{id}` | Cancel request |
+| GET | `/api/memory/sessions` | List recent memory sessions |
+| GET | `/api/memory/sessions/{id}` | Get session conversation history |
+| GET | `/api/memory/search` | Full-text search in conversations |
+| GET | `/api/memory/stats` | Memory system statistics |
+| GET | `/api/skills/recommendations` | Get skill recommendations for tasks |
+| GET | `/api/skills/stats` | Skills usage statistics |
+| GET | `/api/skills/list` | List all available skills |
 | WS | `/ws` | WebSocket connection |
 
 ### Request Parameters

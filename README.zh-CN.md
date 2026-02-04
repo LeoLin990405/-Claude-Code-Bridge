@@ -844,6 +844,8 @@ ccb-submit discuss -p kimi,gemini,iflow -r 3 \
 ### 功能
 
 - 📊 **实时指标** - 请求数、成功率、延迟
+- 🧠 **记忆管理** - 基于会话的对话历史，支持全文搜索
+- 🛠️ **技能发现** - 为你的任务查找和推荐相关技能
 - 📋 **请求队列** - 待处理、处理中、已完成
 - 🔴 **实时日志** - 通过 WebSocket 实时事件流
 - 🤖 **Provider 状态** - 所有 Providers 的健康检查
@@ -854,14 +856,36 @@ ccb-submit discuss -p kimi,gemini,iflow -r 3 \
 <details>
 <summary><b>仪表盘概览</b></summary>
 
-<img src="screenshots/dashboard.png" alt="仪表盘" width="700">
+<img src="screenshots/webui-dashboard.png" alt="仪表盘" width="700">
+
+实时指标、Provider 状态和系统健康监控。
 
 </details>
 
 <details>
-<summary><b>请求队列</b></summary>
+<summary><b>记忆标签 - 会话管理</b></summary>
 
-<img src="screenshots/queue.png" alt="队列" width="700">
+<img src="screenshots/webui-memory.png" alt="记忆管理" width="700">
+
+基于会话的对话历史，支持 FTS5 全文搜索。查看按会话分组的所有对话、跨消息搜索、追踪 Provider 使用情况。
+
+</details>
+
+<details>
+<summary><b>技能标签 - 发现与推荐</b></summary>
+
+<img src="screenshots/webui-skills.png" alt="技能发现" width="700">
+
+由 Vercel Skills CLI 驱动的智能技能发现。为你的任务查找相关技能、查看使用统计、获取安装推荐。
+
+</details>
+
+<details>
+<summary><b>监控标签 - 实时流</b></summary>
+
+<img src="screenshots/webui-monitor.png" alt="监控" width="700">
+
+实时 Provider 监控，支持实时输出流和性能追踪。
 
 </details>
 
@@ -880,6 +904,13 @@ ccb-submit discuss -p kimi,gemini,iflow -r 3 \
 | GET | `/api/query/{id}` | 查询请求状态 |
 | GET | `/api/pending` | 列出待处理请求 |
 | POST | `/api/cancel/{id}` | 取消请求 |
+| GET | `/api/memory/sessions` | 列出最近的记忆会话 |
+| GET | `/api/memory/sessions/{id}` | 获取会话对话历史 |
+| GET | `/api/memory/search` | 对话全文搜索 |
+| GET | `/api/memory/stats` | 记忆系统统计 |
+| GET | `/api/skills/recommendations` | 获取任务的技能推荐 |
+| GET | `/api/skills/stats` | 技能使用统计 |
+| GET | `/api/skills/list` | 列出所有可用技能 |
 | WS | `/ws` | WebSocket 连接 |
 
 ### 请求参数
