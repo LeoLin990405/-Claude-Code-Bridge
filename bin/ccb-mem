@@ -1,0 +1,154 @@
+#!/usr/bin/env python3
+"""
+CCB-CLI with Memory - Enhanced ccb-cli that injects context automatically
+
+Usage: ccb-mem <provider> [options] "your question"
+"""
+import sys
+import subprocess
+import json
+from pathlib import Path
+
+# Add memory module to path
+memory_lib = Path(__file__).parent.parent / "lib" / "memory"
+sys.path.insert(0, str(memory_lib))
+
+from memory_lite import CCBLightMemory
+
+
+def extract_task_keywords(message: str) -> list:
+    """Extract keywords from user message for context search."""
+    # Simple keyword extraction - can be enhanced
+    keywords = []
+
+    # Task type keywords
+    task_keywords = {
+        "frontend": ["frontend", "ui", "react", "vue", "css", "html"],
+        "backend": ["backend", "api", "server", "database"],
+        "algorithm": ["algorithm", "optimize", "complexity", "performance"],
+        "debug": ["debug", "error", "fix", "bug"],
+        "review": ["review", "check", "analyze"],
+        "data": ["data", "analysis", "visualization"],
+    }
+
+    message_lower = message.lower()
+    for category, words in task_keywords.items():
+        for word in words:
+            if word in message_lower:
+                keywords.append(category)
+                break
+
+    return keywords if keywords else ["general"]
+
+
+def enhance_prompt_with_context(original_message: str, inject_context: bool = True) -> str:
+    """Enhance prompt with memory context."""
+    if not inject_context:
+        return original_message
+
+    memory = CCBLightMemory()
+    keywords = extract_task_keywords(original_message)
+
+    # Get context
+    context = memory.get_task_context(keywords)
+
+    # Format context
+    context_str = memory.format_context_for_prompt(context)
+
+    if not context_str.strip():
+        return original_message
+
+    # Combine context + original message
+    enhanced = f"""# 系统上下文
+
+{context_str}
+
+---
+
+# 用户请求
+
+{original_message}
+"""
+    return enhanced
+
+
+def record_conversation(provider: str, question: str, answer: str):
+    """Record conversation to memory."""
+    try:
+        memory = CCBLightMemory()
+        memory.record_conversation(provider, question, answer)
+    except Exception as e:
+        print(f"Warning: Failed to record to memory: {e}", file=sys.stderr)
+
+
+def main():
+    if len(sys.argv) < 2:
+        print("Usage: ccb-mem <provider> [options] <message>")
+        print("\nExamples:")
+        print("  ccb-mem kimi '如何做前端开发'")
+        print("  ccb-mem codex o3 '优化这个算法'")
+        print("  ccb-mem gemini --no-context '不需要上下文'")
+        sys.exit(1)
+
+    # Parse arguments
+    provider = sys.argv[1]
+    args = sys.argv[2:]
+
+    # Check for flags
+    inject_context = True
+    filtered_args = []
+
+    for arg in args:
+        if arg == "--no-context":
+            inject_context = False
+        else:
+            filtered_args.append(arg)
+
+    if not filtered_args:
+        print("Error: No message provided")
+        sys.exit(1)
+
+    # Last argument is the message
+    original_message = filtered_args[-1]
+    other_args = filtered_args[:-1]
+
+    # Enhance message with context
+    enhanced_message = enhance_prompt_with_context(original_message, inject_context)
+
+    # Show what we're doing
+    if inject_context and enhanced_message != original_message:
+        print("🧠 Injecting memory context...", file=sys.stderr)
+
+    # Build command
+    ccb_cli = Path.home() / ".local" / "share" / "codex-dual" / "bin" / "ccb-cli"
+    if not ccb_cli.exists():
+        ccb_cli = "ccb-cli"  # Fallback to PATH
+
+    cmd = [str(ccb_cli), provider] + other_args + [enhanced_message]
+
+    # Execute ccb-cli
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True)
+
+        # Print output
+        if result.stdout:
+            print(result.stdout, end='')
+        if result.stderr:
+            print(result.stderr, end='', file=sys.stderr)
+
+        # Record to memory if successful
+        if result.returncode == 0 and result.stdout:
+            record_conversation(provider, original_message, result.stdout[:1000])
+
+        sys.exit(result.returncode)
+
+    except KeyboardInterrupt:
+        print("\n\nInterrupted", file=sys.stderr)
+        sys.exit(130)
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

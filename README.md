@@ -80,10 +80,76 @@
 | No caching or retry logic | **Built-in caching, retry, and fallback chains** |
 | Can't see AI thinking process | **Thinking chain & raw output capture** |
 | No collaborative AI discussion | **Multi-AI Discussion** with iterative rounds |
+| Context loss between sessions | **Integrated Memory System** with conversation history and skill registry |
+| Don't know which AI is best for task | **Smart recommendations** based on provider strengths and past performance |
 
 ---
 
 ## ✨ Features
+
+### 🆕 Integrated Memory System (v0.16)
+
+**Persistent memory across all AI agents** - Know what tools are available and learn from every conversation:
+
+**Registry System:**
+- 📋 **Auto-scan capabilities** - Tracks 53 Claude Code skills, 8 AI providers, and running MCP servers
+- 🎯 **Smart recommendations** - Suggests the best AI for each task based on strengths
+- 🔍 **Instant discovery** - Query available skills and tools at any time
+
+**Memory Backend:**
+- 💾 **SQLite storage** - All conversations persisted locally in `~/.ccb/ccb_memory.db`
+- 🔎 **Full-text search** - Find relevant past conversations instantly
+- 📊 **Usage analytics** - Track which AI excels at which tasks
+
+**ccb-mem CLI:**
+- 🧠 **Auto-context injection** - Relevant memories automatically added to prompts
+- 💡 **Tool awareness** - Each AI knows available skills and MCP servers
+- 🎓 **Continuous learning** - System gets smarter with every interaction
+
+```bash
+# Use ccb-mem instead of ccb-cli for automatic context injection
+ccb-mem kimi "help me with frontend"
+# 🧠 Injecting memory context...
+#
+# ## 💭 Relevant Memories
+# 1. [kimi] Used Gemini 3f for React - works great
+#
+## 🤖 Recommended AI
+# - gemini: ccb-cli gemini (2★ match)
+#
+# ## 🛠️ Available Skills
+# - frontend-design, canvas-design, web-artifacts-builder
+#
+# ## 🔌 Running MCP Servers
+# - chroma-mcp, playwright-mcp
+
+# Query capabilities
+python3 lib/memory/registry.py find frontend ui
+# Recommended: gemini: ccb-cli gemini
+
+# View conversation history
+python3 lib/memory/memory_lite.py recent 10
+
+# Get task-specific context
+python3 lib/memory/memory_lite.py context algorithm reasoning
+```
+
+**Quick Start:**
+```bash
+# Initialize registry
+python3 lib/memory/registry.py scan
+
+# Use enhanced CLI
+ccb-mem kimi "your question"
+
+# Query stats
+python3 lib/memory/memory_lite.py stats
+```
+
+**Documentation:**
+- [Quick Start Guide](lib/memory/QUICKSTART.md)
+- [Architecture](lib/memory/ARCHITECTURE.md)
+- [Implementation Summary](lib/memory/SUMMARY.md)
 
 ### 🆕 Web UI Optimization (v0.15)
 
@@ -196,6 +262,9 @@ Round 1: Proposal    →   Round 2: Review    →   Round 3: Revision
 - **Cost Tracking** - Token usage and cost monitoring per provider
 - **Smart Routing** - Keyword-based automatic provider selection
 - **Auth Status Monitoring** - Track provider authentication state
+- **Memory System** - Persistent conversation history and capability registry
+- **Context Injection** - Automatic memory context added to prompts
+- **Smart Recommendations** - AI selection based on task type and history
 - **macOS Notifications** - System alerts for long operations
 - **Shell Completion** - Bash/Zsh auto-completion for ccb-cli
 - **Prometheus Metrics** - `/metrics` endpoint for monitoring
@@ -212,6 +281,26 @@ Round 1: Proposal    →   Round 2: Review    →   Round 3: Revision
 ---
 
 ## 🚀 Quick Start
+
+### Step 0: Initialize Memory System (Optional but Recommended)
+
+Enable persistent memory and smart recommendations:
+
+```bash
+# Scan capabilities (skills, providers, MCP servers)
+cd ~/.local/share/codex-dual
+python3 lib/memory/registry.py scan
+
+# Use ccb-mem for automatic context injection
+export PATH="$HOME/.local/share/codex-dual/bin:$PATH"
+
+# Now use ccb-mem instead of ccb-cli
+ccb-mem kimi "help with frontend"
+# 🧠 Injecting memory context...
+# [System automatically adds relevant memories, skills, and recommendations]
+```
+
+See [Memory System Documentation](lib/memory/QUICKSTART.md) for details.
 
 ### Method 1: ccb-cli (Recommended)
 

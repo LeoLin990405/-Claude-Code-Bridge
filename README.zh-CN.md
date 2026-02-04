@@ -80,10 +80,76 @@
 | 无缓存或重试逻辑 | **内置缓存、重试和降级链** |
 | 看不到 AI 思考过程 | **思考链 & 原始输出捕获** |
 | 无法多 AI 协作讨论 | **多 AI 讨论**，支持多轮迭代 |
+| 会话间上下文丢失 | **集成记忆系统**，记录对话历史和 skill 注册表 |
+| 不知道哪个 AI 最适合任务 | **智能推荐**，基于 provider 优势和历史表现 |
 
 ---
 
 ## ✨ 特性
+
+### 🆕 集成记忆系统 (v0.16)
+
+**跨所有 AI agents 的持久化记忆** - 知道有什么工具可用，从每次对话中学习：
+
+**注册表系统：**
+- 📋 **自动扫描能力** - 追踪 53 个 Claude Code skills、8 个 AI providers 和运行中的 MCP servers
+- 🎯 **智能推荐** - 根据任务强项推荐最合适的 AI
+- 🔍 **即时发现** - 随时查询可用的 skills 和工具
+
+**记忆后端：**
+- 💾 **SQLite 存储** - 所有对话本地持久化存储在 `~/.ccb/ccb_memory.db`
+- 🔎 **全文搜索** - 即时找到相关的历史对话
+- 📊 **使用分析** - 追踪哪个 AI 擅长哪些任务
+
+**ccb-mem CLI：**
+- 🧠 **自动上下文注入** - 相关记忆自动添加到提示词
+- 💡 **工具感知** - 每个 AI 都知道可用的 skills 和 MCP servers
+- 🎓 **持续学习** - 系统随着每次交互变得更智能
+
+```bash
+# 使用 ccb-mem 代替 ccb-cli 实现自动上下文注入
+ccb-mem kimi "帮我做前端"
+# 🧠 正在注入记忆上下文...
+#
+# ## 💭 相关记忆
+# 1. [kimi] 上次用 Gemini 3f 做 React - 效果很好
+#
+# ## 🤖 推荐使用的 AI
+# - gemini: ccb-cli gemini (匹配度 2★)
+#
+# ## 🛠️ 可用的 Skills
+# - frontend-design, canvas-design, web-artifacts-builder
+#
+# ## 🔌 运行中的 MCP Servers
+# - chroma-mcp, playwright-mcp
+
+# 查询能力
+python3 lib/memory/registry.py find frontend ui
+# 推荐: gemini: ccb-cli gemini
+
+# 查看对话历史
+python3 lib/memory/memory_lite.py recent 10
+
+# 获取任务相关上下文
+python3 lib/memory/memory_lite.py context algorithm reasoning
+```
+
+**快速开始：**
+```bash
+# 初始化注册表
+python3 lib/memory/registry.py scan
+
+# 使用增强版 CLI
+ccb-mem kimi "你的问题"
+
+# 查询统计
+python3 lib/memory/memory_lite.py stats
+```
+
+**文档：**
+- [快速开始指南](lib/memory/QUICKSTART.md)
+- [架构设计](lib/memory/ARCHITECTURE.md)
+- [实现总结](lib/memory/SUMMARY.md)
 
 ### 🆕 Web UI 优化 (v0.15)
 
@@ -187,11 +253,18 @@ ccb-discussion -w "架构决策"
 - **限流** - 令牌桶算法，支持按 Key 限流
 - **响应缓存** - SQLite 缓存，支持 TTL 和模式排除
 - **重试与降级** - 指数退避，自动 Provider 降级
+- **智能降级** - 基于可靠性的 Provider 选择
 - **并行查询** - 同时查询多个 Provider
 - **多 AI 讨论** - 迭代式协作讨论
+- **讨论模板** - 常见场景的预置模板
+- **讨论导出** - 导出到 Markdown、JSON、HTML 或 Obsidian
 - **统一结果 API** - 统一查询所有 AI 响应
-- **Prometheus 指标** - `/metrics` 端点用于监控
-- **流式响应** - Server-Sent Events 实时响应
+- **成本追踪** - 每个 provider 的 token 使用和成本监控
+- **智能路由** - 基于关键词的自动 provider 选择
+- **认证状态监控** - 追踪 provider 认证状态
+- **记忆系统** - 持久化对话历史和能力注册表
+- **上下文注入** - 自动添加记忆上下文到提示词
+- **智能推荐** - 基于任务类型和历史表现选择 AI
 
 ### Provider 速度分级
 
@@ -204,6 +277,26 @@ ccb-discussion -w "架构决策"
 ---
 
 ## 🚀 快速开始
+
+### 步骤 0: 初始化记忆系统（可选但推荐）
+
+启用持久化记忆和智能推荐：
+
+```bash
+# 扫描能力（skills、providers、MCP servers）
+cd ~/.local/share/codex-dual
+python3 lib/memory/registry.py scan
+
+# 使用 ccb-mem 实现自动上下文注入
+export PATH="$HOME/.local/share/codex-dual/bin:$PATH"
+
+# 现在使用 ccb-mem 代替 ccb-cli
+ccb-mem kimi "帮我做前端"
+# 🧠 正在注入记忆上下文...
+# [系统自动添加相关记忆、skills 和推荐]
+```
+
+详见[记忆系统文档](lib/memory/QUICKSTART.md)。
 
 ### 方式 1: ccb-cli（推荐）
 
