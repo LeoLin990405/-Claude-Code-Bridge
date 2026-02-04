@@ -25,14 +25,15 @@ DEFAULT_FALLBACK_CHAINS: Dict[str, List[str]] = {
     "qwen": ["kimi", "deepseek"],
     "iflow": ["deepseek", "gemini"],
     "qoder": ["codex", "gemini"],
+    "claude": ["codex", "gemini"],
 }
 
 # Default provider groups for parallel queries
 DEFAULT_PROVIDER_GROUPS: Dict[str, List[str]] = {
-    "all": ["gemini", "deepseek", "codex", "opencode", "kimi", "qwen", "iflow", "qoder"],
+    "all": ["gemini", "deepseek", "codex", "opencode", "kimi", "qwen", "iflow", "qoder", "claude"],
     "fast": ["deepseek", "kimi"],
-    "reasoning": ["deepseek", "gemini"],
-    "coding": ["codex", "opencode", "gemini", "qoder"],
+    "reasoning": ["deepseek", "gemini", "claude"],
+    "coding": ["codex", "opencode", "gemini", "qoder", "claude"],
     "chinese": ["deepseek", "kimi", "qwen"],
 }
 
@@ -422,6 +423,15 @@ class GatewayConfig:
             cli_command="qodercli",
             cli_args=["-p"],
             timeout_s=120.0,
+        )
+
+        # Claude (CLI) - use 'claude' command with -p flag for prompt mode
+        self.providers["claude"] = ProviderConfig(
+            name="claude",
+            backend_type=BackendType.CLI_EXEC,
+            cli_command="claude",
+            cli_args=["-p"],
+            timeout_s=300.0,
         )
 
     def get_provider(self, name: str) -> Optional[ProviderConfig]:

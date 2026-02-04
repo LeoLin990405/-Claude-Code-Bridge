@@ -764,10 +764,10 @@
                 <div class="glass-card p-6">
                     <div class="flex items-center justify-between mb-4">
                         <h2 class="text-lg font-semibold flex items-center">
-                            <i class="fas fa-brain text-indigo-400 mr-3"></i>Recent Sessions
+                            <i class="fas fa-brain text-indigo-400 mr-3"></i>{{ t('recentSessions') }}
                         </h2>
                         <button @click="fetchMemorySessions" class="btn-secondary text-sm">
-                            <i class="fas fa-sync mr-2"></i>Refresh
+                            <i class="fas fa-sync mr-2"></i>{{ t('refresh') }}
                         </button>
                     </div>
 
@@ -916,10 +916,10 @@
                 <div class="glass-card p-6">
                     <div class="flex items-center justify-between mb-4">
                         <h2 class="text-lg font-semibold flex items-center">
-                            <i class="fas fa-star text-amber-400 mr-3"></i>Most Used Skills
+                            <i class="fas fa-star text-amber-400 mr-3"></i>{{ t('topUsedSkills') }}
                         </h2>
                         <button @click="fetchSkillsStats" class="btn-secondary text-sm">
-                            <i class="fas fa-sync mr-2"></i>Refresh
+                            <i class="fas fa-sync mr-2"></i>{{ t('refresh') }}
                         </button>
                     </div>
 
@@ -1209,15 +1209,15 @@
 
                     <!-- Provider Cost Breakdown -->
                     <div class="glass-card p-4">
-                        <h3 class="text-sm font-semibold text-gray-300 mb-4">Cost by Provider</h3>
+                        <h3 class="text-sm font-semibold text-gray-300 mb-4">{{ t('costByProvider') }}</h3>
                         <div class="overflow-x-auto">
                             <table class="data-table">
                                 <thead>
                                     <tr>
-                                        <th>Provider</th>
-                                        <th>Requests</th>
-                                        <th>Tokens</th>
-                                        <th>Cost</th>
+                                        <th>{{ t('provider') }}</th>
+                                        <th>{{ t('requests') }}</th>
+                                        <th>{{ t('tokens') }}</th>
+                                        <th>{{ t('cost') }}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -1228,9 +1228,9 @@
                                                 <span class="font-medium capitalize">{{ p.provider }}</span>
                                             </span>
                                         </td>
-                                        <td>{{ p.requests }}</td>
-                                        <td>{{ p.total_tokens.toLocaleString() }}</td>
-                                        <td class="font-mono text-emerald-400">${{ p.total_cost.toFixed(4) }}</td>
+                                        <td>{{ p.request_count }}</td>
+                                        <td>{{ ((p.total_input_tokens || 0) + (p.total_output_tokens || 0)).toLocaleString() }}</td>
+                                        <td class="font-mono text-emerald-400">${{ (p.total_cost_usd || 0).toFixed(4) }}</td>
                                     </tr>
                                     <tr v-if="costByProvider.length === 0">
                                         <td colspan="4" class="text-center text-gray-500">No cost data available</td>
@@ -1968,10 +1968,10 @@
                 <div class="space-y-4">
                     <!-- Template Selection -->
                     <div>
-                        <label class="block text-sm text-gray-400 mb-2">Select Template</label>
+                        <label class="block text-sm text-gray-400 mb-2">{{ t('selectTemplate') }}</label>
                         <select v-model="selectedDiscussionTemplate" @change="selectDiscussionTemplate(selectedDiscussionTemplate)"
                                 class="input-field w-full">
-                            <option value="">-- Choose a template --</option>
+                            <option value="">-- {{ t('chooseTemplate') }} --</option>
                             <optgroup v-for="category in [...new Set(discussionTemplates.map(t => t.category || 'Other'))]" :key="category" :label="category">
                                 <option v-for="t in discussionTemplates.filter(tmpl => (tmpl.category || 'Other') === category)"
                                         :key="t.id" :value="t.id">
@@ -1988,7 +1988,7 @@
 
                     <!-- Template Variables -->
                     <div v-if="Object.keys(templateVariables).length > 0" class="space-y-3">
-                        <label class="block text-sm text-gray-400 mb-2">Fill in Details</label>
+                        <label class="block text-sm text-gray-400 mb-2">{{ t('fillInDetails') }}</label>
                         <div v-for="(value, key) in templateVariables" :key="key">
                             <label class="block text-xs text-gray-500 mb-1 capitalize">{{ key.replace(/_/g, ' ') }}</label>
                             <textarea v-model="templateVariables[key]"
@@ -2021,24 +2021,24 @@
                     <!-- Loading State -->
                     <div v-if="loadingTemplates" class="text-center py-8">
                         <i class="fas fa-spinner fa-spin text-3xl text-purple-400"></i>
-                        <p class="text-sm text-gray-400 mt-3">Loading templates...</p>
+                        <p class="text-sm text-gray-400 mt-3">{{ t('loadingTemplates') }}</p>
                     </div>
 
                     <!-- Empty State -->
                     <div v-if="!loadingTemplates && discussionTemplates.length === 0" class="text-center py-8 text-gray-500">
                         <i class="fas fa-folder-open text-4xl mb-3"></i>
-                        <p class="text-sm">No templates available</p>
+                        <p class="text-sm">{{ t('noTemplatesAvailable') }}</p>
                     </div>
                 </div>
 
                 <div class="flex justify-end space-x-3 mt-6">
-                    <button @click="showTemplateModal = false; clearTemplateSelection();" class="btn-secondary">Cancel</button>
+                    <button @click="showTemplateModal = false; clearTemplateSelection();" class="btn-secondary">{{ t('cancel') }}</button>
                     <button @click="startDiscussionFromTemplate"
                             :disabled="!selectedDiscussionTemplate || Object.values(templateVariables).some(v => !v) || newDiscussionProviders.length < 2 || startingDiscussion"
                             :class="['btn-primary flex items-center space-x-2',
                                      (!selectedDiscussionTemplate || Object.values(templateVariables).some(v => !v) || newDiscussionProviders.length < 2 || startingDiscussion) ? 'opacity-50 cursor-not-allowed' : '']">
                         <i :class="startingDiscussion ? 'fas fa-spinner fa-spin' : 'fas fa-rocket'"></i>
-                        <span>{{ startingDiscussion ? 'Starting...' : 'Start Discussion' }}</span>
+                        <span>{{ startingDiscussion ? t('starting') : t('startDiscussion') }}</span>
                     </button>
                 </div>
             </div>
@@ -2220,7 +2220,7 @@
                 const costByDay = ref([]);
                 const costChart = ref(null);
                 let costChartInstance = null;
-                const defaultProviderList = ['claude', 'codex', 'gemini', 'opencode', 'iflow', 'kimi', 'qwen', 'deepseek'];
+                const defaultProviderList = ['qoder', 'codex', 'gemini', 'opencode', 'iflow', 'kimi', 'qwen', 'deepseek', 'claude'];
                 const warmupProviders = ref(defaultProviderList.map(name => ({ name, selected: true, status: null })));
 
                 // Discussion state
@@ -2244,6 +2244,7 @@
                 // Cost tracking state
                 const tokenPricing = {
                     claude: { input: 0.003, output: 0.015 },
+                    qoder: { input: 0.001, output: 0.003 },
                     gemini: { input: 0.00025, output: 0.0005 },
                     openai: { input: 0.005, output: 0.015 },
                     default: { input: 0.001, output: 0.002 }
@@ -2322,6 +2323,7 @@
                         enterTemplateName: 'Enter template name', templatePreview: 'Preview', save: 'Save',
                         templateSaved: 'Template saved', templateLoaded: 'Template loaded', templateDeleted: 'Template deleted',
                         manageTemplates: 'Manage Templates', noTemplates: 'No templates saved',
+                        chooseTemplate: 'Choose a template', fillInDetails: 'Fill in Details',
                         // Error messages
                         failedToCopy: 'Failed to copy to clipboard', failedToRetry: 'Failed to retry request',
                         failedToFetch: 'Failed to fetch requests', failedToDelete: 'Failed to delete API key',
@@ -2369,6 +2371,11 @@
                         enterTopic: 'Enter discussion topic...', selectDiscussionProviders: 'Select Providers',
                         discussionRounds: 'Rounds', quickMode: 'Quick Mode (2 rounds)',
                         starting: 'Starting...', refreshDiscussions: 'Refresh',
+                        // Memory & Skills tabs
+                        recentSessions: 'Recent Sessions', topUsedSkills: 'Most Used Skills',
+                        costByProvider: 'Cost by Provider', tokens: 'Tokens',
+                        // Discussion templates
+                        loadingTemplates: 'Loading templates...', noTemplatesAvailable: 'No templates available',
                     },
                     zh: {
                         // Header
@@ -2440,6 +2447,7 @@
                         enterTemplateName: '输入模板名称', templatePreview: '预览', save: '保存',
                         templateSaved: '模板已保存', templateLoaded: '模板已加载', templateDeleted: '模板已删除',
                         manageTemplates: '管理模板', noTemplates: '暂无保存的模板',
+                        chooseTemplate: '选择一个模板', fillInDetails: '填写详细信息',
                         // Error messages
                         failedToCopy: '复制到剪贴板失败', failedToRetry: '重试请求失败',
                         failedToFetch: '获取请求失败', failedToDelete: '删除 API 密钥失败',
@@ -2487,6 +2495,12 @@
                         enterTopic: '输入讨论主题...', selectDiscussionProviders: '选择参与者',
                         discussionRounds: '讨论轮数', quickMode: '快速模式（2轮）',
                         starting: '启动中...', refreshDiscussions: '刷新',
+                        // Memory & Skills tab
+                        recentSessions: '最近会话', topUsedSkills: '常用技能',
+                        // Cost tracking
+                        costByProvider: '各提供者成本', tokens: 'Token数',
+                        // Discussion templates
+                        loadingTemplates: '加载模板中...', noTemplatesAvailable: '暂无可用模板',
                     }
                 };
 

@@ -12,11 +12,45 @@ import shutil
 import subprocess
 import time
 import webbrowser
-from typing import Optional, List
+from typing import Optional, List, Tuple
 
 from .base_backend import BaseBackend, BackendResult
 from ..models import GatewayRequest
 from ..gateway_config import ProviderConfig
+
+
+def estimate_tokens(text: str) -> int:
+    """
+    Estimate token count from text.
+
+    Uses a simple heuristic: ~4 characters per token for English,
+    ~1.5 characters per token for Chinese/CJK.
+    """
+    if not text:
+        return 0
+
+    # Count CJK characters (Chinese, Japanese, Korean)
+    cjk_pattern = re.compile(r'[\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff\uac00-\ud7af]')
+    cjk_chars = len(cjk_pattern.findall(text))
+
+    # Non-CJK characters
+    non_cjk_chars = len(text) - cjk_chars
+
+    # Estimate: CJK ~1.5 chars/token, non-CJK ~4 chars/token
+    cjk_tokens = cjk_chars / 1.5
+    non_cjk_tokens = non_cjk_chars / 4
+
+    return int(cjk_tokens + non_cjk_tokens)
+
+
+def estimate_input_output_tokens(input_text: str, output_text: str) -> Tuple[int, int]:
+    """
+    Estimate input and output token counts.
+
+    Returns:
+        Tuple of (input_tokens, output_tokens)
+    """
+    return estimate_tokens(input_text), estimate_tokens(output_text)
 
 
 # Patterns for detecting OAuth/auth URLs
@@ -213,7 +247,7 @@ class CLIBackend(BaseBackend):
                 if result is not None:
                     stdout, stderr, returncode = result
                     latency_ms = (time.time() - start_time) * 1000
-                    return self._process_output(stdout, stderr, returncode, latency_ms)
+                    return self._process_output(stdout, stderr, returncode, latency_ms, request.message)
                 if debug:
                     print(f"[CCB] WezTerm returned None, falling back to subprocess")
 
@@ -222,7 +256,7 @@ class CLIBackend(BaseBackend):
                 if result is not None:
                     stdout, stderr, returncode = result
                     latency_ms = (time.time() - start_time) * 1000
-                    return self._process_output(stdout, stderr, returncode, latency_ms)
+                    return self._process_output(stdout, stderr, returncode, latency_ms, request.message)
 
             # Fallback to regular subprocess
             process = await asyncio.create_subprocess_exec(
@@ -263,6 +297,7 @@ class CLIBackend(BaseBackend):
                 stderr.decode("utf-8", errors="replace"),
                 process.returncode,
                 latency_ms,
+                request.message,
             )
 
         except Exception as e:
@@ -441,7 +476,8 @@ class CLIBackend(BaseBackend):
             return None
 
     def _process_output(
-        self, stdout: str, stderr: str, returncode: int, latency_ms: float
+        self, stdout: str, stderr: str, returncode: int, latency_ms: float,
+        input_text: str = ""
     ) -> BackendResult:
         """Process CLI output and check for auth URLs."""
         stdout = stdout.strip()
@@ -496,10 +532,20 @@ class CLIBackend(BaseBackend):
         # If we have valid output, consider it a success even if exit code is non-zero
         # Many CLI tools return non-zero exit codes for various reasons but still produce valid output
         if response_text:
+            # Estimate tokens for CLI backends
+            input_tokens, output_tokens = estimate_input_output_tokens(input_text, response_text)
+            total_tokens = input_tokens + output_tokens
+
             return BackendResult.ok(
                 response=response_text,
                 latency_ms=latency_ms,
-                metadata={"exit_code": returncode},
+                tokens_used=total_tokens,
+                metadata={
+                    "exit_code": returncode,
+                    "input_tokens": input_tokens,
+                    "output_tokens": output_tokens,
+                    "tokens_estimated": True,
+                },
                 thinking=thinking,
                 raw_output=raw_output,
             )
@@ -510,10 +556,17 @@ class CLIBackend(BaseBackend):
             return BackendResult.fail(error_msg, latency_ms=latency_ms)
 
         # Empty output but success exit code
+        input_tokens = estimate_tokens(input_text)
         return BackendResult.ok(
             response="",
             latency_ms=latency_ms,
-            metadata={"exit_code": returncode},
+            tokens_used=input_tokens,
+            metadata={
+                "exit_code": returncode,
+                "input_tokens": input_tokens,
+                "output_tokens": 0,
+                "tokens_estimated": True,
+            },
             raw_output=raw_output,
         )
 

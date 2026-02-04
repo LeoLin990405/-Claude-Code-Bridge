@@ -491,6 +491,22 @@ class GatewayServer:
             success=True,
         )
 
+        # Record token cost if tokens are available
+        if result.tokens_used or (metadata and metadata.get("input_tokens")):
+            input_tokens = metadata.get("input_tokens", 0) if metadata else 0
+            output_tokens = metadata.get("output_tokens", 0) if metadata else 0
+            # If only total tokens available, assume 30% input / 70% output ratio
+            if result.tokens_used and not input_tokens:
+                input_tokens = int(result.tokens_used * 0.3)
+                output_tokens = result.tokens_used - input_tokens
+            self.store.record_token_cost(
+                provider=provider,
+                input_tokens=input_tokens,
+                output_tokens=output_tokens,
+                request_id=request.id,
+                model=request.metadata.get("model") if request.metadata else None,
+            )
+
         # Broadcast WebSocket event (wrapped in try-except to prevent status overwrite)
         try:
             if self._app and hasattr(self._app.state, 'ws_manager'):

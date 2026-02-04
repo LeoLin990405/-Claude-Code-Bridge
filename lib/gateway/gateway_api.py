@@ -596,10 +596,14 @@ def create_api(
         if cache_manager:
             cache_stats = cache_manager.get_stats().to_dict()
 
+        # Get token/cost data by provider for the last 30 days
+        token_data = {p["provider"]: p for p in store.get_cost_by_provider(days=30)}
+
         providers = []
         for name, pconfig in config.providers.items():
             pstatus = store.get_provider_status(name)
             metrics = store.get_provider_metrics(name, hours=24)
+            cost_info = token_data.get(name, {})
 
             providers.append({
                 "name": name,
@@ -608,6 +612,14 @@ def create_api(
                 "queue_depth": queue_stats["by_provider"].get(name, 0),
                 "avg_latency_ms": metrics.get("avg_latency_ms", 0),
                 "success_rate": metrics.get("success_rate", 1.0),
+                # Token statistics from cost data
+                "total_input_tokens": cost_info.get("total_input_tokens", 0),
+                "total_output_tokens": cost_info.get("total_output_tokens", 0),
+                "total_cost_usd": cost_info.get("total_cost_usd", 0.0),
+                "total_requests": cost_info.get("request_count", 0),
+                # Health check info
+                "last_check": pstatus.last_check if pstatus else None,
+                "last_error": pstatus.error if pstatus else None,
             })
 
         return StatusResponse(
@@ -1824,6 +1836,26 @@ def create_api(
             content="<h1>CCB Gateway</h1><p>Web UI not found. API is running at /api/</p>",
             status_code=200
         )
+
+    @app.get("/web/{file_path:path}")
+    async def serve_web_files(file_path: str):
+        """Serve static files from web directory."""
+        full_path = WEB_UI_DIR / file_path
+        if full_path.exists() and full_path.is_file():
+            # Determine media type
+            suffix = full_path.suffix.lower()
+            media_types = {
+                '.html': 'text/html',
+                '.css': 'text/css',
+                '.js': 'application/javascript',
+                '.json': 'application/json',
+                '.png': 'image/png',
+                '.jpg': 'image/jpeg',
+                '.svg': 'image/svg+xml',
+            }
+            media_type = media_types.get(suffix, 'application/octet-stream')
+            return FileResponse(full_path, media_type=media_type)
+        return HTMLResponse(content="Not Found", status_code=404)
 
     # Mount static files if web directory exists
     if WEB_UI_DIR.exists():
