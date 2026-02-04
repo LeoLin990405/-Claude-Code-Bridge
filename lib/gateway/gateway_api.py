@@ -247,6 +247,7 @@ def create_api(
     api_key_store=None,
     discussion_executor=None,
     reliability_tracker: Optional[ReliabilityTracker] = None,
+    memory_middleware=None,
 ) -> "FastAPI":
     """
     Create the FastAPI application with all routes.
@@ -1698,6 +1699,107 @@ def create_api(
 
     # Store ws_manager on app for external access
     app.state.ws_manager = ws_manager
+
+    # ==================== Memory v2.0 API ====================
+
+    @app.get("/api/memory/sessions")
+    async def get_memory_sessions(limit: int = Query(20, ge=1, le=100)):
+        """Get recent memory sessions."""
+        if not memory_middleware or not hasattr(memory_middleware, 'memory'):
+            raise HTTPException(status_code=503, detail="Memory system not available")
+
+        try:
+            sessions = memory_middleware.memory.v2.list_sessions(limit=limit)
+            return JSONResponse(content={"sessions": sessions})
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to fetch sessions: {str(e)}")
+
+    @app.get("/api/memory/sessions/{session_id}")
+    async def get_session_context(session_id: str, window_size: int = Query(20, ge=1, le=100)):
+        """Get conversation context for a specific session."""
+        if not memory_middleware or not hasattr(memory_middleware, 'memory'):
+            raise HTTPException(status_code=503, detail="Memory system not available")
+
+        try:
+            messages = memory_middleware.memory.v2.get_session_context(
+                session_id=session_id,
+                window_size=window_size
+            )
+            return JSONResponse(content={"session_id": session_id, "messages": messages})
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to fetch session context: {str(e)}")
+
+    @app.get("/api/memory/search")
+    async def search_memory(
+        query: str = Query(..., min_length=1),
+        limit: int = Query(10, ge=1, le=50),
+        provider: Optional[str] = None
+    ):
+        """Search memory messages using FTS5."""
+        if not memory_middleware or not hasattr(memory_middleware, 'memory'):
+            raise HTTPException(status_code=503, detail="Memory system not available")
+
+        try:
+            results = memory_middleware.memory.v2.search_messages(
+                query=query,
+                limit=limit,
+                provider=provider
+            )
+            return JSONResponse(content={"query": query, "results": results})
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
+
+    @app.get("/api/memory/stats")
+    async def get_memory_stats():
+        """Get memory system statistics."""
+        if not memory_middleware or not hasattr(memory_middleware, 'memory'):
+            raise HTTPException(status_code=503, detail="Memory system not available")
+
+        try:
+            stats = memory_middleware.memory.v2.get_stats()
+            return JSONResponse(content=stats)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to fetch stats: {str(e)}")
+
+    # ==================== Skills Discovery API ====================
+
+    @app.get("/api/skills/recommendations")
+    async def get_skill_recommendations(query: str = Query(..., min_length=1)):
+        """Get skill recommendations for a task."""
+        if not memory_middleware or not hasattr(memory_middleware, 'skills_discovery'):
+            raise HTTPException(status_code=503, detail="Skills Discovery not available")
+
+        try:
+            recommendations = memory_middleware.skills_discovery.get_recommendations(query)
+            return JSONResponse(content=recommendations)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Skills discovery failed: {str(e)}")
+
+    @app.get("/api/skills/stats")
+    async def get_skills_stats():
+        """Get skills usage statistics."""
+        if not memory_middleware or not hasattr(memory_middleware, 'skills_discovery'):
+            raise HTTPException(status_code=503, detail="Skills Discovery not available")
+
+        try:
+            stats = memory_middleware.skills_discovery.get_usage_stats()
+            return JSONResponse(content=stats)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to fetch skills stats: {str(e)}")
+
+    @app.get("/api/skills/list")
+    async def list_skills(installed_only: bool = Query(False)):
+        """List all available skills."""
+        if not memory_middleware or not hasattr(memory_middleware, 'skills_discovery'):
+            raise HTTPException(status_code=503, detail="Skills Discovery not available")
+
+        try:
+            skills = memory_middleware.skills_discovery.list_all_skills()
+            if installed_only:
+                skills = [s for s in skills if s.get('installed', False)]
+            return JSONResponse(content={"skills": skills})
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to list skills: {str(e)}")
 
     # ==================== Web UI Static Files ====================
 

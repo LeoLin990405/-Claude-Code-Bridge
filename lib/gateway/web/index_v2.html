@@ -1,0 +1,2143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CCB Gateway Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: #16161f;
+            --bg-elevated: #1a1a25;
+            --border-subtle: rgba(255,255,255,0.06);
+            --border-accent: rgba(99,102,241,0.3);
+            --text-primary: #f0f0f5;
+            --text-secondary: #9ca3af;
+            --text-muted: #6b7280;
+            --accent-primary: #6366f1;
+            --accent-secondary: #8b5cf6;
+            --accent-cyan: #22d3ee;
+            --accent-emerald: #10b981;
+            --accent-amber: #f59e0b;
+            --accent-rose: #f43f5e;
+            --glow-primary: rgba(99,102,241,0.15);
+        }
+        
+        * { font-family: 'Outfit', sans-serif; }
+        code, pre, .font-mono { font-family: 'JetBrains Mono', monospace; }
+        [v-cloak] { display: none; }
+        
+        body { background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; }
+        
+        .bg-mesh {
+            background: 
+                radial-gradient(ellipse at 20% 0%, rgba(99,102,241,0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 100%, rgba(139,92,246,0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 0% 50%, rgba(34,211,238,0.04) 0%, transparent 50%),
+                var(--bg-primary);
+        }
+        
+        .glass-card {
+            background: linear-gradient(135deg, rgba(22,22,31,0.9) 0%, rgba(26,26,37,0.8) 100%);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-card:hover {
+            border-color: var(--border-accent);
+            box-shadow: 0 0 40px var(--glow-primary);
+            transform: translateY(-2px);
+        }
+        
+        .stat-card {
+            position: relative;
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 16px;
+            padding: 1px;
+            background: linear-gradient(135deg, var(--gradient-from), var(--gradient-to));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0.5;
+            transition: opacity 0.3s;
+        }
+        .stat-card:hover::before { opacity: 1; }
+        .stat-card:hover { transform: translateY(-4px) scale(1.02); box-shadow: 0 20px 40px -20px var(--glow-color); }
+        
+        .stat-card.blue { --gradient-from: #6366f1; --gradient-to: #8b5cf6; --glow-color: rgba(99,102,241,0.3); }
+        .stat-card.amber { --gradient-from: #f59e0b; --gradient-to: #ef4444; --glow-color: rgba(245,158,11,0.3); }
+        .stat-card.purple { --gradient-from: #8b5cf6; --gradient-to: #ec4899; --glow-color: rgba(139,92,246,0.3); }
+        .stat-card.emerald { --gradient-from: #10b981; --gradient-to: #22d3ee; --glow-color: rgba(16,185,129,0.3); }
+        .stat-card.cyan { --gradient-from: #22d3ee; --gradient-to: #6366f1; --glow-color: rgba(34,211,238,0.3); }
+        .stat-card.rose { --gradient-from: #f43f5e; --gradient-to: #f59e0b; --glow-color: rgba(244,63,94,0.3); }
+        
+        .nav-tab {
+            position: relative;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            border-radius: 12px;
+            transition: all 0.3s;
+        }
+        .nav-tab:hover { color: var(--text-primary); background: rgba(99,102,241,0.1); }
+        .nav-tab.active {
+            color: var(--text-primary);
+            background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.1));
+            border: 1px solid var(--border-accent);
+        }
+        
+        .provider-card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 1rem;
+            transition: all 0.3s;
+        }
+        .provider-card:hover { border-color: var(--border-accent); box-shadow: 0 0 30px var(--glow-primary); }
+        
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-secondary); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: var(--accent-primary); border-radius: 3px; }
+        
+        @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 5px currentColor; } 50% { box-shadow: 0 0 20px currentColor; } }
+        .pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+        
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .slide-in { animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        @keyframes fadeUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .fade-up { animation: fadeUp 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        .stagger-children > * { animation: fadeUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) backwards; }
+        .stagger-children > *:nth-child(1) { animation-delay: 0.05s; }
+        .stagger-children > *:nth-child(2) { animation-delay: 0.1s; }
+        .stagger-children > *:nth-child(3) { animation-delay: 0.15s; }
+        .stagger-children > *:nth-child(4) { animation-delay: 0.2s; }
+        .stagger-children > *:nth-child(5) { animation-delay: 0.25s; }
+        .stagger-children > *:nth-child(6) { animation-delay: 0.3s; }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white; padding: 0.5rem 1.25rem; border-radius: 10px; font-weight: 500;
+            transition: all 0.3s; border: none; cursor: pointer;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 30px -10px var(--accent-primary); }
+        
+        .btn-secondary {
+            background: var(--bg-elevated); color: var(--text-primary);
+            padding: 0.5rem 1.25rem; border-radius: 10px; font-weight: 500;
+            transition: all 0.3s; border: 1px solid var(--border-subtle); cursor: pointer;
+        }
+        .btn-secondary:hover { border-color: var(--border-accent); background: var(--bg-card); }
+        
+        .input-field {
+            background: var(--bg-secondary); border: 1px solid var(--border-subtle);
+            border-radius: 10px; padding: 0.625rem 1rem; color: var(--text-primary);
+            transition: all 0.3s; width: 100%;
+        }
+        .input-field:focus { outline: none; border-color: var(--accent-primary); box-shadow: 0 0 0 3px var(--glow-primary); }
+        .input-field::placeholder { color: var(--text-muted); }
+        
+        .toggle-switch {
+            position: relative; width: 44px; height: 24px;
+            background: var(--bg-secondary); border-radius: 12px;
+            cursor: pointer; transition: all 0.3s;
+        }
+        .toggle-switch.active { background: linear-gradient(135deg, var(--accent-emerald), var(--accent-cyan)); }
+        .toggle-switch::after {
+            content: ''; position: absolute; top: 2px; left: 2px;
+            width: 20px; height: 20px; background: white; border-radius: 50%;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        .toggle-switch.active::after { transform: translateX(20px); }
+        
+        .badge { padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 500; display: inline-flex; align-items: center; gap: 0.375rem; }
+        .badge-success { background: rgba(16,185,129,0.15); color: #10b981; }
+        .badge-warning { background: rgba(245,158,11,0.15); color: #f59e0b; }
+        .badge-error { background: rgba(244,63,94,0.15); color: #f43f5e; }
+        .badge-info { background: rgba(99,102,241,0.15); color: #6366f1; }
+        
+        .modal-backdrop { background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); }
+        .modal-content { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 20px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
+        
+        .data-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+        .data-table th { text-align: left; padding: 1rem; color: var(--text-muted); font-weight: 500; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-subtle); }
+        .data-table td { padding: 1rem; border-bottom: 1px solid var(--border-subtle); transition: background 0.2s; }
+        .data-table tr:hover td { background: rgba(99,102,241,0.05); }
+        
+        .activity-log { background: var(--bg-secondary); border-radius: 12px; padding: 1rem; max-height: 300px; overflow-y: auto; }
+        .log-entry { padding: 0.5rem 0; border-bottom: 1px solid var(--border-subtle); font-size: 0.8125rem; font-family: 'JetBrains Mono', monospace; }
+        .log-entry:last-child { border-bottom: none; }
+        
+        .chart-container { background: var(--bg-secondary); border-radius: 12px; padding: 1rem; }
+        .kbd { background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 0.25rem 0.5rem; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--text-secondary); }
+        
+        .light-theme {
+            --bg-primary: #f8fafc; --bg-secondary: #ffffff; --bg-card: #ffffff;
+            --bg-elevated: #f1f5f9; --border-subtle: rgba(0,0,0,0.08);
+            --border-accent: rgba(99,102,241,0.4); --text-primary: #1e293b;
+            --text-secondary: #64748b; --text-muted: #94a3b8; --glow-primary: rgba(99,102,241,0.1);
+        }
+        .light-theme .bg-mesh {
+            background: radial-gradient(ellipse at 20% 0%, rgba(99,102,241,0.05) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 100%, rgba(139,92,246,0.04) 0%, transparent 50%), var(--bg-primary);
+        }
+        .light-theme .glass-card { background: rgba(255,255,255,0.9); box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        .light-theme .stat-card { background: var(--bg-card); box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+    </style>
+</head>
+<body :class="['min-h-screen bg-mesh transition-colors duration-500', theme === 'light' ? 'light-theme' : '']">
+    <div id="app" v-cloak>
+        <!-- Header -->
+        <header class="sticky top-0 z-40 backdrop-blur-xl bg-opacity-80" :class="theme === 'light' ? 'bg-white/80' : 'bg-[#0a0a0f]/80'" style="border-bottom: 1px solid var(--border-subtle);">
+            <div class="max-w-[1800px] mx-auto px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-6">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                                <i class="fas fa-bolt text-white text-lg"></i>
+                            </div>
+                            <div>
+                                <h1 class="text-xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">CCB Gateway</h1>
+                                <p class="text-xs text-gray-500">Multi-AI Orchestrator</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2 px-3 py-1.5 rounded-full" 
+                             :class="connected ? 'bg-emerald-500/10 border border-emerald-500/30' : 'bg-rose-500/10 border border-rose-500/30'">
+                            <span class="w-2 h-2 rounded-full" :class="connected ? 'bg-emerald-400 pulse-glow text-emerald-400' : 'bg-rose-400'"></span>
+                            <span class="text-sm font-medium" :class="connected ? 'text-emerald-400' : 'text-rose-400'">
+                                {{ connected ? t('connected') : t('disconnected') }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <span class="text-sm text-gray-500 hidden md:block"><i class="fas fa-clock mr-1"></i>{{ formatDuration(status.gateway?.uptime_s || 0) }}</span>
+                        <div class="h-4 w-px bg-gray-700 hidden md:block"></div>
+                        <button @click="toggleTheme" class="p-2.5 rounded-xl hover:bg-white/5 transition-colors" :title="t('toggleTheme')">
+                            <i :class="theme === 'dark' ? 'fas fa-sun text-amber-400' : 'fas fa-moon text-indigo-400'" class="text-lg"></i>
+                        </button>
+                        <button @click="showShortcuts = true" class="p-2.5 rounded-xl hover:bg-white/5 transition-colors"><i class="fas fa-keyboard text-gray-400"></i></button>
+                        <button @click="showAlertSettings = true" class="p-2.5 rounded-xl hover:bg-white/5 transition-colors"><i class="fas fa-bell text-gray-400"></i></button>
+                        <button @click="exportData" class="p-2.5 rounded-xl hover:bg-white/5 transition-colors"><i class="fas fa-download text-gray-400"></i></button>
+                        <button @click="toggleLang" class="px-3 py-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-sm font-medium hover:bg-indigo-500/20 transition-colors">
+                            {{ lang === 'en' ? '中文' : 'EN' }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="sticky top-[73px] z-30 backdrop-blur-xl" :class="theme === 'light' ? 'bg-white/60' : 'bg-[#0a0a0f]/60'" style="border-bottom: 1px solid var(--border-subtle);">
+            <div class="max-w-[1800px] mx-auto px-6 py-3">
+                <div class="flex space-x-2">
+                    <button v-for="tab in tabs" :key="tab.id" @click="activeTab = tab.id" :class="['nav-tab', activeTab === tab.id ? 'active' : '']">
+                        <span class="flex items-center space-x-2"><span v-html="tab.icon"></span><span>{{ t(tab.id) }}</span></span>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="max-w-[1800px] mx-auto px-6 py-8">
+            <!-- Dashboard Tab -->
+            <div v-show="activeTab === 'dashboard'" class="space-y-8">
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-5 stagger-children">
+                    <div class="stat-card blue">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-indigo-400 text-sm font-medium">{{ t('totalRequests') }}</span>
+                            <div class="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center"><i class="fas fa-paper-plane text-indigo-400 text-sm"></i></div>
+                        </div>
+                        <div class="text-3xl font-bold text-white mb-1">{{ formatNumber(status.gateway?.total_requests || 0) }}</div>
+                        <div class="text-xs text-gray-500">{{ t('allTime') }}</div>
+                    </div>
+                    <div class="stat-card amber">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-amber-400 text-sm font-medium">{{ t('active') }}</span>
+                            <div class="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center"><i class="fas fa-spinner fa-spin text-amber-400 text-sm"></i></div>
+                        </div>
+                        <div class="text-3xl font-bold text-white mb-1">{{ status.gateway?.active_requests || 0 }}</div>
+                        <div class="text-xs text-gray-500">{{ t('processingNow') }}</div>
+                    </div>
+                    <div class="stat-card purple">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-purple-400 text-sm font-medium">{{ t('queue') }}</span>
+                            <div class="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center"><i class="fas fa-layer-group text-purple-400 text-sm"></i></div>
+                        </div>
+                        <div class="text-3xl font-bold text-white mb-1">{{ status.gateway?.queue_depth || 0 }}</div>
+                        <div class="text-xs text-gray-500">{{ t('waiting') }}</div>
+                    </div>
+                    <div class="stat-card emerald">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-emerald-400 text-sm font-medium">{{ t('cacheHit') }}</span>
+                            <div class="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center"><i class="fas fa-database text-emerald-400 text-sm"></i></div>
+                        </div>
+                        <div class="text-3xl font-bold text-white mb-1">{{ formatPercent(status.gateway?.cache?.hit_rate || 0) }}</div>
+                        <div class="text-xs text-gray-500">{{ status.gateway?.cache?.hits || 0 }} {{ t('hits') }}</div>
+                    </div>
+                    <div class="stat-card cyan">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-cyan-400 text-sm font-medium">{{ t('providers') }}</span>
+                            <div class="w-8 h-8 rounded-lg bg-cyan-500/20 flex items-center justify-center"><i class="fas fa-server text-cyan-400 text-sm"></i></div>
+                        </div>
+                        <div class="text-3xl font-bold text-white mb-1">{{ healthyProviders }}/{{ status.providers?.length || 0 }}</div>
+                        <div class="text-xs text-gray-500">{{ t('healthy') }}</div>
+                    </div>
+                    <div class="stat-card rose">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-rose-400 text-sm font-medium">{{ t('estimatedCost') }}</span>
+                            <div class="w-8 h-8 rounded-lg bg-rose-500/20 flex items-center justify-center"><i class="fas fa-dollar-sign text-rose-400 text-sm"></i></div>
+                        </div>
+                        <div class="text-3xl font-bold text-white mb-1">${{ formatCost(estimatedCost) }}</div>
+                        <div class="text-xs text-gray-500">{{ formatNumber(totalTokens) }} tokens</div>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="glass-card p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-lg font-semibold flex items-center"><i class="fas fa-chart-bar text-indigo-400 mr-3"></i>{{ t('latencyDistribution') }}</h2>
+                            <span class="badge badge-info">{{ t('last100') }}</span>
+                        </div>
+                        <div class="chart-container"><canvas ref="latencyChart" height="200"></canvas></div>
+                    </div>
+                    <div class="glass-card p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-lg font-semibold flex items-center"><i class="fas fa-chart-pie text-purple-400 mr-3"></i>{{ t('statusDistribution') }}</h2>
+                            <span class="badge badge-info">{{ t('currentSession') }}</span>
+                        </div>
+                        <div class="chart-container flex justify-center"><canvas ref="statusChart" height="200" style="max-width: 280px;"></canvas></div>
+                    </div>
+                </div>
+
+                <!-- Provider Status & Activity -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 glass-card p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-lg font-semibold flex items-center"><i class="fas fa-server text-cyan-400 mr-3"></i>{{ t('providerStatus') }}</h2>
+                            <button @click="fetchStatus" class="btn-secondary text-sm"><i class="fas fa-sync-alt mr-2"></i>{{ t('refresh') }}</button>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                            <div v-for="provider in status.providers" :key="provider.name" class="provider-card">
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="font-semibold text-white">{{ provider.name }}</span>
+                                    <div class="flex items-center space-x-2">
+                                        <span :class="getStatusBadgeClass(provider.status)" class="badge"><span class="w-1.5 h-1.5 rounded-full bg-current"></span>{{ provider.status }}</span>
+                                        <div @click="toggleProvider(provider)" :class="['toggle-switch', provider.enabled ? 'active' : '']" :title="provider.enabled ? t('clickToDisable') : t('clickToEnable')"></div>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-3 text-sm">
+                                    <div class="flex flex-col"><span class="text-gray-500 text-xs mb-1">{{ t('latency') }}</span><span class="font-medium text-white">{{ formatLatency(provider.avg_latency_ms) }}</span></div>
+                                    <div class="flex flex-col"><span class="text-gray-500 text-xs mb-1">{{ t('success') }}</span><span class="font-medium" :class="provider.success_rate >= 0.9 ? 'text-emerald-400' : 'text-amber-400'">{{ formatPercent(provider.success_rate) }}</span></div>
+                                    <div class="flex flex-col"><span class="text-gray-500 text-xs mb-1">{{ t('queue') }}</span><span class="font-medium text-white">{{ provider.queue_depth }}</span></div>
+                                    <div class="flex flex-col"><span class="text-gray-500 text-xs mb-1">{{ t('requests') }}</span><span class="font-medium text-white">{{ provider.total_requests || 0 }}</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="glass-card p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-lg font-semibold flex items-center"><i class="fas fa-stream text-emerald-400 mr-3"></i>{{ t('activityLog') }}</h2>
+                            <button @click="activityLogs = []" class="text-xs text-gray-500 hover:text-white transition-colors">{{ t('clear') }}</button>
+                        </div>
+                        <div class="activity-log">
+                            <div v-for="(log, i) in activityLogs" :key="i" class="log-entry" :class="getLogClass(log.type)">
+                                <span class="text-gray-600">[{{ log.time }}]</span><span class="ml-2">{{ log.message }}</span>
+                            </div>
+                            <div v-if="activityLogs.length === 0" class="text-center py-8 text-gray-600"><i class="fas fa-inbox text-2xl mb-2"></i><p>{{ t('noActivity') }}</p></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Features -->
+                <div class="glass-card p-6">
+                    <h2 class="text-lg font-semibold flex items-center mb-6"><i class="fas fa-puzzle-piece text-amber-400 mr-3"></i>{{ t('features') }}</h2>
+                    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                        <div v-for="(enabled, feature) in status.gateway?.features" :key="feature" class="flex items-center space-x-3 p-3 rounded-xl" :class="enabled ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-gray-500/10 border border-gray-500/20'">
+                            <span :class="enabled ? 'text-emerald-400' : 'text-gray-500'" class="text-lg"><i :class="enabled ? 'fas fa-check-circle' : 'fas fa-times-circle'"></i></span>
+                            <span class="text-sm font-medium">{{ formatFeatureName(feature) }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Requests Tab -->
+            <div v-show="activeTab === 'requests'" class="space-y-6">
+                <div class="glass-card p-6">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                        <h2 class="text-lg font-semibold flex items-center"><i class="fas fa-list text-indigo-400 mr-3"></i>{{ t('recentRequests') }}</h2>
+                        <div class="flex flex-wrap items-center gap-3">
+                            <input v-model="searchQuery" type="text" :placeholder="t('searchRequests')" class="input-field w-48">
+                            <select v-model="requestFilter" class="input-field w-32">
+                                <option value="">{{ t('allStatus') }}</option>
+                                <option value="queued">{{ t('queued') }}</option>
+                                <option value="processing">{{ t('processing') }}</option>
+                                <option value="completed">{{ t('completed') }}</option>
+                                <option value="failed">{{ t('failed') }}</option>
+                            </select>
+                            <select v-model="providerFilter" class="input-field w-32">
+                                <option value="">{{ t('allProviders') }}</option>
+                                <option v-for="p in status.providers" :key="p.name" :value="p.name">{{ p.name }}</option>
+                            </select>
+                            <button @click="fetchRequests" class="btn-primary"><i v-if="loading.requests" class="fas fa-spinner fa-spin mr-2"></i>{{ t('refresh') }}</button>
+                        </div>
+                    </div>
+                    <div v-if="loading.requests" class="space-y-3">
+                        <div v-for="i in 5" :key="i" class="animate-pulse flex space-x-4">
+                            <div class="h-4 bg-gray-700 rounded w-24"></div>
+                            <div class="h-4 bg-gray-700 rounded w-20"></div>
+                            <div class="h-4 bg-gray-700 rounded w-16"></div>
+                            <div class="h-4 bg-gray-700 rounded flex-1"></div>
+                            <div class="h-4 bg-gray-700 rounded w-32"></div>
+                        </div>
+                    </div>
+                    <div v-else class="overflow-x-auto">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>{{ t('id') }}</th>
+                                    <th>{{ t('provider') }}</th>
+                                    <th>{{ t('status') }}</th>
+                                    <th>{{ t('message') }}</th>
+                                    <th>{{ t('created') }}</th>
+                                    <th>{{ t('actions') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="req in paginatedRequests" :key="req.id">
+                                    <td class="font-mono text-sm text-indigo-400">{{ req.id }}</td>
+                                    <td><span class="badge badge-info">{{ req.provider }}</span></td>
+                                    <td>
+                                        <span :class="getRequestStatusClass(req.status)" class="badge">
+                                            <span class="w-1.5 h-1.5 rounded-full" :class="getStatusDotClass(req.status)"></span>
+                                            {{ req.status }}
+                                        </span>
+                                    </td>
+                                    <td class="max-w-xs truncate text-gray-300" :title="req.message">{{ req.message }}</td>
+                                    <td class="text-sm text-gray-400">{{ formatTime(req.created_at) }}</td>
+                                    <td>
+                                        <div class="flex space-x-2">
+                                            <button @click="viewRequest(req)" class="btn-secondary text-xs py-1 px-2">{{ t('view') }}</button>
+                                            <button v-if="req.status === 'failed'" @click="retryRequest(req)" class="btn-primary text-xs py-1 px-2"><i class="fas fa-redo"></i></button>
+                                            <button v-if="req.status === 'queued' || req.status === 'processing'" @click="showConfirmDialog(t('cancelRequest'), t('confirmCancelRequest'), () => cancelRequest(req.id))" class="text-xs py-1 px-2 bg-rose-500/20 text-rose-400 rounded-lg hover:bg-rose-500/30">{{ t('cancel') }}</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div v-if="filteredRequests.length === 0" class="text-center py-12 text-gray-500"><i class="fas fa-inbox text-4xl mb-3"></i><p>{{ t('noRequests') }}</p></div>
+                        <div v-if="filteredRequests.length > 0" class="flex flex-col md:flex-row justify-between items-center mt-6 pt-6 border-t border-gray-700/50 gap-4">
+                            <span class="text-sm text-gray-400">{{ t('showing') }} {{ paginationStart }}-{{ paginationEnd }} {{ t('of') }} {{ filteredRequests.length }}</span>
+                            <div class="flex items-center space-x-3">
+                                <select v-model="pagination.pageSize" @change="pagination.page = 1" class="input-field w-20 text-sm">
+                                    <option :value="10">10</option>
+                                    <option :value="20">20</option>
+                                    <option :value="50">50</option>
+                                </select>
+                                <span class="text-sm text-gray-400">{{ t('perPage') }}</span>
+                                <div class="flex items-center space-x-1">
+                                    <button @click="pagination.page--" :disabled="pagination.page <= 1" class="btn-secondary py-1 px-3 disabled:opacity-50"><i class="fas fa-chevron-left"></i></button>
+                                    <span class="px-3 text-sm">{{ pagination.page }} / {{ totalPages }}</span>
+                                    <button @click="pagination.page++" :disabled="pagination.page >= totalPages" class="btn-secondary py-1 px-3 disabled:opacity-50"><i class="fas fa-chevron-right"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Test Tab -->
+            <div v-show="activeTab === 'test'" class="space-y-6">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="glass-card p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-lg font-semibold flex items-center"><i class="fas fa-flask text-purple-400 mr-3"></i>{{ t('quickTest') }}</h2>
+                            <div class="flex items-center space-x-2">
+                                <select v-model="selectedTemplate" @change="loadTemplate" class="input-field w-40 text-sm">
+                                    <option value="">{{ t('selectTemplate') }}</option>
+                                    <option v-for="(tpl, i) in testTemplates" :key="i" :value="i">{{ tpl.name }}</option>
+                                </select>
+                                <button @click="showSaveTemplateModal = true" class="btn-secondary py-1 px-2" :title="t('saveTemplate')"><i class="fas fa-save"></i></button>
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm text-gray-400 mb-2">{{ t('provider') }}</label>
+                                <select v-model="testForm.provider" class="input-field">
+                                    <option value="">{{ t('autoDefault') }}</option>
+                                    <option v-for="p in status.providers" :key="p.name" :value="p.name">{{ p.name }}</option>
+                                    <option value="@all">@all ({{ t('parallel') }})</option>
+                                    <option value="@fast">@fast ({{ t('fastProviders') }})</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm text-gray-400 mb-2">{{ t('message') }}</label>
+                                <textarea v-model="testForm.message" rows="4" class="input-field font-mono text-sm" :placeholder="t('enterMessage')"></textarea>
+                            </div>
+                            <div class="flex items-center space-x-6">
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="checkbox" v-model="testForm.stream" class="w-4 h-4 rounded border-gray-600 bg-gray-700 text-indigo-500 focus:ring-indigo-500">
+                                    <span class="text-sm">{{ t('stream') }}</span>
+                                </label>
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="checkbox" v-model="testForm.cacheBypass" class="w-4 h-4 rounded border-gray-600 bg-gray-700 text-indigo-500 focus:ring-indigo-500">
+                                    <span class="text-sm">{{ t('bypassCache') }}</span>
+                                </label>
+                            </div>
+                            <button @click="sendTestRequest" :disabled="testSending" class="w-full btn-primary py-3 text-base">
+                                <i v-if="testSending" class="fas fa-spinner fa-spin mr-2"></i>
+                                {{ testSending ? t('sending') : t('sendTest') }}
+                            </button>
+                        </div>
+                    </div>
+                    <div class="glass-card p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-lg font-semibold flex items-center"><i class="fas fa-terminal text-emerald-400 mr-3"></i>{{ t('result') }}</h2>
+                            <span v-if="testResult" class="badge" :class="testResult.success ? 'badge-success' : 'badge-error'">{{ testResult.latency }}ms</span>
+                        </div>
+                        <div v-if="testResult" class="space-y-4">
+                            <div class="flex items-center space-x-3">
+                                <span class="text-gray-400">{{ t('status') }}:</span>
+                                <span :class="testResult.success ? 'text-emerald-400' : 'text-rose-400'" class="font-medium">{{ testResult.success ? t('completed') : t('failed') }}</span>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <span class="text-gray-400">{{ t('requestId') }}:</span>
+                                <span class="font-mono text-indigo-400">{{ testResult.requestId }}</span>
+                            </div>
+                            <div v-if="testResult.cached" class="badge badge-success">{{ t('cached') }}</div>
+                            <div>
+                                <span class="text-gray-400 block mb-2">{{ t('response') }}:</span>
+                                <pre class="bg-gray-900/50 rounded-xl p-4 text-sm overflow-auto max-h-64 font-mono" :class="testResult.success ? 'text-emerald-300' : 'text-rose-300'">{{ testResult.response || testResult.error }}</pre>
+                            </div>
+                        </div>
+                        <div v-else class="text-center py-16 text-gray-500"><i class="fas fa-paper-plane text-4xl mb-3"></i><p>{{ t('sendToSee') }}</p></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- API Keys Tab -->
+            <div v-show="activeTab === 'keys'" class="space-y-6">
+                <div class="glass-card p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-lg font-semibold flex items-center"><i class="fas fa-key text-amber-400 mr-3"></i>{{ t('apiKeys') }}</h2>
+                        <button @click="showCreateKeyModal = true" class="btn-primary"><i class="fas fa-plus mr-2"></i>{{ t('createKey') }}</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>{{ t('keyId') }}</th>
+                                    <th>{{ t('name') }}</th>
+                                    <th>{{ t('createdAt') }}</th>
+                                    <th>{{ t('lastUsed') }}</th>
+                                    <th>{{ t('rateLimit') }}</th>
+                                    <th>{{ t('status') }}</th>
+                                    <th>{{ t('actions') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="key in apiKeys" :key="key.key_id">
+                                    <td class="font-mono text-sm">{{ key.key_id }}</td>
+                                    <td class="font-medium">{{ key.name }}</td>
+                                    <td class="text-sm text-gray-400">{{ formatTime(key.created_at) }}</td>
+                                    <td class="text-sm text-gray-400">{{ key.last_used_at ? formatTime(key.last_used_at) : t('never') }}</td>
+                                    <td>{{ key.rate_limit_rpm || t('default') }}</td>
+                                    <td><span :class="key.enabled ? 'badge-success' : 'badge-error'" class="badge">{{ key.enabled ? t('activeStatus') : t('disabled') }}</span></td>
+                                    <td>
+                                        <div class="flex space-x-2">
+                                            <button @click="toggleKey(key)" :class="key.enabled ? 'bg-amber-500/20 text-amber-400 hover:bg-amber-500/30' : 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30'" class="text-xs py-1 px-2 rounded-lg">{{ key.enabled ? t('disable') : t('enable') }}</button>
+                                            <button @click="showConfirmDialog(t('deleteKey'), t('confirmDeleteKey'), () => deleteKey(key.key_id))" class="text-xs py-1 px-2 bg-rose-500/20 text-rose-400 rounded-lg hover:bg-rose-500/30">{{ t('delete') }}</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div v-if="newApiKey" class="glass-card p-6 border-emerald-500/30 bg-emerald-500/5">
+                    <div class="font-semibold text-emerald-400 mb-2 flex items-center"><i class="fas fa-check-circle mr-2"></i>{{ t('newKeyCreated') }}</div>
+                    <div class="text-sm text-gray-300 mb-3">{{ t('saveKeyNow') }}</div>
+                    <div class="flex items-center space-x-3">
+                        <div class="flex-1 bg-gray-900/50 p-4 rounded-xl font-mono text-sm break-all select-all border border-gray-700">{{ newApiKey }}</div>
+                        <button @click="copyToClipboard(newApiKey)" class="btn-primary py-3 px-4"><i class="fas fa-copy mr-2"></i>{{ t('copy') }}</button>
+                    </div>
+                    <button @click="newApiKey = null" class="mt-4 btn-secondary text-sm">{{ t('dismiss') }}</button>
+                </div>
+            </div>
+
+            <!-- Config Tab -->
+            <div v-show="activeTab === 'config'" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="glass-card p-6">
+                        <h2 class="text-lg font-semibold flex items-center mb-6"><i class="fas fa-shield-alt text-indigo-400 mr-3"></i>{{ t('authentication') }}</h2>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center py-2 border-b border-gray-700/50">
+                                <span class="text-gray-400">{{ t('enabled') }}</span>
+                                <span :class="authConfig.enabled ? 'text-emerald-400' : 'text-gray-500'">{{ authConfig.enabled ? t('yes') : t('no') }}</span>
+                            </div>
+                            <div class="flex justify-between items-center py-2 border-b border-gray-700/50">
+                                <span class="text-gray-400">{{ t('headerName') }}</span>
+                                <span class="font-mono text-indigo-400 text-sm">{{ authConfig.header_name }}</span>
+                            </div>
+                            <div class="flex justify-between items-center py-2">
+                                <span class="text-gray-400">{{ t('allowLocalhost') }}</span>
+                                <span>{{ authConfig.allow_localhost ? t('yes') : t('no') }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="glass-card p-6">
+                        <h2 class="text-lg font-semibold flex items-center mb-6"><i class="fas fa-tachometer-alt text-purple-400 mr-3"></i>{{ t('rateLimiting') }}</h2>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center py-2 border-b border-gray-700/50">
+                                <span class="text-gray-400">{{ t('enabled') }}</span>
+                                <span :class="rateLimitConfig.enabled ? 'text-emerald-400' : 'text-gray-500'">{{ rateLimitConfig.enabled ? t('yes') : t('no') }}</span>
+                            </div>
+                            <div class="flex justify-between items-center py-2 border-b border-gray-700/50">
+                                <span class="text-gray-400">{{ t('requestsPerMin') }}</span>
+                                <span class="text-indigo-400 font-medium">{{ rateLimitConfig.requests_per_minute }}</span>
+                            </div>
+                            <div class="flex justify-between items-center py-2">
+                                <span class="text-gray-400">{{ t('burstSize') }}</span>
+                                <span>{{ rateLimitConfig.burst_size }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="glass-card p-6">
+                        <h2 class="text-lg font-semibold flex items-center mb-6"><i class="fas fa-redo text-cyan-400 mr-3"></i>{{ t('retryFallback') }}</h2>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center py-2 border-b border-gray-700/50">
+                                <span class="text-gray-400">{{ t('retryEnabled') }}</span>
+                                <span :class="retryConfig.enabled ? 'text-emerald-400' : 'text-gray-500'">{{ retryConfig.enabled ? t('yes') : t('no') }}</span>
+                            </div>
+                            <div class="flex justify-between items-center py-2 border-b border-gray-700/50">
+                                <span class="text-gray-400">{{ t('maxRetries') }}</span>
+                                <span>{{ retryConfig.max_retries }}</span>
+                            </div>
+                            <div class="flex justify-between items-center py-2">
+                                <span class="text-gray-400">{{ t('fallbackEnabled') }}</span>
+                                <span :class="retryConfig.fallback_enabled ? 'text-emerald-400' : 'text-gray-500'">{{ retryConfig.fallback_enabled ? t('yes') : t('no') }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="glass-card p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-lg font-semibold flex items-center"><i class="fas fa-database text-emerald-400 mr-3"></i>{{ t('cacheManagement') }}</h2>
+                            <div class="flex space-x-2">
+                                <button @click="cleanupCache" class="btn-secondary text-xs py-1 px-2"><i class="fas fa-broom mr-1"></i>{{ t('cleanup') }}</button>
+                                <button @click="showConfirmDialog(t('clearCache'), t('confirmClearCache'), clearCache)" class="text-xs py-1 px-2 bg-rose-500/20 text-rose-400 rounded-lg hover:bg-rose-500/30"><i class="fas fa-trash mr-1"></i>{{ t('clearAll') }}</button>
+                            </div>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center py-2 border-b border-gray-700/50">
+                                <span class="text-gray-400">{{ t('hits') }}</span>
+                                <span class="text-emerald-400 font-medium">{{ status.gateway?.cache?.hits || 0 }}</span>
+                            </div>
+                            <div class="flex justify-between items-center py-2 border-b border-gray-700/50">
+                                <span class="text-gray-400">{{ t('misses') }}</span>
+                                <span class="text-amber-400">{{ status.gateway?.cache?.misses || 0 }}</span>
+                            </div>
+                            <div class="flex justify-between items-center py-2 border-b border-gray-700/50">
+                                <span class="text-gray-400">{{ t('hitRate') }}</span>
+                                <span class="text-indigo-400 font-medium">{{ formatPercent(status.gateway?.cache?.hit_rate || 0) }}</span>
+                            </div>
+                            <div class="flex justify-between items-center py-2">
+                                <span class="text-gray-400">{{ t('totalEntries') }}</span>
+                                <span>{{ status.gateway?.cache?.total_entries || 0 }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="glass-card p-6">
+                        <h2 class="text-lg font-semibold flex items-center mb-6"><i class="fas fa-chart-line text-rose-400 mr-3"></i>{{ t('prometheusMetrics') }}</h2>
+                        <a href="/metrics" target="_blank" class="flex items-center space-x-2 text-indigo-400 hover:text-indigo-300 transition-colors mb-3">
+                            <span>{{ t('viewRawMetrics') }}</span><i class="fas fa-external-link-alt text-sm"></i>
+                        </a>
+                        <p class="text-xs text-gray-500">{{ t('endpoint') }}: <code class="bg-gray-800 px-2 py-1 rounded">/metrics</code></p>
+                    </div>
+                    <div class="glass-card p-6">
+                        <h2 class="text-lg font-semibold flex items-center mb-6"><i class="fas fa-book text-amber-400 mr-3"></i>{{ t('apiDocs') }}</h2>
+                        <a href="/docs" target="_blank" class="flex items-center space-x-2 text-indigo-400 hover:text-indigo-300 transition-colors mb-3">
+                            <span>{{ t('openApiSwagger') }}</span><i class="fas fa-external-link-alt text-sm"></i>
+                        </a>
+                        <p class="text-xs text-gray-500">{{ t('interactiveApi') }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Compare Tab -->
+            <div v-show="activeTab === 'compare'" class="space-y-6">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="glass-card p-6">
+                        <h2 class="text-lg font-semibold flex items-center mb-6"><i class="fas fa-chart-radar text-indigo-400 mr-3"></i>{{ t('providerComparison') }}</h2>
+                        <div class="flex justify-center"><canvas ref="radarChart" height="300" style="max-width: 350px;"></canvas></div>
+                    </div>
+                    <div class="glass-card p-6">
+                        <h2 class="text-lg font-semibold flex items-center mb-6"><i class="fas fa-table text-purple-400 mr-3"></i>{{ t('performanceMetrics') }}</h2>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>{{ t('provider') }}</th>
+                                    <th>{{ t('avgLatency') }}</th>
+                                    <th>{{ t('successRate') }}</th>
+                                    <th>{{ t('score') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="p in sortedProviders" :key="p.name">
+                                    <td class="font-medium">{{ p.name }}</td>
+                                    <td>{{ formatLatency(p.avg_latency_ms) }}</td>
+                                    <td :class="p.success_rate >= 0.9 ? 'text-emerald-400' : 'text-amber-400'">{{ formatPercent(p.success_rate) }}</td>
+                                    <td>
+                                        <div class="flex items-center space-x-2">
+                                            <div class="w-16 bg-gray-700 rounded-full h-2"><div class="h-2 rounded-full" :class="getScoreColor(p.score)" :style="{width: (p.score || 0) + '%'}"></div></div>
+                                            <span class="text-xs">{{ Math.round(p.score || 0) }}</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="glass-card p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-lg font-semibold flex items-center"><i class="fas fa-clock text-cyan-400 mr-3"></i>{{ t('requestTimeline') }}</h2>
+                        <select v-model="timelineRange" class="input-field w-32">
+                            <option value="1h">{{ t('last1h') }}</option>
+                            <option value="6h">{{ t('last6h') }}</option>
+                            <option value="24h">{{ t('last24h') }}</option>
+                        </select>
+                    </div>
+                    <div class="chart-container" style="height: 120px;"><canvas ref="timelineChart" height="100"></canvas></div>
+                </div>
+                <div class="glass-card p-6">
+                    <h2 class="text-lg font-semibold flex items-center mb-6"><i class="fas fa-stopwatch text-amber-400 mr-3"></i>{{ t('quickBenchmark') }}</h2>
+                    <div class="flex items-center space-x-4 mb-6">
+                        <input v-model="benchmarkMessage" type="text" class="input-field flex-1" :placeholder="t('enterBenchmark')">
+                        <button @click="runBenchmark" :disabled="benchmarkRunning" class="btn-primary">{{ benchmarkRunning ? t('running') : t('runBenchmark') }}</button>
+                    </div>
+                    <div v-if="benchmarkResults.length > 0" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div v-for="result in benchmarkResults" :key="result.provider" class="provider-card text-center">
+                            <div class="font-medium mb-2">{{ result.provider }}</div>
+                            <div class="text-2xl font-bold" :class="result.success ? 'text-emerald-400' : 'text-rose-400'">{{ result.success ? formatLatency(result.latency) : t('failed') }}</div>
+                            <div class="text-xs text-gray-400 mt-1">{{ result.success ? t('completed') : result.error }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Modals -->
+        <!-- Keyboard Shortcuts Modal -->
+        <div v-if="showShortcuts" class="fixed inset-0 modal-backdrop flex items-center justify-center z-50" @click.self="showShortcuts = false">
+            <div class="modal-content p-6 w-96 fade-up">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-semibold flex items-center"><i class="fas fa-keyboard text-indigo-400 mr-3"></i>{{ t('keyboardShortcuts') }}</h3>
+                    <button @click="showShortcuts = false" class="text-gray-400 hover:text-white text-xl">&times;</button>
+                </div>
+                <div class="space-y-2">
+                    <div class="flex justify-between py-2 border-b border-gray-700/50"><span>{{ t('dashboard') }}</span><kbd class="kbd">1</kbd></div>
+                    <div class="flex justify-between py-2 border-b border-gray-700/50"><span>{{ t('requests') }}</span><kbd class="kbd">2</kbd></div>
+                    <div class="flex justify-between py-2 border-b border-gray-700/50"><span>{{ t('test') }}</span><kbd class="kbd">3</kbd></div>
+                    <div class="flex justify-between py-2 border-b border-gray-700/50"><span>{{ t('compare') }}</span><kbd class="kbd">4</kbd></div>
+                    <div class="flex justify-between py-2 border-b border-gray-700/50"><span>{{ t('keys') }}</span><kbd class="kbd">5</kbd></div>
+                    <div class="flex justify-between py-2 border-b border-gray-700/50"><span>{{ t('config') }}</span><kbd class="kbd">6</kbd></div>
+                    <div class="flex justify-between py-2 border-b border-gray-700/50"><span>{{ t('refresh') }}</span><kbd class="kbd">R</kbd></div>
+                    <div class="flex justify-between py-2"><span>{{ t('closeModal') }}</span><kbd class="kbd">Esc</kbd></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast Notifications -->
+        <div class="fixed bottom-6 right-6 space-y-3 z-50">
+            <div v-for="(toast, i) in toasts" :key="i" class="slide-in px-5 py-3 rounded-xl shadow-2xl flex items-center space-x-3 backdrop-blur-xl"
+                 :class="toast.type === 'success' ? 'bg-emerald-500/90' : toast.type === 'error' ? 'bg-rose-500/90' : toast.type === 'warn' ? 'bg-amber-500/90' : 'bg-indigo-500/90'">
+                <i :class="toast.type === 'success' ? 'fas fa-check-circle' : toast.type === 'error' ? 'fas fa-times-circle' : toast.type === 'warn' ? 'fas fa-exclamation-triangle' : 'fas fa-info-circle'"></i>
+                <span class="flex-1 font-medium">{{ toast.message }}</span>
+                <button @click="removeToast(i)" class="text-white/70 hover:text-white text-lg">&times;</button>
+            </div>
+        </div>
+
+        <!-- Confirm Dialog -->
+        <div v-if="confirmDialog.show" class="fixed inset-0 modal-backdrop flex items-center justify-center z-50" @click.self="confirmDialog.show = false">
+            <div class="modal-content p-6 w-96 fade-up">
+                <h3 class="text-lg font-semibold mb-3">{{ confirmDialog.title }}</h3>
+                <p class="text-gray-400 mb-6">{{ confirmDialog.message }}</p>
+                <div class="flex justify-end space-x-3">
+                    <button @click="confirmDialog.show = false" class="btn-secondary">{{ t('cancelBtn') }}</button>
+                    <button @click="executeConfirmAction" class="bg-rose-500 hover:bg-rose-600 text-white px-4 py-2 rounded-xl transition-colors">{{ t('confirm') }}</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Create Key Modal -->
+        <div v-if="showCreateKeyModal" class="fixed inset-0 modal-backdrop flex items-center justify-center z-50">
+            <div class="modal-content p-6 w-96 fade-up">
+                <h3 class="text-lg font-semibold mb-6 flex items-center"><i class="fas fa-key text-amber-400 mr-3"></i>{{ t('createApiKey') }}</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2">{{ t('name') }}</label>
+                        <input v-model="newKeyName" type="text" class="input-field" placeholder="My API Key">
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2">{{ t('rateLimitRpm') }}</label>
+                        <input v-model.number="newKeyRateLimit" type="number" class="input-field" :placeholder="t('leaveEmpty')">
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button @click="showCreateKeyModal = false" class="btn-secondary">{{ t('cancelBtn') }}</button>
+                    <button @click="createKey" class="btn-primary">{{ t('create') }}</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Save Template Modal -->
+        <div v-if="showSaveTemplateModal" class="fixed inset-0 modal-backdrop flex items-center justify-center z-50">
+            <div class="modal-content p-6 w-96 fade-up">
+                <h3 class="text-lg font-semibold mb-6 flex items-center"><i class="fas fa-save text-emerald-400 mr-3"></i>{{ t('saveTemplate') }}</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2">{{ t('templateName') }}</label>
+                        <input v-model="newTemplateName" type="text" class="input-field" :placeholder="t('enterTemplateName')">
+                    </div>
+                    <div class="text-sm text-gray-400">
+                        <div class="mb-2">{{ t('templatePreview') }}:</div>
+                        <div class="bg-gray-800/50 rounded-xl p-3 space-y-1">
+                            <div><span class="text-gray-500">{{ t('provider') }}:</span> {{ testForm.provider || t('autoDefault') }}</div>
+                            <div><span class="text-gray-500">{{ t('message') }}:</span> {{ testForm.message.slice(0, 50) }}{{ testForm.message.length > 50 ? '...' : '' }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button @click="showSaveTemplateModal = false" class="btn-secondary">{{ t('cancelBtn') }}</button>
+                    <button @click="saveTemplate" class="btn-primary">{{ t('save') }}</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alert Settings Modal -->
+        <div v-if="showAlertSettings" class="fixed inset-0 modal-backdrop flex items-center justify-center z-50" @click.self="showAlertSettings = false">
+            <div class="modal-content p-6 w-[450px] fade-up">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-semibold flex items-center"><i class="fas fa-bell text-amber-400 mr-3"></i>{{ t('alertSettings') }}</h3>
+                    <button @click="showAlertSettings = false" class="text-gray-400 hover:text-white text-xl">&times;</button>
+                </div>
+                <div class="space-y-4">
+                    <div class="provider-card">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="font-medium">{{ t('highLatencyAlert') }}</span>
+                            <div @click="alerts.highLatency.enabled = !alerts.highLatency.enabled" :class="['toggle-switch', alerts.highLatency.enabled ? 'active' : '']"></div>
+                        </div>
+                        <div class="flex items-center space-x-2 text-sm">
+                            <span class="text-gray-400">{{ t('threshold') }}:</span>
+                            <input type="number" v-model.number="alerts.highLatency.threshold" class="input-field w-24 text-sm">
+                            <span class="text-gray-400">ms</span>
+                        </div>
+                    </div>
+                    <div class="provider-card">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="font-medium">{{ t('lowSuccessRateAlert') }}</span>
+                            <div @click="alerts.lowSuccessRate.enabled = !alerts.lowSuccessRate.enabled" :class="['toggle-switch', alerts.lowSuccessRate.enabled ? 'active' : '']"></div>
+                        </div>
+                        <div class="flex items-center space-x-2 text-sm">
+                            <span class="text-gray-400">{{ t('threshold') }}:</span>
+                            <input type="number" v-model.number="alerts.lowSuccessRate.threshold" step="0.01" min="0" max="1" class="input-field w-24 text-sm">
+                            <span class="text-gray-400">(0-1)</span>
+                        </div>
+                    </div>
+                    <div class="provider-card">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="font-medium">{{ t('queueDepthAlert') }}</span>
+                            <div @click="alerts.queueDepth.enabled = !alerts.queueDepth.enabled" :class="['toggle-switch', alerts.queueDepth.enabled ? 'active' : '']"></div>
+                        </div>
+                        <div class="flex items-center space-x-2 text-sm">
+                            <span class="text-gray-400">{{ t('threshold') }}:</span>
+                            <input type="number" v-model.number="alerts.queueDepth.threshold" class="input-field w-24 text-sm">
+                            <span class="text-gray-400">{{ t('requests') }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-end mt-6">
+                    <button @click="saveAlerts" class="btn-primary">{{ t('save') }}</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Request Detail Modal -->
+        <div v-if="selectedRequest" class="fixed inset-0 modal-backdrop flex items-center justify-center z-50" @click.self="selectedRequest = null">
+            <div class="modal-content p-6 w-[600px] max-h-[80vh] overflow-auto fade-up">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-semibold flex items-center"><i class="fas fa-info-circle text-indigo-400 mr-3"></i>{{ t('requestDetails') }}</h3>
+                    <button @click="selectedRequest = null" class="text-gray-400 hover:text-white text-xl">&times;</button>
+                </div>
+                <div class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><span class="text-gray-400 text-sm">{{ t('id') }}:</span><div class="font-mono text-indigo-400">{{ selectedRequest.id }}</div></div>
+                        <div><span class="text-gray-400 text-sm">{{ t('provider') }}:</span><div><span class="badge badge-info">{{ selectedRequest.provider }}</span></div></div>
+                        <div><span class="text-gray-400 text-sm">{{ t('status') }}:</span><div><span :class="getRequestStatusClass(selectedRequest.status)" class="badge">{{ selectedRequest.status }}</span></div></div>
+                        <div><span class="text-gray-400 text-sm">{{ t('created') }}:</span><div>{{ formatTime(selectedRequest.created_at) }}</div></div>
+                    </div>
+                    <div>
+                        <span class="text-gray-400 text-sm block mb-2">{{ t('message') }}:</span>
+                        <pre class="bg-gray-900/50 rounded-xl p-4 text-sm overflow-auto max-h-32 font-mono">{{ selectedRequest.message }}</pre>
+                    </div>
+                    <div v-if="selectedRequest.response">
+                        <span class="text-gray-400 text-sm block mb-2">{{ t('response') }}:</span>
+                        <pre class="bg-gray-900/50 rounded-xl p-4 text-sm overflow-auto max-h-48 font-mono text-emerald-300">{{ selectedRequest.response }}</pre>
+                    </div>
+                    <div v-if="selectedRequest.error">
+                        <span class="text-gray-400 text-sm block mb-2">{{ t('error') }}:</span>
+                        <pre class="bg-gray-900/50 rounded-xl p-4 text-sm overflow-auto max-h-32 font-mono text-rose-300">{{ selectedRequest.error }}</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref, computed, onMounted, onUnmounted, watch, nextTick } = Vue;
+
+        createApp({
+            setup() {
+                // State
+                const connected = ref(false);
+                const activeTab = ref('dashboard');
+                const status = ref({ gateway: {}, providers: [] });
+                const requests = ref([]);
+                const apiKeys = ref([]);
+                const authConfig = ref({});
+                const rateLimitConfig = ref({});
+                const retryConfig = ref({});
+                const showCreateKeyModal = ref(false);
+                const newKeyName = ref('');
+                const newKeyRateLimit = ref(null);
+                const newApiKey = ref(null);
+                const activityLogs = ref([]);
+                const requestFilter = ref('');
+                const providerFilter = ref('');
+                const searchQuery = ref('');
+                const selectedRequest = ref(null);
+                const selectedRequestResponse = ref(null);
+
+                // Loading states
+                const loading = ref({
+                    status: false,
+                    requests: false,
+                    keys: false,
+                    test: false
+                });
+
+                // Pagination state
+                const pagination = ref({
+                    page: 1,
+                    pageSize: 20
+                });
+
+                // Confirm dialog state
+                const confirmDialog = ref({
+                    show: false,
+                    title: '',
+                    message: '',
+                    onConfirm: null
+                });
+                
+                // Test panel state
+                const testForm = ref({
+                    provider: '',
+                    message: 'Hello! Please respond with a short greeting.',
+                    stream: false,
+                    cacheBypass: false
+                });
+                const testSending = ref(false);
+                const testResult = ref(null);
+
+                // Test templates state
+                const testTemplates = ref(JSON.parse(localStorage.getItem('ccb-test-templates') || '[]'));
+                const selectedTemplate = ref('');
+                const showSaveTemplateModal = ref(false);
+                const showManageTemplatesModal = ref(false);
+                const newTemplateName = ref('');
+
+                // Compare tab state
+                const radarChart = ref(null);
+                const timelineChart = ref(null);
+                let radarChartInstance = null;
+                let timelineChartInstance = null;
+                const timelineRange = ref('1h');
+                const benchmarkMessage = ref('Hello! Please respond briefly.');
+                const benchmarkRunning = ref(false);
+                const benchmarkResults = ref([]);
+
+                // UI state
+                const showShortcuts = ref(false);
+                const toasts = ref([]);
+                const showAlertSettings = ref(false);
+
+                // Theme state
+                const theme = ref(localStorage.getItem('ccb-theme') || 'dark');
+
+                // Alert settings state
+                const alerts = ref(JSON.parse(localStorage.getItem('ccb-alerts') || JSON.stringify({
+                    highLatency: { enabled: true, threshold: 5000 },
+                    lowSuccessRate: { enabled: true, threshold: 0.9 },
+                    queueDepth: { enabled: true, threshold: 10 }
+                })));
+
+                // Cost tracking state
+                const tokenPricing = {
+                    claude: { input: 0.003, output: 0.015 },
+                    gemini: { input: 0.00025, output: 0.0005 },
+                    openai: { input: 0.005, output: 0.015 },
+                    default: { input: 0.001, output: 0.002 }
+                };
+
+                // i18n - Language support
+                const lang = ref(localStorage.getItem('ccb-lang') || 'en');
+                const i18n = {
+                    en: {
+                        // Header
+                        connected: 'Connected', disconnected: 'Disconnected', uptime: 'Uptime', switchLang: 'Switch Language',
+                        // Tabs
+                        dashboard: 'Dashboard', requests: 'Requests', test: 'Test', compare: 'Compare', keys: 'API Keys', config: 'Config',
+                        // Dashboard cards
+                        totalRequests: 'Total Requests', allTime: 'All time', active: 'Active', processingNow: 'Processing now',
+                        queue: 'Queue', waiting: 'Waiting', cacheHit: 'Cache Hit', hits: 'hits', providers: 'Providers', healthy: 'Healthy',
+                        // Charts
+                        latencyDistribution: 'Request Latency Distribution', last100: 'Last 100 requests',
+                        statusDistribution: 'Request Status Distribution', currentSession: 'Current session',
+                        // Provider status
+                        providerStatus: 'Provider Status', latency: 'Latency', success: 'Success', enabled: 'Enabled', yes: 'Yes', no: 'No',
+                        // Activity log
+                        activityLog: 'Activity Log', clear: 'Clear', noActivity: 'No activity yet...',
+                        // Features
+                        features: 'Features',
+                        // Requests tab
+                        recentRequests: 'Recent Requests', allStatus: 'All Status', queued: 'Queued', processing: 'Processing',
+                        completed: 'Completed', failed: 'Failed', allProviders: 'All Providers', refresh: 'Refresh',
+                        id: 'ID', provider: 'Provider', status: 'Status', message: 'Message', created: 'Created', actions: 'Actions',
+                        view: 'View', cancel: 'Cancel', noRequests: 'No requests found',
+                        // Test tab
+                        quickTest: 'Quick Test', autoDefault: 'Auto (Default)', parallel: 'Parallel', fastProviders: 'Fast providers',
+                        enterMessage: 'Enter your test message...', stream: 'Stream', bypassCache: 'Bypass Cache',
+                        sendTest: 'Send Test Request', sending: 'Sending...', result: 'Result', requestId: 'Request ID',
+                        cached: 'Cached', response: 'Response', sendToSee: 'Send a test request to see results',
+                        // Compare tab
+                        providerComparison: 'Provider Comparison', performanceMetrics: 'Performance Metrics',
+                        avgLatency: 'Avg Latency', successRate: 'Success Rate', score: 'Score',
+                        requestTimeline: 'Request Timeline', last1h: 'Last 1 Hour', last6h: 'Last 6 Hours', last24h: 'Last 24 Hours',
+                        quickBenchmark: 'Quick Benchmark', enterBenchmark: 'Enter test message for benchmark...',
+                        runBenchmark: 'Run Benchmark', running: 'Running...',
+                        // API Keys tab
+                        apiKeys: 'API Keys', createKey: '+ Create Key', keyId: 'Key ID', name: 'Name',
+                        createdAt: 'Created', lastUsed: 'Last Used', rateLimit: 'Rate Limit', never: 'Never', default: 'Default',
+                        activeStatus: 'Active', disabled: 'Disabled', disable: 'Disable', enable: 'Enable', delete: 'Delete',
+                        newKeyCreated: 'New API Key Created', saveKeyNow: "Save this key now - it won't be shown again!",
+                        dismiss: 'Dismiss', createApiKey: 'Create API Key', rateLimitRpm: 'Rate Limit (RPM, optional)',
+                        leaveEmpty: 'Leave empty for default', cancelBtn: 'Cancel', create: 'Create',
+                        // Config tab
+                        authentication: 'Authentication', rateLimiting: 'Rate Limiting', retryFallback: 'Retry & Fallback',
+                        cacheStats: 'Cache Statistics', prometheusMetrics: 'Prometheus Metrics', apiDocs: 'API Documentation',
+                        requestsPerMin: 'Requests/min', burstSize: 'Burst Size', retryEnabled: 'Retry Enabled',
+                        maxRetries: 'Max Retries', fallbackEnabled: 'Fallback Enabled', misses: 'Misses',
+                        totalEntries: 'Total Entries', tokensSaved: 'Tokens Saved', viewRawMetrics: 'View Raw Metrics',
+                        endpoint: 'Endpoint', openApiSwagger: 'OpenAPI / Swagger UI', interactiveApi: 'Interactive API documentation',
+                        headerName: 'Header', allowLocalhost: 'Allow Localhost',
+                        // Request detail modal
+                        requestDetails: 'Request Details',
+                        // Shortcuts modal
+                        keyboardShortcuts: 'Keyboard Shortcuts', closeModal: 'Close Modal',
+                        // Misc
+                        exportSuccess: 'Data exported successfully', refreshed: 'Refreshed', benchmarkComplete: 'Benchmark completed',
+                        // Phase 8A additions
+                        copy: 'Copy', copyToClipboard: 'Copy to clipboard', copiedToClipboard: 'Copied to clipboard!',
+                        searchRequests: 'Search requests...', showing: 'Showing', of: 'of', perPage: 'per page',
+                        confirm: 'Confirm', deleteKey: 'Delete API Key', confirmDeleteKey: 'Are you sure you want to delete this API key? This action cannot be undone.',
+                        cancelRequest: 'Cancel Request', confirmCancelRequest: 'Are you sure you want to cancel this request?',
+                        retry: 'Retry', requestRetried: 'Request retried successfully',
+                        // Phase 8B additions
+                        selectTemplate: 'Select template...', saveTemplate: 'Save Template', templateName: 'Template Name',
+                        enterTemplateName: 'Enter template name', templatePreview: 'Preview', save: 'Save',
+                        templateSaved: 'Template saved', templateLoaded: 'Template loaded', templateDeleted: 'Template deleted',
+                        manageTemplates: 'Manage Templates', noTemplates: 'No templates saved',
+                        // Error messages
+                        failedToCopy: 'Failed to copy to clipboard', failedToRetry: 'Failed to retry request',
+                        failedToFetch: 'Failed to fetch requests', failedToDelete: 'Failed to delete API key',
+                        keyDeleted: 'API key deleted',
+                        // Phase 8C additions
+                        cacheManagement: 'Cache Management', clearCache: 'Clear Cache', clearAll: 'Clear All',
+                        cleanup: 'Cleanup', cleanupExpired: 'Cleanup expired entries',
+                        confirmClearCache: 'Are you sure you want to clear all cache entries? This cannot be undone.',
+                        cacheCleared: 'Cache cleared successfully', failedToClearCache: 'Failed to clear cache',
+                        cleanupComplete: 'Cleanup complete', entriesRemoved: 'entries removed',
+                        failedToCleanupCache: 'Failed to cleanup cache', hitRate: 'Hit Rate',
+                        memorySaved: 'Memory Used', clickToDisable: 'Click to disable', clickToEnable: 'Click to enable',
+                        failedToToggleProvider: 'Failed to toggle provider',
+                        // Phase 8D additions
+                        estimatedCost: 'Est. Cost', toggleTheme: 'Toggle theme',
+                        alertSettings: 'Alert Settings', highLatencyAlert: 'High Latency Alert',
+                        lowSuccessRateAlert: 'Low Success Rate Alert', queueDepthAlert: 'Queue Depth Alert',
+                        threshold: 'Threshold', items: 'items', saveSettings: 'Save Settings',
+                        alertsSaved: 'Alert settings saved', highLatencyDetected: 'High latency detected',
+                        lowSuccessRateDetected: 'Low success rate detected', highQueueDepthDetected: 'High queue depth detected',
+                    },
+                    zh: {
+                        // Header
+                        connected: '已连接', disconnected: '已断开', uptime: '运行时间', switchLang: '切换语言',
+                        // Tabs
+                        dashboard: '仪表板', requests: '请求', test: '测试', compare: '对比', keys: 'API 密钥', config: '配置',
+                        // Dashboard cards
+                        totalRequests: '总请求数', allTime: '累计', active: '活跃', processingNow: '正在处理',
+                        queue: '队列', waiting: '等待中', cacheHit: '缓存命中', hits: '次', providers: '提供者', healthy: '健康',
+                        // Charts
+                        latencyDistribution: '请求延迟分布', last100: '最近 100 个请求',
+                        statusDistribution: '请求状态分布', currentSession: '当前会话',
+                        // Provider status
+                        providerStatus: '提供者状态', latency: '延迟', success: '成功率', enabled: '启用', yes: '是', no: '否',
+                        // Activity log
+                        activityLog: '活动日志', clear: '清除', noActivity: '暂无活动...',
+                        // Features
+                        features: '功能',
+                        // Requests tab
+                        recentRequests: '最近请求', allStatus: '全部状态', queued: '排队中', processing: '处理中',
+                        completed: '已完成', failed: '失败', allProviders: '全部提供者', refresh: '刷新',
+                        id: 'ID', provider: '提供者', status: '状态', message: '消息', created: '创建时间', actions: '操作',
+                        view: '查看', cancel: '取消', noRequests: '未找到请求',
+                        // Test tab
+                        quickTest: '快速测试', autoDefault: '自动（默认）', parallel: '并行', fastProviders: '快速提供者',
+                        enterMessage: '输入测试消息...', stream: '流式', bypassCache: '绕过缓存',
+                        sendTest: '发送测试请求', sending: '发送中...', result: '结果', requestId: '请求 ID',
+                        cached: '已缓存', response: '响应', sendToSee: '发送测试请求以查看结果',
+                        // Compare tab
+                        providerComparison: '提供者对比', performanceMetrics: '性能指标',
+                        avgLatency: '平均延迟', successRate: '成功率', score: '评分',
+                        requestTimeline: '请求时间线', last1h: '最近 1 小时', last6h: '最近 6 小时', last24h: '最近 24 小时',
+                        quickBenchmark: '快速基准测试', enterBenchmark: '输入基准测试消息...',
+                        runBenchmark: '运行基准测试', running: '运行中...',
+                        // API Keys tab
+                        apiKeys: 'API 密钥', createKey: '+ 创建密钥', keyId: '密钥 ID', name: '名称',
+                        createdAt: '创建时间', lastUsed: '最后使用', rateLimit: '速率限制', never: '从未', default: '默认',
+                        activeStatus: '活跃', disabled: '已禁用', disable: '禁用', enable: '启用', delete: '删除',
+                        newKeyCreated: '新 API 密钥已创建', saveKeyNow: '请立即保存此密钥 - 之后将不再显示！',
+                        dismiss: '关闭', createApiKey: '创建 API 密钥', rateLimitRpm: '速率限制（每分钟，可选）',
+                        leaveEmpty: '留空使用默认值', cancelBtn: '取消', create: '创建',
+                        // Config tab
+                        authentication: '认证', rateLimiting: '速率限制', retryFallback: '重试与降级',
+                        cacheStats: '缓存统计', prometheusMetrics: 'Prometheus 指标', apiDocs: 'API 文档',
+                        requestsPerMin: '每分钟请求数', burstSize: '突发大小', retryEnabled: '重试启用',
+                        maxRetries: '最大重试次数', fallbackEnabled: '降级启用', misses: '未命中',
+                        totalEntries: '总条目', tokensSaved: '节省 Token', viewRawMetrics: '查看原始指标',
+                        endpoint: '端点', openApiSwagger: 'OpenAPI / Swagger UI', interactiveApi: '交互式 API 文档',
+                        headerName: '请求头', allowLocalhost: '允许本地访问',
+                        // Request detail modal
+                        requestDetails: '请求详情',
+                        // Shortcuts modal
+                        keyboardShortcuts: '键盘快捷键', closeModal: '关闭弹窗',
+                        // Misc
+                        exportSuccess: '数据导出成功', refreshed: '已刷新', benchmarkComplete: '基准测试完成',
+                        // Phase 8A additions
+                        copy: '复制', copyToClipboard: '复制到剪贴板', copiedToClipboard: '已复制到剪贴板！',
+                        searchRequests: '搜索请求...', showing: '显示', of: '共', perPage: '每页',
+                        confirm: '确认', deleteKey: '删除 API 密钥', confirmDeleteKey: '确定要删除此 API 密钥吗？此操作无法撤销。',
+                        cancelRequest: '取消请求', confirmCancelRequest: '确定要取消此请求吗？',
+                        retry: '重试', requestRetried: '请求重试成功',
+                        // Phase 8B additions
+                        selectTemplate: '选择模板...', saveTemplate: '保存模板', templateName: '模板名称',
+                        enterTemplateName: '输入模板名称', templatePreview: '预览', save: '保存',
+                        templateSaved: '模板已保存', templateLoaded: '模板已加载', templateDeleted: '模板已删除',
+                        manageTemplates: '管理模板', noTemplates: '暂无保存的模板',
+                        // Error messages
+                        failedToCopy: '复制到剪贴板失败', failedToRetry: '重试请求失败',
+                        failedToFetch: '获取请求失败', failedToDelete: '删除 API 密钥失败',
+                        keyDeleted: 'API 密钥已删除',
+                        // Phase 8C additions
+                        cacheManagement: '缓存管理', clearCache: '清除缓存', clearAll: '清除全部',
+                        cleanup: '清理', cleanupExpired: '清理过期条目',
+                        confirmClearCache: '确定要清除所有缓存条目吗？此操作无法撤销。',
+                        cacheCleared: '缓存已清除', failedToClearCache: '清除缓存失败',
+                        cleanupComplete: '清理完成', entriesRemoved: '条目已移除',
+                        failedToCleanupCache: '清理缓存失败', hitRate: '命中率',
+                        memorySaved: '内存占用', clickToDisable: '点击禁用', clickToEnable: '点击启用',
+                        failedToToggleProvider: '切换提供者状态失败',
+                        // Phase 8D additions
+                        estimatedCost: '预估成本', toggleTheme: '切换主题',
+                        alertSettings: '告警设置', highLatencyAlert: '高延迟告警',
+                        lowSuccessRateAlert: '低成功率告警', queueDepthAlert: '队列深度告警',
+                        threshold: '阈值', items: '项', saveSettings: '保存设置',
+                        alertsSaved: '告警设置已保存', highLatencyDetected: '检测到高延迟',
+                        lowSuccessRateDetected: '检测到低成功率', highQueueDepthDetected: '检测到队列深度过高',
+                    }
+                };
+
+                const t = (key) => i18n[lang.value][key] || key;
+
+                const toggleLang = () => {
+                    lang.value = lang.value === 'en' ? 'zh' : 'en';
+                    localStorage.setItem('ccb-lang', lang.value);
+                };
+
+                // Chart refs
+                const latencyChart = ref(null);
+                const statusChart = ref(null);
+                let latencyChartInstance = null;
+                let statusChartInstance = null;
+                const latencyData = ref([]);
+                const statusCounts = ref({ completed: 0, failed: 0, queued: 0, processing: 0 });
+
+                const tabs = [
+                    { id: 'dashboard', name: 'Dashboard', icon: '<i class="fas fa-chart-line"></i>', shortcut: '1' },
+                    { id: 'requests', name: 'Requests', icon: '<i class="fas fa-list"></i>', shortcut: '2' },
+                    { id: 'test', name: 'Test', icon: '<i class="fas fa-flask"></i>', shortcut: '3' },
+                    { id: 'compare', name: 'Compare', icon: '<i class="fas fa-balance-scale"></i>', shortcut: '4' },
+                    { id: 'keys', name: 'API Keys', icon: '<i class="fas fa-key"></i>', shortcut: '5' },
+                    { id: 'config', name: 'Config', icon: '<i class="fas fa-cog"></i>', shortcut: '6' },
+                ];
+
+                // Computed
+                const healthyProviders = computed(() => {
+                    return (status.value.providers || []).filter(p => p.status === 'healthy' || p.status === 'available').length;
+                });
+
+                const filteredRequests = computed(() => {
+                    return requests.value.filter(r => {
+                        if (requestFilter.value && r.status !== requestFilter.value) return false;
+                        if (providerFilter.value && r.provider !== providerFilter.value) return false;
+                        if (searchQuery.value) {
+                            const query = searchQuery.value.toLowerCase();
+                            const matchesId = r.id && String(r.id).toLowerCase().includes(query);
+                            const matchesMessage = r.message && String(r.message).toLowerCase().includes(query);
+                            const matchesProvider = r.provider && String(r.provider).toLowerCase().includes(query);
+                            if (!matchesId && !matchesMessage && !matchesProvider) return false;
+                        }
+                        return true;
+                    });
+                });
+
+                // Watch for filter changes to reset pagination
+                watch([requestFilter, providerFilter, searchQuery], () => {
+                    pagination.value.page = 1;
+                });
+
+                // Pagination computed properties
+                const totalPages = computed(() => Math.max(1, Math.ceil(filteredRequests.value.length / pagination.value.pageSize)));
+                const paginationStart = computed(() => Math.min((pagination.value.page - 1) * pagination.value.pageSize + 1, filteredRequests.value.length));
+                const paginationEnd = computed(() => Math.min(pagination.value.page * pagination.value.pageSize, filteredRequests.value.length));
+                const paginatedRequests = computed(() => {
+                    const start = (pagination.value.page - 1) * pagination.value.pageSize;
+                    const end = start + pagination.value.pageSize;
+                    return filteredRequests.value.slice(start, end);
+                });
+
+                const sortedProviders = computed(() => {
+                    return (status.value.providers || []).map(p => ({
+                        ...p,
+                        score: calculateProviderScore(p)
+                    })).sort((a, b) => (b.score || 0) - (a.score || 0));
+                });
+
+                // Cost tracking computed properties
+                const totalTokens = computed(() => {
+                    return (status.value.providers || []).reduce((sum, p) => {
+                        return sum + (p.total_input_tokens || 0) + (p.total_output_tokens || 0);
+                    }, 0);
+                });
+
+                const estimatedCost = computed(() => {
+                    return (status.value.providers || []).reduce((sum, p) => {
+                        const pricing = tokenPricing[p.name.toLowerCase()] || tokenPricing.default;
+                        const inputCost = ((p.total_input_tokens || 0) / 1000) * pricing.input;
+                        const outputCost = ((p.total_output_tokens || 0) / 1000) * pricing.output;
+                        return sum + inputCost + outputCost;
+                    }, 0);
+                });
+
+                const calculateProviderScore = (provider) => {
+                    if (!provider.enabled) return 0;
+                    const successWeight = 50;
+                    const latencyWeight = 30;
+                    const availabilityWeight = 20;
+
+                    const successScore = (provider.success_rate || 0) * successWeight;
+                    const maxLatency = 60000;
+                    const latencyScore = Math.max(0, (1 - (provider.avg_latency_ms || maxLatency) / maxLatency)) * latencyWeight;
+                    const availScore = provider.status === 'healthy' ? availabilityWeight : 0;
+
+                    return successScore + latencyScore + availScore;
+                };
+
+                const getScoreColor = (score) => {
+                    if (score >= 70) return 'bg-emerald-500';
+                    if (score >= 40) return 'bg-amber-500';
+                    return 'bg-rose-500';
+                };
+
+                // WebSocket
+                let ws = null;
+                let refreshInterval = null;
+
+                const connectWebSocket = () => {
+                    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                    ws = new WebSocket(`${protocol}//${window.location.host}/api/ws`);
+
+                    ws.onopen = () => {
+                        connected.value = true;
+                        ws.send(JSON.stringify({ type: 'subscribe', channels: ['all'] }));
+                        addLog('info', 'WebSocket connected');
+                    };
+
+                    ws.onclose = () => {
+                        connected.value = false;
+                        addLog('warn', 'WebSocket disconnected, reconnecting...');
+                        setTimeout(connectWebSocket, 3000);
+                    };
+
+                    ws.onerror = () => {
+                        addLog('error', 'WebSocket error');
+                    };
+
+                    ws.onmessage = (event) => {
+                        const data = JSON.parse(event.data);
+                        handleWebSocketEvent(data);
+                    };
+                };
+
+                const handleWebSocketEvent = (event) => {
+                    const type = event.type;
+                    const data = event.data || {};
+                    const reqId = data.request_id ? data.request_id.slice(0, 11) : 'unknown';
+
+                    if (type === 'request_queued' || type === 'request_submitted') {
+                        addLog('info', `Request ${reqId} queued → ${data.provider}`);
+                        statusCounts.value.queued++;
+                        fetchRequests();
+                        fetchStatus();
+                    } else if (type === 'request_processing') {
+                        addLog('info', `Request ${reqId} processing...`);
+                        statusCounts.value.processing++;
+                    } else if (type === 'request_completed') {
+                        const latency = data.latency_ms ? `${Math.round(data.latency_ms)}ms` : '';
+                        addLog('success', `Request ${reqId} completed ${latency}`);
+                        statusCounts.value.completed++;
+                        if (data.latency_ms) {
+                            latencyData.value.push(data.latency_ms);
+                            if (latencyData.value.length > 100) latencyData.value.shift();
+                            updateLatencyChart();
+                        }
+                        fetchRequests();
+                        fetchStatus();
+                    } else if (type === 'request_failed') {
+                        const errMsg = data.error ? data.error.slice(0, 50) : 'unknown error';
+                        addLog('error', `Request ${reqId} failed: ${errMsg}`);
+                        statusCounts.value.failed++;
+                        fetchRequests();
+                        fetchStatus();
+                    }
+                    
+                    updateStatusChart();
+                };
+
+                const addLog = (type, message) => {
+                    const time = new Date().toLocaleTimeString();
+                    activityLogs.value.push({ type, message, time });
+                    if (activityLogs.value.length > 100) activityLogs.value.shift();
+                };
+
+                // Charts
+                const initCharts = () => {
+                    // Latency histogram
+                    if (latencyChart.value) {
+                        latencyChartInstance = new Chart(latencyChart.value, {
+                            type: 'bar',
+                            data: {
+                                labels: ['0-100ms', '100-500ms', '500ms-1s', '1-5s', '5-10s', '>10s'],
+                                datasets: [{
+                                    label: 'Requests',
+                                    data: [0, 0, 0, 0, 0, 0],
+                                    backgroundColor: 'rgba(99, 102, 241, 0.7)',
+                                    borderColor: 'rgba(99, 102, 241, 1)',
+                                    borderWidth: 1,
+                                    borderRadius: 6
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: { legend: { display: false } },
+                                scales: {
+                                    y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } },
+                                    x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
+                                }
+                            }
+                        });
+                    }
+
+                    // Status pie chart
+                    if (statusChart.value) {
+                        statusChartInstance = new Chart(statusChart.value, {
+                            type: 'doughnut',
+                            data: {
+                                labels: ['Completed', 'Failed', 'Queued', 'Processing'],
+                                datasets: [{
+                                    data: [0, 0, 0, 0],
+                                    backgroundColor: [
+                                        'rgba(16, 185, 129, 0.8)',
+                                        'rgba(244, 63, 94, 0.8)',
+                                        'rgba(99, 102, 241, 0.8)',
+                                        'rgba(245, 158, 11, 0.8)'
+                                    ],
+                                    borderWidth: 0
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                cutout: '70%',
+                                plugins: {
+                                    legend: { position: 'bottom', labels: { color: '#9ca3af', padding: 16 } }
+                                }
+                            }
+                        });
+                    }
+                };
+
+                const initCompareCharts = () => {
+                    // Radar chart for provider comparison
+                    if (radarChart.value) {
+                        const providers = status.value.providers || [];
+                        radarChartInstance = new Chart(radarChart.value, {
+                            type: 'radar',
+                            data: {
+                                labels: ['Success Rate', 'Speed', 'Availability', 'Reliability', 'Queue'],
+                                datasets: providers.slice(0, 5).map((p, i) => ({
+                                    label: p.name,
+                                    data: [
+                                        (p.success_rate || 0) * 100,
+                                        Math.max(0, 100 - (p.avg_latency_ms || 0) / 600),
+                                        p.status === 'healthy' ? 100 : 50,
+                                        (p.success_rate || 0) * 100,
+                                        Math.max(0, 100 - (p.queue_depth || 0) * 10)
+                                    ],
+                                    borderColor: ['#6366f1', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6'][i],
+                                    backgroundColor: ['rgba(99,102,241,0.15)', 'rgba(16,185,129,0.15)', 'rgba(245,158,11,0.15)', 'rgba(244,63,94,0.15)', 'rgba(139,92,246,0.15)'][i],
+                                    borderWidth: 2
+                                }))
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                scales: {
+                                    r: {
+                                        beginAtZero: true,
+                                        max: 100,
+                                        grid: { color: 'rgba(255,255,255,0.05)' },
+                                        pointLabels: { color: '#9ca3af' },
+                                        ticks: { display: false }
+                                    }
+                                },
+                                plugins: {
+                                    legend: { position: 'bottom', labels: { color: '#9ca3af' } }
+                                }
+                            }
+                        });
+                    }
+
+                    // Timeline chart
+                    if (timelineChart.value) {
+                        timelineChartInstance = new Chart(timelineChart.value, {
+                            type: 'line',
+                            data: {
+                                labels: [],
+                                datasets: [{
+                                    label: 'Requests',
+                                    data: [],
+                                    borderColor: '#6366f1',
+                                    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                                    fill: true,
+                                    tension: 0.4,
+                                    borderWidth: 2
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: { legend: { display: false } },
+                                scales: {
+                                    y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } },
+                                    x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
+                                }
+                            }
+                        });
+                    }
+                };
+
+                const updateRadarChart = () => {
+                    if (!radarChartInstance) return;
+                    const providers = status.value.providers || [];
+                    radarChartInstance.data.datasets = providers.slice(0, 5).map((p, i) => ({
+                        label: p.name,
+                        data: [
+                            (p.success_rate || 0) * 100,
+                            Math.max(0, 100 - (p.avg_latency_ms || 0) / 600),
+                            p.status === 'healthy' ? 100 : 50,
+                            (p.success_rate || 0) * 100,
+                            Math.max(0, 100 - (p.queue_depth || 0) * 10)
+                        ],
+                        borderColor: ['#6366f1', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6'][i],
+                        backgroundColor: ['rgba(99,102,241,0.15)', 'rgba(16,185,129,0.15)', 'rgba(245,158,11,0.15)', 'rgba(244,63,94,0.15)', 'rgba(139,92,246,0.15)'][i],
+                        borderWidth: 2
+                    }));
+                    radarChartInstance.update('none');
+                };
+
+                const updateLatencyChart = () => {
+                    if (!latencyChartInstance) return;
+                    const buckets = [0, 0, 0, 0, 0, 0];
+                    for (const ms of latencyData.value) {
+                        if (ms < 100) buckets[0]++;
+                        else if (ms < 500) buckets[1]++;
+                        else if (ms < 1000) buckets[2]++;
+                        else if (ms < 5000) buckets[3]++;
+                        else if (ms < 10000) buckets[4]++;
+                        else buckets[5]++;
+                    }
+                    latencyChartInstance.data.datasets[0].data = buckets;
+                    latencyChartInstance.update('none');
+                };
+
+                const updateStatusChart = () => {
+                    if (!statusChartInstance) return;
+                    statusChartInstance.data.datasets[0].data = [
+                        statusCounts.value.completed,
+                        statusCounts.value.failed,
+                        statusCounts.value.queued,
+                        statusCounts.value.processing
+                    ];
+                    statusChartInstance.update('none');
+                };
+
+                // API calls
+                const fetchStatus = async () => {
+                    try {
+                        const res = await fetch('/api/status');
+                        status.value = await res.json();
+                    } catch (e) {
+                        console.error('Failed to fetch status:', e);
+                    }
+                };
+
+                const fetchRequests = async () => {
+                    loading.value.requests = true;
+                    try {
+                        const res = await fetch('/api/requests?limit=100');
+                        requests.value = await res.json();
+                        // Reset to page 1 if current page is out of bounds
+                        if (pagination.value.page > totalPages.value) {
+                            pagination.value.page = 1;
+                        }
+                    } catch (e) {
+                        console.error('Failed to fetch requests:', e);
+                        showToast('error', t('failedToFetch'));
+                    } finally {
+                        loading.value.requests = false;
+                    }
+                };
+
+                const fetchApiKeys = async () => {
+                    try {
+                        const res = await fetch('/api/admin/keys');
+                        if (res.ok) {
+                            apiKeys.value = await res.json();
+                        }
+                    } catch (e) {
+                        console.error('Failed to fetch API keys:', e);
+                    }
+                };
+
+                const fetchConfigs = async () => {
+                    try {
+                        const [auth, rateLimit, retry] = await Promise.all([
+                            fetch('/api/admin/auth/config').then(r => r.json()),
+                            fetch('/api/admin/rate-limit/config').then(r => r.json()),
+                            fetch('/api/retry/config').then(r => r.json()),
+                        ]);
+                        authConfig.value = auth;
+                        rateLimitConfig.value = rateLimit;
+                        retryConfig.value = retry;
+                    } catch (e) {
+                        console.error('Failed to fetch configs:', e);
+                    }
+                };
+
+                const createKey = async () => {
+                    try {
+                        const res = await fetch('/api/admin/keys', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                name: newKeyName.value,
+                                rate_limit_rpm: newKeyRateLimit.value || null,
+                            }),
+                        });
+                        if (res.ok) {
+                            const data = await res.json();
+                            newApiKey.value = data.api_key;
+                            showCreateKeyModal.value = false;
+                            newKeyName.value = '';
+                            newKeyRateLimit.value = null;
+                            fetchApiKeys();
+                            addLog('success', 'API key created');
+                        }
+                    } catch (e) {
+                        console.error('Failed to create key:', e);
+                        addLog('error', 'Failed to create API key');
+                    }
+                };
+
+                const toggleKey = async (key) => {
+                    const action = key.enabled ? 'disable' : 'enable';
+                    try {
+                        await fetch(`/api/admin/keys/${key.key_id}/${action}`, { method: 'POST' });
+                        fetchApiKeys();
+                    } catch (e) {
+                        console.error('Failed to toggle key:', e);
+                    }
+                };
+
+                const deleteKey = async (keyId) => {
+                    try {
+                        await fetch(`/api/admin/keys/${keyId}`, { method: 'DELETE' });
+                        fetchApiKeys();
+                        showToast('success', t('keyDeleted'));
+                    } catch (e) {
+                        console.error('Failed to delete key:', e);
+                        showToast('error', t('failedToDelete'));
+                    }
+                };
+
+                const cancelRequest = async (requestId) => {
+                    try {
+                        await fetch(`/api/request/${requestId}`, { method: 'DELETE' });
+                        fetchRequests();
+                    } catch (e) {
+                        console.error('Failed to cancel request:', e);
+                    }
+                };
+
+                const viewRequest = async (req) => {
+                    selectedRequest.value = req;
+                    selectedRequestResponse.value = null;
+                    try {
+                        const res = await fetch(`/api/reply/${req.id}`);
+                        if (res.ok) {
+                            const data = await res.json();
+                            selectedRequestResponse.value = data.response || data.error || 'No response yet';
+                        }
+                    } catch (e) {
+                        selectedRequestResponse.value = 'Failed to load response';
+                    }
+                };
+
+                const sendTestRequest = async () => {
+                    testSending.value = true;
+                    testResult.value = null;
+                    const startTime = performance.now();
+                    
+                    try {
+                        const endpoint = testForm.value.stream ? '/api/ask/stream' : '/api/ask';
+                        const res = await fetch(endpoint, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                provider: testForm.value.provider || null,
+                                message: testForm.value.message,
+                                cache_bypass: testForm.value.cacheBypass,
+                            }),
+                        });
+                        
+                        const data = await res.json();
+                        const latency = Math.round(performance.now() - startTime);
+                        
+                        if (data.request_id) {
+                            addLog('info', `Test request sent: ${data.request_id.slice(0, 11)}`);
+                            
+                            let attempts = 0;
+                            const pollResult = async () => {
+                                attempts++;
+                                const replyRes = await fetch(`/api/reply/${data.request_id}`);
+                                if (replyRes.ok) {
+                                    const reply = await replyRes.json();
+                                    if (reply.status === 'completed' || reply.status === 'failed') {
+                                        testResult.value = {
+                                            success: reply.status === 'completed',
+                                            requestId: data.request_id,
+                                            response: reply.response,
+                                            error: reply.error,
+                                            latency: reply.latency_ms ? Math.round(reply.latency_ms) : latency,
+                                            cached: data.cached
+                                        };
+                                        testSending.value = false;
+                                        return;
+                                    }
+                                }
+                                if (attempts < 60) {
+                                    setTimeout(pollResult, 1000);
+                                } else {
+                                    testResult.value = {
+                                        success: false,
+                                        requestId: data.request_id,
+                                        error: 'Request timed out',
+                                        latency
+                                    };
+                                    testSending.value = false;
+                                }
+                            };
+                            setTimeout(pollResult, 1000);
+                        } else {
+                            testResult.value = {
+                                success: false,
+                                error: data.detail || 'Unknown error',
+                                latency
+                            };
+                            testSending.value = false;
+                        }
+                    } catch (e) {
+                        testResult.value = {
+                            success: false,
+                            error: e.message,
+                            latency: Math.round(performance.now() - startTime)
+                        };
+                        testSending.value = false;
+                    }
+                };
+
+                // New features: Export, Benchmark, Shortcuts
+                const exportData = () => {
+                    const data = {
+                        exportedAt: new Date().toISOString(),
+                        status: status.value,
+                        requests: requests.value,
+                        activityLogs: activityLogs.value
+                    };
+                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `ccb-gateway-export-${new Date().toISOString().slice(0,10)}.json`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    showToast('success', 'Data exported successfully');
+                };
+
+                const toggleFullscreen = () => {
+                    if (!document.fullscreenElement) {
+                        document.documentElement.requestFullscreen();
+                    } else {
+                        document.exitFullscreen();
+                    }
+                };
+
+                const showToast = (type, message) => {
+                    const id = Date.now();
+                    toasts.value.push({ id, type, message });
+                    setTimeout(() => {
+                        const index = toasts.value.findIndex(t => t.id === id);
+                        if (index !== -1) toasts.value.splice(index, 1);
+                    }, 3000);
+                };
+
+                const removeToast = (index) => {
+                    toasts.value.splice(index, 1);
+                };
+
+                const copyToClipboard = async (text) => {
+                    try {
+                        await navigator.clipboard.writeText(text);
+                        showToast('success', t('copiedToClipboard'));
+                    } catch (e) {
+                        console.error('Failed to copy:', e);
+                        // Fallback for non-HTTPS environments
+                        try {
+                            const textarea = document.createElement('textarea');
+                            textarea.value = text;
+                            textarea.style.position = 'fixed';
+                            textarea.style.opacity = '0';
+                            document.body.appendChild(textarea);
+                            textarea.select();
+                            document.execCommand('copy');
+                            document.body.removeChild(textarea);
+                            showToast('success', t('copiedToClipboard'));
+                        } catch (fallbackError) {
+                            showToast('error', t('failedToCopy'));
+                        }
+                    }
+                };
+
+                const showConfirmDialog = (title, message, onConfirm) => {
+                    confirmDialog.value = {
+                        show: true,
+                        title,
+                        message,
+                        onConfirm
+                    };
+                };
+
+                const executeConfirmAction = () => {
+                    if (confirmDialog.value.onConfirm) {
+                        confirmDialog.value.onConfirm();
+                    }
+                    confirmDialog.value.show = false;
+                };
+
+                const retryRequest = async (req) => {
+                    try {
+                        await fetch('/api/ask', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                provider: req.provider,
+                                message: req.message
+                            })
+                        });
+                        showToast('success', t('requestRetried'));
+                        fetchRequests();
+                    } catch (e) {
+                        console.error('Failed to retry request:', e);
+                        showToast('error', t('failedToRetry'));
+                    }
+                };
+
+                // Test template functions
+                const saveTemplate = () => {
+                    if (!newTemplateName.value.trim()) {
+                        showToast('error', t('enterTemplateName'));
+                        return;
+                    }
+                    testTemplates.value.push({
+                        name: newTemplateName.value.trim(),
+                        provider: testForm.value.provider,
+                        message: testForm.value.message,
+                        stream: testForm.value.stream,
+                        cacheBypass: testForm.value.cacheBypass
+                    });
+                    localStorage.setItem('ccb-test-templates', JSON.stringify(testTemplates.value));
+                    showSaveTemplateModal.value = false;
+                    newTemplateName.value = '';
+                    showToast('success', t('templateSaved'));
+                };
+
+                const loadTemplate = () => {
+                    if (selectedTemplate.value === '') return;
+                    const tpl = testTemplates.value[selectedTemplate.value];
+                    if (tpl) {
+                        testForm.value.provider = tpl.provider || '';
+                        testForm.value.message = tpl.message || '';
+                        testForm.value.stream = tpl.stream || false;
+                        testForm.value.cacheBypass = tpl.cacheBypass || false;
+                        showToast('info', t('templateLoaded'));
+                    }
+                    selectedTemplate.value = '';
+                };
+
+                const deleteTemplate = (index) => {
+                    testTemplates.value.splice(index, 1);
+                    localStorage.setItem('ccb-test-templates', JSON.stringify(testTemplates.value));
+                    showToast('success', t('templateDeleted'));
+                };
+
+                // Theme toggle function
+                const toggleTheme = () => {
+                    theme.value = theme.value === 'dark' ? 'light' : 'dark';
+                    localStorage.setItem('ccb-theme', theme.value);
+                };
+
+                // Provider toggle function
+                const toggleProvider = async (provider) => {
+                    try {
+                        const action = provider.enabled ? 'disable' : 'enable';
+                        await fetch(`/api/admin/providers/${provider.name}/${action}`, { method: 'POST' });
+                        fetchStatus();
+                        showToast('success', `${provider.name} ${provider.enabled ? t('disabled') : t('enabled')}`);
+                    } catch (e) {
+                        console.error('Failed to toggle provider:', e);
+                        showToast('error', t('failedToToggleProvider'));
+                    }
+                };
+
+                // Cache management functions
+                const clearCache = async () => {
+                    try {
+                        await fetch('/api/cache', { method: 'DELETE' });
+                        fetchStatus();
+                        showToast('success', t('cacheCleared'));
+                    } catch (e) {
+                        console.error('Failed to clear cache:', e);
+                        showToast('error', t('failedToClearCache'));
+                    }
+                };
+
+                const cleanupCache = async () => {
+                    try {
+                        const res = await fetch('/api/cache/cleanup', { method: 'POST' });
+                        const data = await res.json();
+                        fetchStatus();
+                        showToast('success', `${t('cleanupComplete')}: ${data.removed || 0} ${t('entriesRemoved')}`);
+                    } catch (e) {
+                        console.error('Failed to cleanup cache:', e);
+                        showToast('error', t('failedToCleanupCache'));
+                    }
+                };
+
+                // Alert functions
+                const saveAlerts = () => {
+                    localStorage.setItem('ccb-alerts', JSON.stringify(alerts.value));
+                    showAlertSettings.value = false;
+                    showToast('success', t('alertsSaved'));
+                };
+
+                const checkAlerts = () => {
+                    if (!status.value.providers) return;
+
+                    status.value.providers.forEach(p => {
+                        if (alerts.value.highLatency.enabled && p.avg_latency_ms > alerts.value.highLatency.threshold) {
+                            showToast('warn', `${p.name}: ${t('highLatencyDetected')} (${formatLatency(p.avg_latency_ms)})`);
+                        }
+                        if (alerts.value.lowSuccessRate.enabled && p.success_rate < alerts.value.lowSuccessRate.threshold && p.total_requests > 0) {
+                            showToast('warn', `${p.name}: ${t('lowSuccessRateDetected')} (${formatPercent(p.success_rate)})`);
+                        }
+                        if (alerts.value.queueDepth.enabled && p.queue_depth > alerts.value.queueDepth.threshold) {
+                            showToast('warn', `${p.name}: ${t('highQueueDepthDetected')} (${p.queue_depth})`);
+                        }
+                    });
+                };
+
+                const runBenchmark = async () => {
+                    benchmarkRunning.value = true;
+                    benchmarkResults.value = [];
+                    const providers = (status.value.providers || []).filter(p => p.enabled);
+
+                    for (const provider of providers) {
+                        const startTime = performance.now();
+                        try {
+                            const res = await fetch('/api/ask', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    provider: provider.name,
+                                    message: benchmarkMessage.value,
+                                }),
+                            });
+                            const data = await res.json();
+
+                            if (data.request_id) {
+                                let attempts = 0;
+                                const pollResult = () => new Promise((resolve) => {
+                                    const check = async () => {
+                                        attempts++;
+                                        const replyRes = await fetch(`/api/reply/${data.request_id}`);
+                                        if (replyRes.ok) {
+                                            const reply = await replyRes.json();
+                                            if (reply.status === 'completed') {
+                                                resolve({ success: true, latency: reply.latency_ms || (performance.now() - startTime) });
+                                                return;
+                                            } else if (reply.status === 'failed') {
+                                                resolve({ success: false, error: reply.error || 'Failed' });
+                                                return;
+                                            }
+                                        }
+                                        if (attempts < 60) setTimeout(check, 1000);
+                                        else resolve({ success: false, error: 'Timeout' });
+                                    };
+                                    setTimeout(check, 1000);
+                                });
+
+                                const result = await pollResult();
+                                benchmarkResults.value.push({ provider: provider.name, ...result });
+                            }
+                        } catch (e) {
+                            benchmarkResults.value.push({ provider: provider.name, success: false, error: e.message });
+                        }
+                    }
+                    benchmarkRunning.value = false;
+                    showToast('success', 'Benchmark completed');
+                };
+
+                const handleKeydown = (e) => {
+                    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+                    if (e.key === 'Escape') {
+                        showShortcuts.value = false;
+                        selectedRequest.value = null;
+                        showCreateKeyModal.value = false;
+                        confirmDialog.value.show = false;
+                        showSaveTemplateModal.value = false;
+                        showManageTemplatesModal.value = false;
+                        showAlertSettings.value = false;
+                    } else if (e.key >= '1' && e.key <= '6') {
+                        const tabIndex = parseInt(e.key) - 1;
+                        if (tabs[tabIndex]) activeTab.value = tabs[tabIndex].id;
+                    } else if (e.key.toLowerCase() === 'r') {
+                        fetchStatus();
+                        fetchRequests();
+                        showToast('info', t('refreshed'));
+                    } else if (e.key.toLowerCase() === 'e') {
+                        exportData();
+                    } else if (e.key === '?') {
+                        showShortcuts.value = true;
+                    }
+                };
+
+                // Formatters
+                const formatDuration = (seconds) => {
+                    if (!seconds) return '0s';
+                    const h = Math.floor(seconds / 3600);
+                    const m = Math.floor((seconds % 3600) / 60);
+                    const s = Math.floor(seconds % 60);
+                    if (h > 0) return `${h}h ${m}m`;
+                    if (m > 0) return `${m}m ${s}s`;
+                    return `${s}s`;
+                };
+
+                const formatPercent = (value) => `${(value * 100).toFixed(1)}%`;
+                const formatLatency = (ms) => {
+                    if (!ms) return '0ms';
+                    if (ms < 1000) return `${ms.toFixed(0)}ms`;
+                    return `${(ms / 1000).toFixed(2)}s`;
+                };
+                const formatTime = (timestamp) => {
+                    if (!timestamp) return '-';
+                    return new Date(timestamp * 1000).toLocaleString();
+                };
+                const formatFeatureName = (name) => name.replace(/_/g, ' ').replace(/enabled/i, '').trim();
+                const formatCost = (cost) => {
+                    if (!cost || cost < 0.01) return '0.00';
+                    return cost.toFixed(2);
+                };
+                const formatNumber = (num) => {
+                    if (!num) return '0';
+                    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+                    if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+                    return num.toString();
+                };
+                const formatBytes = (bytes) => {
+                    if (!bytes) return '0 B';
+                    const units = ['B', 'KB', 'MB', 'GB'];
+                    let i = 0;
+                    while (bytes >= 1024 && i < units.length - 1) {
+                        bytes /= 1024;
+                        i++;
+                    }
+                    return `${bytes.toFixed(1)} ${units[i]}`;
+                };
+
+                // Style helpers
+                const getStatusClass = (status) => ({
+                    healthy: 'text-emerald-400', available: 'text-emerald-400',
+                    degraded: 'text-amber-400', unavailable: 'text-rose-400', unknown: 'text-gray-400'
+                }[status] || 'text-gray-400');
+
+                const getStatusBadgeClass = (status) => ({
+                    healthy: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30', 
+                    available: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+                    degraded: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+                    unavailable: 'bg-rose-500/20 text-rose-400 border-rose-500/30', 
+                    unknown: 'bg-gray-500/20 text-gray-400 border-gray-500/30'
+                }[status] || 'bg-gray-500/20 text-gray-400 border-gray-500/30');
+
+                const getRequestStatusClass = (status) => ({
+                    queued: 'badge-info', processing: 'badge-warning',
+                    completed: 'badge-success', failed: 'badge-error',
+                    cancelled: 'badge', timeout: 'badge-warning', retrying: 'badge-info'
+                }[status] || 'badge');
+
+                const getStatusDotClass = (status) => ({
+                    queued: 'bg-indigo-400', processing: 'bg-amber-400 animate-pulse',
+                    completed: 'bg-emerald-400', failed: 'bg-rose-400',
+                    cancelled: 'bg-gray-400', timeout: 'bg-orange-400', retrying: 'bg-violet-400'
+                }[status] || 'bg-gray-400');
+
+                const getLogClass = (type) => ({
+                    info: 'text-indigo-300', success: 'text-emerald-300',
+                    warn: 'text-amber-300', error: 'text-rose-300'
+                }[type] || 'text-gray-300');
+
+                // Lifecycle
+                onMounted(() => {
+                    fetchStatus();
+                    fetchRequests();
+                    fetchApiKeys();
+                    fetchConfigs();
+                    connectWebSocket();
+                    nextTick(() => {
+                        initCharts();
+                        initCompareCharts();
+                    });
+                    refreshInterval = setInterval(() => {
+                        fetchStatus();
+                        updateRadarChart();
+                    }, 5000);
+                    document.addEventListener('keydown', handleKeydown);
+                });
+
+                onUnmounted(() => {
+                    if (ws) ws.close();
+                    if (refreshInterval) clearInterval(refreshInterval);
+                    if (latencyChartInstance) latencyChartInstance.destroy();
+                    if (statusChartInstance) statusChartInstance.destroy();
+                    if (radarChartInstance) radarChartInstance.destroy();
+                    if (timelineChartInstance) timelineChartInstance.destroy();
+                    document.removeEventListener('keydown', handleKeydown);
+                });
+
+                return {
+                    connected, activeTab, tabs, status, requests, apiKeys,
+                    authConfig, rateLimitConfig, retryConfig,
+                    showCreateKeyModal, newKeyName, newKeyRateLimit, newApiKey,
+                    activityLogs, requestFilter, providerFilter, searchQuery,
+                    selectedRequest, selectedRequestResponse,
+                    testForm, testSending, testResult,
+                    latencyChart, statusChart, radarChart, timelineChart,
+                    healthyProviders, filteredRequests, sortedProviders,
+                    // Phase 8A additions
+                    loading, pagination, totalPages, paginationStart, paginationEnd, paginatedRequests,
+                    confirmDialog, showConfirmDialog, executeConfirmAction,
+                    copyToClipboard, removeToast, retryRequest,
+                    // Phase 8B additions
+                    testTemplates, selectedTemplate, showSaveTemplateModal, showManageTemplatesModal, newTemplateName,
+                    saveTemplate, loadTemplate, deleteTemplate,
+                    // Phase 8C additions
+                    toggleProvider, clearCache, cleanupCache,
+                    // Phase 8D additions
+                    theme, toggleTheme, alerts, showAlertSettings, saveAlerts,
+                    totalTokens, estimatedCost, formatCost, formatNumber, formatBytes,
+                    // Original functions
+                    fetchRequests, createKey, toggleKey, deleteKey, cancelRequest, viewRequest,
+                    sendTestRequest, exportData, toggleFullscreen, showShortcuts, toasts, showToast,
+                    timelineRange, benchmarkMessage, benchmarkRunning, benchmarkResults, runBenchmark,
+                    formatDuration, formatPercent, formatLatency, formatTime, formatFeatureName,
+                    getStatusClass, getStatusBadgeClass, getRequestStatusClass, getStatusDotClass, getLogClass, getScoreColor,
+                    lang, t, toggleLang,
+                };
+            },
+        }).mount('#app');
+    </script>
+</body>
+</html>

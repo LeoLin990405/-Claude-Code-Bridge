@@ -623,6 +623,7 @@ class GatewayServer:
             metrics=self.metrics,
             api_key_store=self.api_key_store,
             discussion_executor=self.discussion_executor,
+            memory_middleware=self.memory_middleware,
         )
         # Store backends on app for streaming access
         self._app.state.backends = self.backends

@@ -676,6 +676,276 @@
                 </div>
             </div>
 
+            <!-- Memory Tab -->
+            <div v-show="activeTab === 'memory'" class="space-y-6">
+                <!-- Memory Stats -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="stat-card p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="text-sm text-gray-400 mb-1">Total Sessions</div>
+                                <div class="text-2xl font-semibold text-white">{{ memoryStats.total_sessions || 0 }}</div>
+                            </div>
+                            <div class="w-10 h-10 bg-indigo-500/20 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-folder-open text-indigo-400"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="text-sm text-gray-400 mb-1">Total Messages</div>
+                                <div class="text-2xl font-semibold text-white">{{ memoryStats.total_messages || 0 }}</div>
+                            </div>
+                            <div class="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-comments text-purple-400"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="text-sm text-gray-400 mb-1">Total Tokens</div>
+                                <div class="text-2xl font-semibold text-white">{{ formatNumber(memoryStats.total_tokens || 0) }}</div>
+                            </div>
+                            <div class="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-coins text-emerald-400"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="text-sm text-gray-400 mb-1">Search Accuracy</div>
+                                <div class="text-2xl font-semibold text-white">~80%</div>
+                            </div>
+                            <div class="w-10 h-10 bg-cyan-500/20 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-search text-cyan-400"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Memory Search -->
+                <div class="glass-card p-6">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-400 mb-2">Search Conversations</label>
+                        <div class="flex gap-2">
+                            <input v-model="memorySearchQuery" @keyup.enter="searchMemory" type="text"
+                                   placeholder="Search messages..."
+                                   class="flex-1 px-4 py-2 bg-gray-900/50 border border-gray-700/50 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500/50">
+                            <button @click="searchMemory" class="btn-primary">
+                                <i class="fas fa-search mr-2"></i>Search
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Search Results -->
+                    <div v-if="memorySearchResults.length > 0" class="space-y-2 mt-4">
+                        <div class="text-sm text-gray-400 mb-2">Found {{ memorySearchResults.length }} results</div>
+                        <div v-for="result in memorySearchResults" :key="result.message_id"
+                             class="p-4 bg-gray-900/30 border border-gray-700/30 rounded-lg hover:border-indigo-500/30 cursor-pointer transition-colors"
+                             @click="viewSession(result.session_id)">
+                            <div class="flex items-start justify-between mb-2">
+                                <div class="flex items-center gap-2">
+                                    <span :class="['px-2 py-1 text-xs rounded-full', getRoleColor(result.role)]">
+                                        {{ result.role }}
+                                    </span>
+                                    <span v-if="result.provider" class="text-xs text-gray-500">{{ result.provider }}</span>
+                                </div>
+                                <span class="text-xs text-gray-500">{{ formatDate(result.timestamp) }}</span>
+                            </div>
+                            <div class="text-sm text-gray-300 line-clamp-2">{{ result.content }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sessions List -->
+                <div class="glass-card p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-semibold flex items-center">
+                            <i class="fas fa-brain text-indigo-400 mr-3"></i>Recent Sessions
+                        </h2>
+                        <button @click="fetchMemorySessions" class="btn-secondary text-sm">
+                            <i class="fas fa-sync mr-2"></i>Refresh
+                        </button>
+                    </div>
+
+                    <div v-if="memorySessions.length > 0" class="space-y-3">
+                        <div v-for="session in memorySessions" :key="session.session_id"
+                             class="p-4 bg-gray-900/30 border border-gray-700/30 rounded-lg hover:border-indigo-500/30 cursor-pointer transition-colors"
+                             @click="viewSession(session.session_id)">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-xs text-gray-500 font-mono">{{ session.session_id.substring(0, 8) }}...</span>
+                                    <span class="text-sm text-gray-300">{{ session.message_count }} messages</span>
+                                </div>
+                                <span class="text-xs text-gray-500">{{ formatDate(session.last_active) }}</span>
+                            </div>
+                            <div class="flex flex-wrap gap-1">
+                                <span v-for="provider in (session.providers_used || '').split(',')" :key="provider"
+                                      class="px-2 py-0.5 bg-purple-500/20 text-purple-400 text-xs rounded-full">
+                                    {{ provider.trim() }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-else class="text-center py-12 text-gray-500">
+                        <i class="fas fa-brain text-5xl mb-4"></i>
+                        <p class="text-lg">No sessions found</p>
+                        <p class="text-sm mt-2">Start a conversation to create memory sessions</p>
+                    </div>
+                </div>
+
+                <!-- Session Detail Modal -->
+                <div v-if="selectedSession" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" @click="selectedSession = null">
+                    <div class="modal-content max-w-4xl w-full max-h-[80vh] overflow-y-auto" @click.stop>
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold">Session: {{ selectedSession.session_id.substring(0, 16) }}...</h3>
+                            <button @click="selectedSession = null" class="text-gray-400 hover:text-white">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+
+                        <div v-if="selectedSession.messages" class="space-y-3">
+                            <div v-for="msg in selectedSession.messages" :key="msg.message_id"
+                                 class="p-4 bg-gray-900/30 border border-gray-700/30 rounded-lg">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span :class="['px-2 py-1 text-xs rounded-full', getRoleColor(msg.role)]">
+                                        {{ msg.role }}
+                                    </span>
+                                    <span class="text-xs text-gray-500">{{ formatDate(msg.timestamp) }}</span>
+                                </div>
+                                <div class="text-sm text-gray-300 whitespace-pre-wrap">{{ msg.content }}</div>
+                                <div v-if="msg.provider" class="mt-2 text-xs text-gray-500">
+                                    Provider: {{ msg.provider }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Skills Tab -->
+            <div v-show="activeTab === 'skills'" class="space-y-6">
+                <!-- Skills Stats -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="stat-card p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="text-sm text-gray-400 mb-1">Total Skills</div>
+                                <div class="text-2xl font-semibold text-white">{{ skillsStats.total_skills || 0 }}</div>
+                            </div>
+                            <div class="w-10 h-10 bg-indigo-500/20 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-tools text-indigo-400"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="text-sm text-gray-400 mb-1">Installed</div>
+                                <div class="text-2xl font-semibold text-white">{{ skillsStats.installed_skills || 0 }}</div>
+                            </div>
+                            <div class="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-check-circle text-emerald-400"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="text-sm text-gray-400 mb-1">Total Uses</div>
+                                <div class="text-2xl font-semibold text-white">{{ skillsStats.total_usage || 0 }}</div>
+                            </div>
+                            <div class="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-chart-bar text-purple-400"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Skills Search -->
+                <div class="glass-card p-6">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-400 mb-2">Find Skills for Your Task</label>
+                        <div class="flex gap-2">
+                            <input v-model="skillsSearchQuery" @keyup.enter="searchSkills" type="text"
+                                   placeholder="E.g., create PDF, analyze data, test React..."
+                                   class="flex-1 px-4 py-2 bg-gray-900/50 border border-gray-700/50 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500/50">
+                            <button @click="searchSkills" class="btn-primary">
+                                <i class="fas fa-search mr-2"></i>Find Skills
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Skill Recommendations -->
+                    <div v-if="skillRecommendations.found" class="space-y-3 mt-4">
+                        <div class="text-sm text-indigo-400 mb-2">
+                            <i class="fas fa-lightbulb mr-2"></i>{{ skillRecommendations.message }}
+                        </div>
+                        <div v-for="skill in skillRecommendations.skills" :key="skill.name"
+                             class="p-4 bg-gray-900/30 border border-gray-700/30 rounded-lg hover:border-indigo-500/30 transition-colors">
+                            <div class="flex items-start justify-between mb-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-lg font-semibold text-white">/{{ skill.name }}</span>
+                                    <span v-if="skill.installed" class="px-2 py-0.5 bg-emerald-500/20 text-emerald-400 text-xs rounded-full">
+                                        <i class="fas fa-check mr-1"></i>Installed
+                                    </span>
+                                    <span v-else class="px-2 py-0.5 bg-gray-500/20 text-gray-400 text-xs rounded-full">
+                                        <i class="fas fa-download mr-1"></i>Available
+                                    </span>
+                                </div>
+                                <span class="text-sm text-indigo-400">Score: {{ skill.relevance_score }}</span>
+                            </div>
+                            <div class="text-sm text-gray-300 mb-2">{{ skill.description }}</div>
+                            <div v-if="skill.usage_count > 0" class="text-xs text-gray-500">
+                                Used {{ skill.usage_count }} times
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-else-if="skillRecommendations.message" class="text-center py-8 text-gray-500">
+                        <i class="fas fa-search text-4xl mb-3"></i>
+                        <p>{{ skillRecommendations.message }}</p>
+                    </div>
+                </div>
+
+                <!-- Top Used Skills -->
+                <div class="glass-card p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-semibold flex items-center">
+                            <i class="fas fa-star text-amber-400 mr-3"></i>Most Used Skills
+                        </h2>
+                        <button @click="fetchSkillsStats" class="btn-secondary text-sm">
+                            <i class="fas fa-sync mr-2"></i>Refresh
+                        </button>
+                    </div>
+
+                    <div v-if="skillsStats.top_skills && skillsStats.top_skills.length > 0" class="space-y-2">
+                        <div v-for="skill in skillsStats.top_skills.slice(0, 10)" :key="skill.skill_name"
+                             class="flex items-center justify-between p-3 bg-gray-900/30 border border-gray-700/30 rounded-lg">
+                            <div class="flex items-center gap-3">
+                                <span class="text-sm font-medium text-white">/{{ skill.skill_name }}</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span class="text-xs text-gray-500">{{ skill.usage_count }} uses</span>
+                                <div class="w-24 h-2 bg-gray-700/50 rounded-full overflow-hidden">
+                                    <div class="h-full bg-indigo-500" :style="{ width: (skill.usage_count / skillsStats.top_skills[0].usage_count * 100) + '%' }"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-else class="text-center py-12 text-gray-500">
+                        <i class="fas fa-tools text-5xl mb-4"></i>
+                        <p class="text-lg">No skills used yet</p>
+                        <p class="text-sm mt-2">Start using skills to see statistics</p>
+                    </div>
+                </div>
+            </div>
+
             <!-- Discussions Tab -->
             <div v-show="activeTab === 'discussions'" class="space-y-6">
                 <div class="glass-card p-6">
@@ -1910,6 +2180,18 @@
                 const benchmarkRunning = ref(false);
                 const benchmarkResults = ref([]);
 
+                // Memory tab state
+                const memoryStats = ref({});
+                const memorySessions = ref([]);
+                const memorySearchQuery = ref('');
+                const memorySearchResults = ref([]);
+                const selectedSession = ref(null);
+
+                // Skills tab state
+                const skillsStats = ref({});
+                const skillsSearchQuery = ref('');
+                const skillRecommendations = ref({ found: false, skills: [], message: '' });
+
                 // UI state
                 const showShortcuts = ref(false);
                 const toasts = ref([]);
@@ -2226,13 +2508,15 @@
                 const tabs = [
                     { id: 'dashboard', name: 'Dashboard', icon: '<i class="fas fa-chart-line"></i>', shortcut: '1' },
                     { id: 'monitor', name: 'Monitor', icon: '<i class="fas fa-desktop"></i>', shortcut: '2' },
-                    { id: 'discussions', name: 'Discussions', icon: '<i class="fas fa-comments"></i>', shortcut: '3' },
-                    { id: 'requests', name: 'Requests', icon: '<i class="fas fa-list"></i>', shortcut: '4' },
-                    { id: 'costs', name: 'Costs', icon: '<i class="fas fa-dollar-sign"></i>', shortcut: '5' },
-                    { id: 'test', name: 'Test', icon: '<i class="fas fa-flask"></i>', shortcut: '6' },
-                    { id: 'compare', name: 'Compare', icon: '<i class="fas fa-balance-scale"></i>', shortcut: '7' },
-                    { id: 'keys', name: 'API Keys', icon: '<i class="fas fa-key"></i>', shortcut: '8' },
-                    { id: 'config', name: 'Config', icon: '<i class="fas fa-cog"></i>', shortcut: '9' },
+                    { id: 'memory', name: 'Memory', icon: '<i class="fas fa-brain"></i>', shortcut: '3' },
+                    { id: 'skills', name: 'Skills', icon: '<i class="fas fa-tools"></i>', shortcut: '4' },
+                    { id: 'discussions', name: 'Discussions', icon: '<i class="fas fa-comments"></i>', shortcut: '5' },
+                    { id: 'requests', name: 'Requests', icon: '<i class="fas fa-list"></i>', shortcut: '6' },
+                    { id: 'costs', name: 'Costs', icon: '<i class="fas fa-dollar-sign"></i>', shortcut: '7' },
+                    { id: 'test', name: 'Test', icon: '<i class="fas fa-flask"></i>', shortcut: '8' },
+                    { id: 'compare', name: 'Compare', icon: '<i class="fas fa-balance-scale"></i>', shortcut: '9' },
+                    { id: 'keys', name: 'API Keys', icon: '<i class="fas fa-key"></i>', shortcut: '0' },
+                    { id: 'config', name: 'Config', icon: '<i class="fas fa-cog"></i>', shortcut: '-' },
                 ];
 
                 // Computed
@@ -2720,6 +3004,75 @@
                         loading.value.discussions = false;
                     }
                 };
+
+                // Memory methods
+                const fetchMemoryStats = async () => {
+                    try {
+                        const res = await fetch('/api/memory/stats');
+                        memoryStats.value = await res.json();
+                    } catch (e) {
+                        console.error('Failed to fetch memory stats:', e);
+                    }
+                };
+
+                const fetchMemorySessions = async () => {
+                    try {
+                        const res = await fetch('/api/memory/sessions?limit=20');
+                        const data = await res.json();
+                        memorySessions.value = data.sessions || [];
+                    } catch (e) {
+                        console.error('Failed to fetch memory sessions:', e);
+                    }
+                };
+
+                const searchMemory = async () => {
+                    if (!memorySearchQuery.value.trim()) return;
+                    try {
+                        const res = await fetch(`/api/memory/search?query=${encodeURIComponent(memorySearchQuery.value)}&limit=10`);
+                        const data = await res.json();
+                        memorySearchResults.value = data.results || [];
+                    } catch (e) {
+                        console.error('Failed to search memory:', e);
+                        showToast('error', 'Memory search failed');
+                    }
+                };
+
+                const viewSession = async (sessionId) => {
+                    try {
+                        const res = await fetch(`/api/memory/sessions/${sessionId}?window_size=20`);
+                        const data = await res.json();
+                        selectedSession.value = { session_id: sessionId, messages: data.messages };
+                    } catch (e) {
+                        console.error('Failed to fetch session:', e);
+                        showToast('error', 'Failed to load session');
+                    }
+                };
+
+                // Skills methods
+                const fetchSkillsStats = async () => {
+                    try {
+                        const res = await fetch('/api/skills/stats');
+                        skillsStats.value = await res.json();
+                    } catch (e) {
+                        console.error('Failed to fetch skills stats:', e);
+                    }
+                };
+
+                const searchSkills = async () => {
+                    if (!skillsSearchQuery.value.trim()) return;
+                    try {
+                        const res = await fetch(`/api/skills/recommendations?query=${encodeURIComponent(skillsSearchQuery.value)}`);
+                        skillRecommendations.value = await res.json();
+                        if (!skillRecommendations.value.found) {
+                            skillRecommendations.value.message = 'No matching skills found. Try different keywords.';
+                        }
+                    } catch (e) {
+                        console.error('Failed to search skills:', e);
+                        showToast('error', 'Skills search failed');
+                    }
+                };
+
+                // Discussion methods (continued)
 
                 // B2: Discussion template management
                 const fetchDiscussionTemplates = async () => {
@@ -3709,6 +4062,29 @@
                     if (!timestamp) return '-';
                     return new Date(timestamp * 1000).toLocaleString();
                 };
+                const formatDate = (isoString) => {
+                    if (!isoString) return '-';
+                    const date = new Date(isoString);
+                    const now = new Date();
+                    const diff = now - date;
+                    const minutes = Math.floor(diff / 60000);
+                    const hours = Math.floor(diff / 3600000);
+                    const days = Math.floor(diff / 86400000);
+
+                    if (minutes < 1) return 'just now';
+                    if (minutes < 60) return `${minutes}m ago`;
+                    if (hours < 24) return `${hours}h ago`;
+                    if (days < 7) return `${days}d ago`;
+                    return date.toLocaleDateString();
+                };
+                const getRoleColor = (role) => {
+                    const colors = {
+                        user: 'bg-indigo-500/20 text-indigo-400',
+                        assistant: 'bg-emerald-500/20 text-emerald-400',
+                        system: 'bg-amber-500/20 text-amber-400'
+                    };
+                    return colors[role] || 'bg-gray-500/20 text-gray-400';
+                };
                 const formatFeatureName = (name) => name.replace(/_/g, ' ').replace(/enabled/i, '').trim();
                 const formatCost = (cost) => {
                     if (!cost || cost < 0.01) return '0.00';
@@ -3780,6 +4156,9 @@
                     fetchCostSummary();
                     fetchCostByProvider();
                     fetchCostByDay();
+                    fetchMemoryStats();
+                    fetchMemorySessions();
+                    fetchSkillsStats();
                     connectWebSocket();
                     nextTick(() => {
                         initCharts();
@@ -3794,6 +4173,14 @@
                             fetchCostSummary();
                             fetchCostByProvider();
                             fetchCostByDay();
+                        }
+                        // Refresh memory and skills data if on those tabs
+                        if (activeTab.value === 'memory') {
+                            fetchMemoryStats();
+                            fetchMemorySessions();
+                        }
+                        if (activeTab.value === 'skills') {
+                            fetchSkillsStats();
                         }
                     }, 5000);
                     document.addEventListener('keydown', handleKeydown);
@@ -3837,6 +4224,12 @@
                     // Monitor tab
                     monitorStreams, monitorAutoScroll, monitorLayout, monitorFocusProvider, liveRequests,
                     monitorProviders, setMonitorRef, getMonitorOutput, getOutputLineClass, clearMonitorStreams,
+                    // Memory tab
+                    memoryStats, memorySessions, memorySearchQuery, memorySearchResults, selectedSession,
+                    fetchMemoryStats, fetchMemorySessions, searchMemory, viewSession, formatDate, getRoleColor,
+                    // Skills tab
+                    skillsStats, skillsSearchQuery, skillRecommendations,
+                    fetchSkillsStats, searchSkills,
                     // Discussions tab
                     discussions, selectedDiscussion, discussionMessages, showNewDiscussionModal,
                     newDiscussionTopic, newDiscussionProviders, newDiscussionQuickMode, startingDiscussion,
