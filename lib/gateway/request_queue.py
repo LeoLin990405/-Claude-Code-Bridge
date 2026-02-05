@@ -242,6 +242,8 @@ class RequestQueue:
 class AsyncRequestQueue:
     """
     Async wrapper for RequestQueue with event-driven processing.
+
+    Supports true concurrent processing of multiple requests up to max_concurrent.
     """
 
     def __init__(self, queue: RequestQueue):
@@ -249,6 +251,8 @@ class AsyncRequestQueue:
         self._event = asyncio.Event()
         self._running = False
         self._task: Optional[asyncio.Task] = None
+        self._active_tasks: Dict[str, asyncio.Task] = {}
+        self._tasks_lock = asyncio.Lock()
 
     async def start(
         self,
@@ -262,6 +266,13 @@ class AsyncRequestQueue:
         """Stop the async queue processor."""
         self._running = False
         self._event.set()
+
+        # Cancel all active tasks
+        async with self._tasks_lock:
+            for task in self._active_tasks.values():
+                task.cancel()
+            self._active_tasks.clear()
+
         if self._task:
             self._task.cancel()
             try:
@@ -277,23 +288,53 @@ class AsyncRequestQueue:
         self,
         handler: Callable[[GatewayRequest], Awaitable[None]],
     ) -> None:
-        """Main processing loop."""
+        """Main processing loop with true concurrent execution."""
         while self._running:
             # Check for timeouts
             self.queue.check_timeouts()
 
-            # Try to dequeue and process
+            # Clean up completed tasks
+            await self._cleanup_completed_tasks()
+
+            # Try to dequeue and process (up to max_concurrent)
             request = self.queue.dequeue()
             if request:
                 self.queue.mark_processing(request.id)
-                try:
-                    await handler(request)
-                except Exception as e:
-                    self.queue.mark_completed(request.id, error=str(e))
+                # Spawn task for concurrent execution (don't await!)
+                task = asyncio.create_task(
+                    self._handle_request(handler, request)
+                )
+                async with self._tasks_lock:
+                    self._active_tasks[request.id] = task
             else:
                 # Wait for notification or timeout
                 self._event.clear()
                 try:
-                    await asyncio.wait_for(self._event.wait(), timeout=1.0)
+                    await asyncio.wait_for(self._event.wait(), timeout=0.5)
                 except asyncio.TimeoutError:
                     pass
+
+    async def _handle_request(
+        self,
+        handler: Callable[[GatewayRequest], Awaitable[None]],
+        request: GatewayRequest,
+    ) -> None:
+        """Handle a single request and clean up when done."""
+        try:
+            await handler(request)
+        except Exception as e:
+            self.queue.mark_completed(request.id, error=str(e))
+        finally:
+            # Remove from active tasks
+            async with self._tasks_lock:
+                self._active_tasks.pop(request.id, None)
+
+    async def _cleanup_completed_tasks(self) -> None:
+        """Remove completed tasks from tracking."""
+        async with self._tasks_lock:
+            completed = [
+                rid for rid, task in self._active_tasks.items()
+                if task.done()
+            ]
+            for rid in completed:
+                self._active_tasks.pop(rid, None)

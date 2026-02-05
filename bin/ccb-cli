@@ -95,6 +95,7 @@ Providers 和模型选项:
   codex [model] <prompt>              - Codex OpenAI
   gemini [model] <prompt>             - Gemini
   qoder <prompt>                      - Qoder 代码助手
+  claude <prompt>                     - Claude (另一个 Claude 实例)
 
 模型快捷方式:
   deepseek reasoner  = deepseek-reasoner
@@ -114,6 +115,7 @@ Providers 和模型选项:
   ccb-cli deepseek --agent oracle "预测市场趋势"
   ccb-cli codex o4-mini -a reviewer "审查这段代码"
   ccb-cli gemini 3f --agent frontend "React 组件"
+  ccb-cli claude "问另一个 Claude"
 EOF
 }
 
@@ -359,6 +361,10 @@ parse_and_call() {
             ;;
         qoder)
             # Qoder: simple pass-through, no special model modes
+            message="${args[*]}"
+            ;;
+        claude)
+            # Claude: call another Claude instance via Gateway
             message="${args[*]}"
             ;;
         *)
