@@ -8,9 +8,9 @@
 [![License](https://img.shields.io/github/license/LeoLin990405/ai-router-ccb?color=blue)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.9+-3776AB?logo=python&logoColor=white)](https://www.python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
-[![Version](https://img.shields.io/badge/version-0.19--alpha-brightgreen)](https://github.com/LeoLin990405/ai-router-ccb/releases)
+[![Version](https://img.shields.io/badge/version-0.20--alpha-brightgreen)](https://github.com/LeoLin990405/ai-router-ccb/releases)
 
-**Claude orchestrates 8 AI providers through unified Gateway API with automatic memory injection and real-time monitoring**
+**Claude orchestrates 9 AI providers through unified Gateway API with dual-system memory and real-time monitoring**
 
 [Features](#-features) • [Quick Start](#-quick-start) • [Documentation](#-documentation) • [Architecture](#-architecture) • [API](#-api-reference)
 
@@ -25,13 +25,14 @@
 ## 📖 Table of Contents
 
 - [Overview](#-overview)
+- [What's New in v0.20](#-whats-new-in-v020)
 - [Why CCB Gateway?](#-why-ccb-gateway)
 - [Features](#-features)
 - [Architecture](#-architecture)
 - [Quick Start](#-quick-start)
 - [Usage](#-usage)
-- [Memory System](#-memory-system-v018)
-- [Skills Discovery](#-skills-discovery-v019)
+- [Memory System](#-memory-system-v020)
+- [Skills Discovery](#-skills-discovery)
 - [Multi-AI Discussion](#-multi-ai-discussion)
 - [Web UI](#-web-ui)
 - [API Reference](#-api-reference)
@@ -44,16 +45,17 @@
 
 ## 🌟 Overview
 
-**CCB Gateway** is a production-ready multi-AI orchestration platform where **Claude acts as the intelligent orchestrator**, routing tasks to 8 specialized AI providers through a unified Gateway API with automatic memory, caching, retry, and real-time monitoring.
+**CCB Gateway** is a production-ready multi-AI orchestration platform where **Claude acts as the intelligent orchestrator**, routing tasks to 9 specialized AI providers through a unified Gateway API with dual-system memory, caching, retry, and real-time monitoring.
 
 **What makes it unique:**
-- 🧠 **Automatic Memory** - Every conversation remembered, relevant context auto-injected
-- 🎯 **Pre-loaded Context** - 53 Skills + 8 Providers + 4 MCP Servers embedded in every request
+- 🧠 **Dual-System Memory** - System 1 (instant archiving) + System 2 (nightly consolidation)
+- 🎯 **Pre-loaded Context** - 53 Skills + 9 Providers + 4 MCP Servers embedded in every request
 - 🔍 **Skills Discovery** - Auto-find and recommend relevant skills via Vercel Skills CLI
 - ⚡ **Intelligent Routing** - Speed-tiered fallback with smart provider selection
 - 📊 **Real-time Monitoring** - WebSocket-based dashboard with live metrics
 - 🔄 **Multi-AI Discussion** - Collaborative problem-solving across multiple AIs
 - ☁️ **Cloud Sync** - Google Drive backup with hourly auto-sync
+- 🔒 **Security Hardened** - Path traversal protection, race condition fixes
 
 ```
                     ┌─────────────────────────────┐
@@ -76,10 +78,51 @@
      │ Kimi   │ │ Qwen   │ │DeepSeek │ │ Codex  │ │Gemini  │ │ iFlow  │
      │ 🚀 7s  │ │ 🚀 12s │ │ ⚡ 16s  │ │ 🐢 48s │ │ 🐢 71s │ │ ⚡ 25s │
      └────────┘ └────────┘ └─────────┘ └────────┘ └────────┘ └────────┘
-                           ┌─────────┐ ┌─────────┐
-                           │ Qoder   │ │OpenCode │
-                           │ ⚡ 30s  │ │ ⚡ 42s  │
-                           └─────────┘ └─────────┘
+                           ┌─────────┐ ┌─────────┐ ┌─────────┐
+                           │ Qoder   │ │OpenCode │ │ Claude  │
+                           │ ⚡ 30s  │ │ ⚡ 42s  │ │ ⚡ 20s  │
+                           └─────────┘ └─────────┘ └─────────┘
+```
+
+---
+
+## 🆕 What's New in v0.20
+
+### Dual-System Memory Architecture
+
+**Inspired by human cognition** - Fast automatic capture + Deep overnight processing:
+
+| System | Speed | Purpose | Storage |
+|--------|-------|---------|---------|
+| **System 1** | ⚡ Instant | Auto-archive on `/clear` or `/compact` | `~/.ccb/context_archive/*.md` |
+| **System 2** | 🌙 Nightly | Consolidate insights into long-term memory | `~/.ccb/memories/*.md` |
+
+### New Features
+
+- 🧠 **Context Saver** - Automatically saves session context to Markdown
+- 📚 **Memory Consolidator** - Nightly processing generates structured long-term memory
+- 🔧 **ccb-mem CLI** - New unified memory management tool
+- 🔒 **Security Fixes** - Path traversal protection in static file serving
+- 🐛 **Race Condition Fix** - Timeout handling in request queue
+- 🤖 **Claude Provider** - Added as 9th provider option
+
+### Commands
+
+```bash
+# Save current session
+ccb-mem save
+
+# Consolidate recent sessions (last 24h)
+ccb-mem consolidate --hours 24
+
+# Search memory archives
+ccb-mem search "React hooks"
+
+# List recent archives
+ccb-mem list
+
+# Inject memory into new conversation
+ccb-mem inject 2026-02-05
 ```
 
 ---
@@ -107,7 +150,7 @@
 
 ✅ **Unified Gateway API** - One interface for all
 ✅ **Intelligent Routing** - Auto-select best AI
-✅ **Automatic Memory** - Context preserved
+✅ **Dual-System Memory** - Fast + Deep processing
 ✅ **Pre-loaded Tools** - 53 Skills embedded
 ✅ **Real-time Dashboard** - Full visibility
 ✅ **Multi-AI Discussion** - Collaborative AI
@@ -121,94 +164,164 @@
 
 ## ✨ Features
 
-### 🧠 Automatic Memory System (v2.0 - v0.19)
+### 🧠 Dual-System Memory (v0.20)
 
-**Zero-configuration memory** - Every conversation is remembered and relevant context is automatically injected.
+**Human-like memory architecture** - Fast automatic capture combined with deep overnight processing.
 
 <details>
-<summary><b>Pre-loaded Context (Click to expand)</b></summary>
+<summary><b>System 1: Context Saver (Click to expand)</b></summary>
 
-Every request automatically includes:
-- 🎯 **53 Claude Code Skills** - frontend-design, pdf, xlsx, pptx, ccb, lenny-*, etc.
-- 🔌 **4 MCP Servers** - chroma-mcp, playwright-mcp, etc.
-- 🤖 **8 AI Providers** - Models, strengths, use cases
-- 💭 **Relevant Memories** - Past conversations retrieved via FTS5 full-text search
+**Instant automatic archiving** when you run `/clear` or `/compact`:
 
-**Performance:**
-- ⚡ <100ms overhead per request (<5% impact)
-- 📝 100% conversation capture rate
-- 🔍 ~80% search accuracy (90%+ with future vector search)
+```
+Session Start → Work → /clear triggered
+                           │
+                           ▼
+              ┌────────────────────────┐
+              │   Context Saver        │
+              │   (System 1 - Fast)    │
+              ├────────────────────────┤
+              │ • Parse session.jsonl  │
+              │ • Extract key messages │
+              │ • Summarize tool calls │
+              │ • Track file changes   │
+              │ • Save as Markdown     │
+              └────────────────────────┘
+                           │
+                           ▼
+              ~/.ccb/context_archive/
+              session_abc123_2026-02-05.md
+```
+
+**Archive Format:**
+```markdown
+# Session: abc123
+- **Project**: /Users/leo/project
+- **Duration**: 45 minutes
+- **Model**: claude-opus-4-5
+
+## Task Summary
+Implemented user authentication with JWT...
+
+## Key Messages
+- User: "Add login functionality"
+- Assistant: Created auth module with...
+
+## Tool Calls
+| Tool | Count |
+|------|-------|
+| Edit | 15 |
+| Read | 8 |
+| Bash | 5 |
+
+## File Changes
+- `src/auth.ts` - Created
+- `src/middleware.ts` - Modified
+```
 
 </details>
 
 <details>
-<summary><b>Memory Backend (v2.0 Architecture)</b></summary>
+<summary><b>System 2: Memory Consolidator (Click to expand)</b></summary>
 
-**Session-based Design:**
-- 📂 **Sessions** - Organize conversations into sessions
-- 💬 **Messages** - Structured messages with role (user/assistant/system)
-- 🔗 **Context Tracking** - Record which context was injected
-- 👥 **Multi-user** - User isolation support
-- 📊 **Analytics** - Automatic provider statistics
+**Nightly deep processing** - Runs automatically or on-demand:
 
-**Storage:**
-- 💾 **SQLite Database** - All data in `~/.ccb/ccb_memory.db`
-- 🔎 **FTS5 Search** - Full-text search with Chinese support
-- 🗜️ **Compression** - Old sessions archived with GZIP
-- ☁️ **Cloud Sync** - Google Drive backup (hourly auto-sync)
-
-**Performance:**
-- ⚡ <10ms write latency per conversation
-- 🔍 <25ms search latency (FTS5)
-- 📈 Scales to 100K+ messages efficiently
-
-**Architecture:**
 ```
-sessions (会话)
-  └─> messages (消息)
-       ├─> context_injections (上下文注入)
-       └─> skills_usage (技能使用)
+Nightly (3 AM) or Manual Trigger
+              │
+              ▼
+┌──────────────────────────────────────┐
+│      Memory Consolidator             │
+│      (System 2 - Deep)               │
+├──────────────────────────────────────┤
+│ 1. Collect recent archives           │
+│ 2. Cluster by project/topic          │
+│ 3. Extract patterns & learnings      │
+│ 4. Generate structured memory        │
+│ 5. Save to long-term storage         │
+└──────────────────────────────────────┘
+              │
+              ▼
+        ~/.ccb/memories/
+        2026-02-05_consolidated.md
 ```
 
-See [V1 vs V2 Comparison](lib/memory/V1_VS_V2.md) for details.
+**Consolidated Memory Format:**
+```markdown
+# Memory: 2026-02-05
+
+## Projects Worked On
+### /Users/leo/ccb-gateway
+- Sessions: 3
+- Duration: 2h 15m
+- Focus: Memory system implementation
+
+### /Users/leo/web-app
+- Sessions: 2
+- Duration: 1h 30m
+- Focus: React component refactoring
+
+## Key Learnings
+1. SQLite FTS5 requires content sync triggers
+2. Race conditions in async timeout handling
+3. Path traversal protection patterns
+
+## Frequently Used Tools
+| Tool | Count | Projects |
+|------|-------|----------|
+| Edit | 45 | 2 |
+| Read | 32 | 2 |
+| Bash | 18 | 1 |
+
+## Technical Decisions
+- Chose Markdown over JSON for human readability
+- Dual-system architecture for memory efficiency
+```
 
 </details>
 
 <details>
-<summary><b>Automatic Integration</b></summary>
+<summary><b>Memory Injection</b></summary>
 
-**Pre-Request Hook:**
-```python
-# Before calling AI provider
-request = await memory_middleware.pre_request(request)
-# Result: Message enhanced with system context + relevant memories
+**Auto-inject relevant memories** into new conversations:
+
+```bash
+# Start new session with yesterday's memory
+claude --context $(ccb-mem inject 2026-02-04)
+
+# Or manually via @
+@~/.ccb/memories/2026-02-04_consolidated.md
 ```
 
-**Post-Response Hook:**
-```python
-# After AI responds
-await memory_middleware.post_response(request, response)
-# Result: Conversation saved to database automatically
+The Gateway middleware can also auto-inject:
+```json
+{
+  "memory": {
+    "enabled": true,
+    "auto_inject_recent": true,
+    "inject_days": 3
+  }
+}
 ```
 
 </details>
 
 **Usage:**
 ```bash
-# No special command needed - ccb-cli now has automatic memory!
-ccb-cli kimi "How do I build a login page?"
+# Automatic - hook triggers on /clear
+# Session automatically saved to ~/.ccb/context_archive/
 
-# [Gateway Middleware]
-#   ✓ System context injected (53 Skills + 4 MCP + 8 Providers)
-#   ✓ 2 relevant memories injected
-#
-# Response: Based on our previous discussion about React...
-#
-# 💡 [2 relevant memories auto-injected]
+# Manual save
+ccb-mem save
 
-# View memories
-python3 lib/memory/memory_lite.py recent 10
-python3 lib/memory/memory_lite.py search "React"
+# Consolidate last 24 hours
+ccb-mem consolidate --hours 24
+
+# Search across all memories
+ccb-mem search "authentication"
+
+# List recent archives
+ccb-mem list
 ```
 
 ---
@@ -219,7 +332,7 @@ python3 lib/memory/memory_lite.py search "React"
 
 ```yaml
 Fast Tier (3-15s):    Kimi → Qwen → DeepSeek
-Medium Tier (15-45s): iFlow → Qoder → OpenCode
+Medium Tier (15-45s): iFlow → Qoder → OpenCode → Claude
 Slow Tier (45-90s):   Codex → Gemini
 ```
 
@@ -231,37 +344,59 @@ Slow Tier (45-90s):   Codex → Gemini
 
 ---
 
+### 🔍 Skills Discovery
+
+**Auto-discover and recommend relevant Claude Code Skills** - Integrates with [Vercel Skills](https://github.com/vercel-labs/skills).
+
+```
+User Request → Extract Keywords → Search Skills (Local + Remote)
+                                         ↓
+                        ┌────────────────┴────────────────┐
+                        │                                  │
+                   scan-skills.sh              npx skills find [query]
+                   (Local Skills)               (Vercel Registry)
+                        │                                  │
+                        └────────────────┬────────────────┘
+                                         ↓
+                         Inject Recommendations to Context
+```
+
+**Usage:**
+```bash
+# Gateway auto-discovers skills
+ccb-cli kimi "help me create a PDF"
+# [MemoryMiddleware] 💡 Found 1 relevant Skill: /pdf
+
+# Manual search
+ccb-skills recommend "create spreadsheet"
+ccb-skills stats
+```
+
+---
+
 ### 🤝 Multi-AI Discussion
 
 **Collaborative problem-solving** - Multiple AIs discuss and reach consensus:
 
 ```bash
-# Start a discussion with 3 AIs
 ccb-submit discuss \
   --providers kimi,codex,gemini \
   --rounds 3 \
   --strategy "consensus" \
   "Design a scalable microservices architecture"
-
-# Each AI:
-# Round 1: Proposes initial solution
-# Round 2: Reviews others' proposals
-# Round 3: Final recommendation
-
-# Output: Synthesized solution from all perspectives
 ```
 
-**Use cases:**
-- 🏗️ Architecture design
-- 🐛 Complex debugging
-- 📝 Technical documentation
-- 💡 Brainstorming sessions
+**Aggregation Strategies:**
+- **consensus** - All AIs must agree
+- **majority** - Most common answer wins
+- **first_success** - First valid response
+- **best_quality** - Highest quality (scored)
 
 ---
 
 ### 📊 Real-time Monitoring
 
-**WebSocket-based dashboard** with live updates:
+**WebSocket-based dashboard** with live updates at http://localhost:8765/web
 
 <table>
 <tr>
@@ -295,8 +430,6 @@ ccb-submit discuss \
 </tr>
 </table>
 
-Access at: http://localhost:8765/web
-
 ---
 
 ### 🚀 Production Features
@@ -328,7 +461,7 @@ Access at: http://localhost:8765/web
 **Security**
 - 🔐 API key authentication
 - 🚦 Rate limiting
-- 🔒 Secure credential storage
+- 🔒 Path traversal protection
 - 📋 Audit logging
 
 </td>
@@ -352,21 +485,18 @@ Access at: http://localhost:8765/web
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                      CCB Gateway (v0.18)                         │
+│                      CCB Gateway (v0.20)                         │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                   │
 │  ┌────────────────────────────────────────────────────────┐    │
-│  │            Memory Middleware (v0.18)                    │    │
+│  │            Dual-System Memory (v0.20)                   │    │
 │  ├────────────────────────────────────────────────────────┤    │
-│  │  Pre-Request Hook:                                      │    │
-│  │  • SystemContextBuilder (53 Skills + 4 MCP + 8 Prov)   │    │
-│  │  • MemoryLite.search() → FTS5 search                   │    │
-│  │  • Provider recommendation                              │    │
-│  │  • Context injection                                    │    │
 │  │                                                          │    │
-│  │  Post-Response Hook:                                    │    │
-│  │  • MemoryLite.record() → SQLite                        │    │
-│  │  • Update statistics                                    │    │
+│  │  System 1 (Fast):           System 2 (Deep):            │    │
+│  │  • ContextSaver             • MemoryConsolidator        │    │
+│  │  • Auto on /clear           • Nightly processing        │    │
+│  │  • Markdown archives        • Long-term memory          │    │
+│  │                                                          │    │
 │  └────────────────────────────────────────────────────────┘    │
 │                          │                                       │
 │  ┌────────────────────────▼─────────────────────────────┐      │
@@ -382,7 +512,7 @@ Access at: http://localhost:8765/web
 │  ┌───────────┬───────────┼───────────┬───────────┐            │
 │  ▼           ▼           ▼           ▼           ▼            │
 │ ┌─────┐   ┌─────┐   ┌─────────┐  ┌─────┐   ┌───────┐        │
-│ │Kimi │   │Qwen │   │DeepSeek │  │Codex│   │Gemini │   ...  │
+│ │Kimi │   │Qwen │   │DeepSeek │  │Codex│   │Claude │   ...  │
 │ └─────┘   └─────┘   └─────────┘  └─────┘   └───────┘        │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
@@ -391,35 +521,20 @@ Access at: http://localhost:8765/web
 ### Memory System Flow
 
 ```
-User Request
+Session Activity
     │
-    ├─→ [Memory Middleware: Pre-Request]
-    │   ├─→ Extract keywords from message
-    │   ├─→ SystemContextBuilder.get_relevant_context()
-    │   │   ├─→ Filter 53 Skills by keywords
-    │   │   ├─→ Get current Provider info
-    │   │   └─→ Get active MCP Servers
-    │   ├─→ MemoryLite.search_conversations()
-    │   │   └─→ SQLite FTS5 full-text search
-    │   └─→ Inject to prompt:
-    │       """
-    │       # System Context
-    │       ## 🤖 Current Provider: kimi
-    │       ## 🛠️ Relevant Skills: frontend-design, pptx
-    │       ## 💭 Relevant Memories: [previous conversation]
+    ├─→ [System 1: Context Saver]
+    │   ├─→ Triggered by /clear or /compact
+    │   ├─→ Parse session.jsonl
+    │   ├─→ Extract key messages & tool calls
+    │   └─→ Save to ~/.ccb/context_archive/
     │
-    │       ---
-    │       # User Request
-    │       [original message]
-    │       """
-    │
-    ├─→ [Provider Call]
-    │   └─→ Enhanced message → AI Provider
-    │
-    └─→ [Memory Middleware: Post-Response]
-        ├─→ Record conversation to SQLite
-        ├─→ Update FTS5 index
-        └─→ Update provider statistics
+    └─→ [System 2: Memory Consolidator]
+        ├─→ Runs nightly (3 AM) or manually
+        ├─→ Collect recent archives
+        ├─→ Cluster by project/topic
+        ├─→ Extract patterns & learnings
+        └─→ Save to ~/.ccb/memories/
 ```
 
 ---
@@ -455,16 +570,12 @@ npm install
 # Start with default config
 python3 -m lib.gateway.gateway_server --port 8765
 
-# With custom config
-python3 -m lib.gateway.gateway_server --config config/gateway.yaml
-
 # Output:
 # [SystemContext] Preloading system information...
 # [SystemContext] Loaded 53 skills
-# [SystemContext] Loaded 8 providers
+# [SystemContext] Loaded 9 providers
 # [SystemContext] Loaded 4 MCP servers
 # [MemoryMiddleware] Initialized (enabled=True)
-# [GatewayServer] Memory Middleware initialized successfully
 # ✓ Server running at http://localhost:8765
 ```
 
@@ -483,11 +594,6 @@ curl -X POST http://localhost:8765/api/ask \
     "wait": true,
     "timeout": 60
   }'
-
-# Response includes:
-# - AI response
-# - Metadata about injected context
-# - Latency metrics
 ```
 
 ---
@@ -506,7 +612,7 @@ ccb-cli <provider> [model] "<message>"
 ccb-cli kimi "How do I optimize SQL queries?"
 ccb-cli codex o3 "Prove the halting problem is undecidable"
 ccb-cli gemini 3f "Design a responsive navbar"
-ccb-cli qwen "Analyze this dataframe"
+ccb-cli claude "Review this code"
 
 # With agent role
 ccb-cli codex o3 -a reviewer "Review this PR"
@@ -520,126 +626,56 @@ ccb-cli kimi -a sisyphus "Fix this bug: ..."
 | gemini | 3f, 3p, 2.5f, 2.5p | `ccb-cli gemini 3f "..."` |
 | kimi | thinking, normal | `ccb-cli kimi thinking "..."` |
 | deepseek | reasoner, chat | `ccb-cli deepseek reasoner "..."` |
+| claude | - | `ccb-cli claude "..."` |
 
----
-
-### Gateway API
-
-**RESTful API with WebSocket support:**
-
-#### POST /api/ask (Synchronous)
+### ccb-mem - Memory Management
 
 ```bash
-curl -X POST http://localhost:8765/api/ask \
-  -H "Content-Type: application/json" \
-  -d '{
-    "provider": "kimi",
-    "message": "Your question",
-    "wait": true,
-    "timeout": 120
-  }'
+# Save current session
+ccb-mem save
 
-# Response:
-{
-  "status": "completed",
-  "response": "AI response here...",
-  "provider": "kimi",
-  "latency_ms": 8500,
-  "metadata": {
-    "_memory_injected": true,
-    "_memory_count": 2,
-    "_system_context_injected": true
-  }
-}
-```
+# Save specific session
+ccb-mem save /path/to/session.jsonl
 
-#### POST /api/submit (Asynchronous)
+# Consolidate recent sessions
+ccb-mem consolidate --hours 24
 
-```bash
-# Submit request
-curl -X POST http://localhost:8765/api/submit \
-  -d '{"provider": "kimi", "message": "Your question"}'
+# Search memories
+ccb-mem search "authentication"
 
-# Returns: {"request_id": "abc123", "status": "queued"}
+# List recent archives
+ccb-mem list
 
-# Query result
-curl http://localhost:8765/api/query/abc123
-
-# Response:
-{
-  "request_id": "abc123",
-  "status": "completed",
-  "response": "AI response...",
-  "latency_ms": 8500
-}
-```
-
-#### WebSocket /ws
-
-```javascript
-const ws = new WebSocket('ws://localhost:8765/ws');
-
-ws.onmessage = (event) => {
-  const data = JSON.parse(event.data);
-
-  if (data.type === "request_processing") {
-    console.log(`Processing: ${data.data.request_id}`);
-  } else if (data.type === "request_completed") {
-    console.log(`Completed: ${data.data.request_id}`);
-  }
-};
+# Get injection path for date
+ccb-mem inject 2026-02-05
 ```
 
 ---
 
-## 🧠 Memory System (v0.18)
+## 🧠 Memory System (v0.20)
 
-### Architecture
+### Dual-System Architecture
 
-The memory system consists of three layers:
+The memory system is inspired by human cognition:
 
-1. **System Context Builder** - Pre-loads Skills/MCP/Providers at startup
-2. **Memory Middleware** - Injects context and records conversations
-3. **Memory Backend** - SQLite database with FTS5 search
+| System | Analogy | Trigger | Output |
+|--------|---------|---------|--------|
+| **System 1** | Short-term memory | `/clear`, `/compact` | Markdown archive |
+| **System 2** | Long-term memory | Nightly cron | Consolidated memory |
 
-### Database Schema
+### File Locations
 
-```sql
--- conversations table
-CREATE TABLE conversations (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    timestamp TEXT NOT NULL,
-    provider TEXT NOT NULL,
-    question TEXT NOT NULL,
-    answer TEXT NOT NULL,
-    metadata TEXT,  -- JSON
-    tokens INTEGER DEFAULT 0
-);
-
--- FTS5 full-text search index
-CREATE VIRTUAL TABLE conversations_fts USING fts5(
-    question, answer, provider,
-    content='conversations',
-    content_rowid='id'
-);
 ```
-
-### CLI Commands
-
-```bash
-# View recent conversations
-python3 lib/memory/memory_lite.py recent 10
-
-# Search conversations
-python3 lib/memory/memory_lite.py search "React hooks"
-
-# View statistics
-python3 lib/memory/memory_lite.py stats
-
-# Cloud sync
-ccb-sync push    # Push to Google Drive
-ccb-sync pull    # Pull from Google Drive
-ccb-sync status  # Check sync status
+~/.ccb/
+├── context_archive/          # System 1 output
+│   ├── session_abc_2026-02-05.md
+│   ├── session_def_2026-02-05.md
+│   └── ...
+├── memories/                  # System 2 output
+│   ├── 2026-02-04_consolidated.md
+│   ├── 2026-02-05_consolidated.md
+│   └── ...
+└── ccb_memory.db             # SQLite for Gateway middleware
 ```
 
 ### Configuration
@@ -654,185 +690,13 @@ ccb-sync status  # Check sync status
     "inject_system_context": true,
     "max_injected_memories": 5
   },
-  "recommendation": {
-    "enabled": true,
-    "auto_switch_provider": false
+  "dual_system": {
+    "system1_enabled": true,
+    "system2_enabled": true,
+    "consolidate_hour": 3,
+    "retention_days": 30
   }
 }
-```
-
----
-
-## 🔍 Skills Discovery (v0.19)
-
-**Auto-discover and recommend relevant Claude Code Skills** - Integrates with [Vercel Skills](https://github.com/vercel-labs/skills) to find and install skills on-demand.
-
-### How It Works
-
-```
-User Request → Extract Keywords → Search Skills (Local + Remote)
-                                         ↓
-                        ┌────────────────┴────────────────┐
-                        │                                  │
-                   scan-skills.sh              npx skills find [query]
-                   (Local Skills)               (Vercel Registry)
-                        │                                  │
-                        └────────────────┬────────────────┘
-                                         ↓
-                              Rank by Relevance Score
-                              (Keywords + Usage History)
-                                         ↓
-                         Inject Recommendations to Context
-                                         ↓
-                            AI Sees Available Skills
-                                         ↓
-                          Record Usage → Learn & Improve
-```
-
-### Features
-
-- 🔍 **Local + Remote Search** - Scans installed skills and searches Vercel Skills registry
-- 🧠 **Learning Algorithm** - Recommendations improve based on usage history
-- 📊 **Relevance Scoring** - Keywords + historical usage + installation status
-- 🚀 **Auto-Installation** - Optionally auto-install recommended remote skills
-- 💾 **Cached Results** - Skills cached in memory database for fast access
-
-### Usage
-
-**Automatic (via Gateway):**
-```bash
-# Gateway automatically discovers relevant skills
-ccb-cli kimi "help me test React components"
-
-# Gateway output:
-# [MemoryMiddleware] 💡 发现 2 个相关 Skill: /webapp-testing, jest-react-testing
-```
-
-**Manual Search:**
-```bash
-# Find skills for a specific task
-ccb-skills recommend "create PDF"
-
-# Output:
-# 💡 发现 1 个相关 Skill: /pdf
-#
-#   pdf (score: 23, installed: ✓)
-#     Comprehensive PDF manipulation toolkit
-#     Usage: /pdf
-
-# View usage statistics
-ccb-skills stats
-
-# Refresh cache
-ccb-skills scan
-```
-
-### Configuration
-
-```json
-{
-  "skills": {
-    "auto_discover": true,        // Auto-find skills
-    "recommend_skills": true,     // Show recommendations
-    "max_recommendations": 3,     // Max skills to recommend
-    "auto_install": false,        // Auto-install remote skills
-    "cache_ttl_hours": 24         // Cache expiration
-  }
-}
-```
-
-### CLI Commands
-
-| Command | Description |
-|---------|-------------|
-| `ccb-skills scan` | Refresh local skills cache |
-| `ccb-skills recommend "<task>"` | Get skill recommendations |
-| `ccb-skills match "<task>"` | Find matching skills (detailed) |
-| `ccb-skills stats` | Show usage statistics |
-| `ccb-skills list [--installed]` | List all/installed skills |
-
-### Relevance Algorithm
-
-```python
-score = 0
-
-# Name match (highest priority)
-if keyword in skill_name: score += 10
-
-# Description match
-if keyword in description: score += 5
-
-# Trigger match
-if keyword in triggers: score += 3
-
-# Installed bonus
-if installed: score += 2
-
-# Usage history boost (capped at +5 per keyword)
-score += min(usage_count, 5)
-```
-
-### Example: Automatic Discovery
-
-```bash
-# User request
-$ ccb-cli kimi "create an Excel spreadsheet"
-
-# Behind the scenes:
-[MemoryMiddleware] Extracted keywords: ['create', 'excel', 'spreadsheet']
-[SkillsDiscovery] Searching local skills...
-[SkillsDiscovery] Found: xlsx (score: 20)
-[SkillsDiscovery] Searching remote skills: npx skills find excel
-[SkillsDiscovery] Found: excel-toolkit (score: 15)
-[MemoryMiddleware] 💡 发现 2 个相关 Skill: /xlsx, excel-toolkit
-
-# AI sees in context:
-## 🛠️ 相关技能推荐
-- **/xlsx** (score: 20) - Comprehensive spreadsheet toolkit
-  ✓ 已安装，可直接使用: `/xlsx`
-- **excel-toolkit** (score: 15) - Excel automation from Vercel
-  📦 可安装: npx skills add vercel-labs/agent-skills@excel-toolkit -g -y
-
-# Result: AI uses /xlsx skill automatically
-```
-
----
-
-## 💬 Multi-AI Discussion
-
-**Collaborative problem-solving across multiple AIs:**
-
-### Basic Discussion
-
-```bash
-ccb-submit discuss \
-  --providers kimi,codex,gemini \
-  --rounds 3 \
-  --strategy consensus \
-  "Design a distributed cache system"
-```
-
-### Aggregation Strategies
-
-- **consensus** - All AIs must agree
-- **majority** - Most common answer wins
-- **first_success** - First valid response
-- **best_quality** - Highest quality (scored)
-
-### Use Cases
-
-```bash
-# Architecture design
-ccb-submit discuss -p kimi,codex,gemini -r 3 \
-  "Design microservices for e-commerce"
-
-# Code review
-ccb-submit discuss -p codex,deepseek -r 2 \
-  "Review this implementation: [code]"
-
-# Brainstorming
-ccb-submit discuss -p kimi,gemini,iflow -r 3 \
-  "Ideas for improving user onboarding"
 ```
 
 ---
@@ -848,7 +712,7 @@ ccb-submit discuss -p kimi,gemini,iflow -r 3 \
 - 🛠️ **Skills Discovery** - Find and recommend relevant skills for your tasks
 - 📋 **Request Queue** - Pending, processing, completed
 - 🔴 **Live Logs** - Real-time event stream via WebSocket
-- 🤖 **Provider Status** - Health checks for all providers
+- 🤖 **Provider Status** - Health checks for all 9 providers
 - 📈 **Charts** - Performance trends and analytics
 
 ### Screenshots
@@ -867,7 +731,7 @@ Real-time metrics, provider status, and system health monitoring.
 
 <img src="screenshots/webui-memory.png" alt="Memory Management" width="700">
 
-Session-based conversation history with FTS5 full-text search. View all conversations grouped by sessions, search across messages, and track provider usage.
+Session-based conversation history with FTS5 full-text search.
 
 </details>
 
@@ -876,16 +740,7 @@ Session-based conversation history with FTS5 full-text search. View all conversa
 
 <img src="screenshots/webui-skills.png" alt="Skills Discovery" width="700">
 
-Smart skills discovery powered by Vercel Skills CLI. Find relevant skills for your tasks, view usage statistics, and get installation recommendations.
-
-</details>
-
-<details>
-<summary><b>Monitor Tab - Real-time Streams</b></summary>
-
-<img src="screenshots/webui-monitor.png" alt="Monitor" width="700">
-
-Real-time provider monitoring with live output streams and performance tracking.
+Smart skills discovery powered by Vercel Skills CLI.
 
 </details>
 
@@ -898,19 +753,17 @@ Real-time provider monitoring with live output streams and performance tracking.
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/health` | Health check |
-| GET | `/providers` | List all providers |
+| GET | `/providers` | List all 9 providers |
 | POST | `/api/ask` | Synchronous request |
 | POST | `/api/submit` | Asynchronous request |
 | GET | `/api/query/{id}` | Query request status |
 | GET | `/api/pending` | List pending requests |
 | POST | `/api/cancel/{id}` | Cancel request |
-| GET | `/api/memory/sessions` | List recent memory sessions |
-| GET | `/api/memory/sessions/{id}` | Get session conversation history |
-| GET | `/api/memory/search` | Full-text search in conversations |
-| GET | `/api/memory/stats` | Memory system statistics |
-| GET | `/api/skills/recommendations` | Get skill recommendations for tasks |
-| GET | `/api/skills/stats` | Skills usage statistics |
-| GET | `/api/skills/list` | List all available skills |
+| GET | `/api/memory/sessions` | List memory sessions |
+| GET | `/api/memory/search` | Full-text search |
+| GET | `/api/memory/stats` | Memory statistics |
+| GET | `/api/skills/recommendations` | Get skill recommendations |
+| GET | `/api/skills/list` | List all skills |
 | WS | `/ws` | WebSocket connection |
 
 ### Request Parameters
@@ -918,31 +771,12 @@ Real-time provider monitoring with live output streams and performance tracking.
 **POST /api/ask & /api/submit:**
 ```json
 {
-  "provider": "kimi",           // Required: AI provider name
+  "provider": "kimi",           // Required: AI provider (9 options)
   "message": "Your question",   // Required: User message
   "model": "thinking",          // Optional: Specific model
-  "wait": true,                 // Optional: Wait for completion (ask only)
+  "wait": true,                 // Optional: Wait for completion
   "timeout": 120,               // Optional: Timeout in seconds
   "metadata": {}                // Optional: Custom metadata
-}
-```
-
-### Response Format
-
-```json
-{
-  "request_id": "abc123",
-  "status": "completed",         // queued, processing, completed, failed
-  "response": "AI response...",  // Only if completed
-  "provider": "kimi",
-  "latency_ms": 8500,
-  "tokens_used": 150,
-  "metadata": {
-    "_memory_injected": true,
-    "_memory_count": 2,
-    "_system_context_injected": true
-  },
-  "error": null                  // Error message if failed
 }
 ```
 
@@ -952,46 +786,44 @@ Real-time provider monitoring with live output streams and performance tracking.
 
 ### Core Documentation
 
-- **[Memory System Architecture](lib/memory/INTEGRATION_DESIGN.md)** - Full design with 4-system analysis
-- **[Integration Report](lib/memory/INTEGRATION_REPORT.md)** - Complete implementation report
+- **[Memory System Architecture](lib/memory/INTEGRATION_DESIGN.md)** - Full design
 - **[Database Structure](lib/memory/DATABASE_STRUCTURE.md)** - Schema and queries
 - **[Cloud Sync Guide](lib/memory/SYNC_QUICKSTART.md)** - Google Drive setup
+- **[V1 vs V2 Comparison](lib/memory/V1_VS_V2.md)** - Memory evolution
 
 ### Additional Resources
 
 - **[API Documentation](docs/API.md)** - Complete API reference
 - **[Configuration Guide](docs/CONFIG.md)** - All configuration options
 - **[Deployment Guide](docs/DEPLOYMENT.md)** - Production deployment
-- **[Contributing Guide](CONTRIBUTING.md)** - How to contribute
 
 ---
 
 ## 🗺️ Roadmap
 
-### v0.19 (Q2 2026) - Skills Discovery ✅
+### v0.20 (Current) - Dual-System Memory ✅
 
-- [x] **Skills Discovery Service** - Auto-find and recommend skills
-- [x] **Vercel Skills Integration** - Search remote skills via `npx skills find`
-- [x] **Learning Algorithm** - Improve recommendations based on usage
-- [x] **Memory Integration** - Skills cached and tracked in memory DB
-- [ ] Semantic similarity search for skills
-- [ ] Auto-install popular skills
+- [x] **Context Saver** - System 1 instant archiving
+- [x] **Memory Consolidator** - System 2 nightly processing
+- [x] **ccb-mem CLI** - Unified memory management
+- [x] **Security Hardening** - Path traversal protection
+- [x] **Claude Provider** - Added as 9th provider
 
-### v0.20 (Q3 2026) - Semantic Enhancement
+### v0.21 (Q2 2026) - Semantic Enhancement
 
 - [ ] Qdrant vector database integration
-- [ ] Semantic similarity search for conversations
+- [ ] Semantic similarity search
 - [ ] LLM-driven fact extraction
 - [ ] Multi-language embeddings
 
-### v0.21 (Q4 2026) - Agent Autonomy
+### v0.22 (Q3 2026) - Agent Autonomy
 
 - [ ] Agent memory function calls (Letta mode)
 - [ ] Structured memory blocks (core_memory)
 - [ ] Self-updating agents
 - [ ] Memory version control
 
-### v0.22 (Q4 2026) - Team Collaboration
+### v0.23 (Q4 2026) - Team Collaboration
 
 - [ ] Multi-user memory isolation
 - [ ] Shared memory pools
@@ -1024,22 +856,6 @@ git push origin feature/your-feature
 # 5. Create Pull Request
 ```
 
-### Development Setup
-
-```bash
-# Install dev dependencies
-pip install -r requirements-dev.txt
-
-# Run tests
-pytest
-
-# Run linter
-flake8 lib/ tests/
-
-# Run type checker
-mypy lib/
-```
-
 ---
 
 ## 📜 License
@@ -1065,10 +881,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- 📧 Email: [your-email@example.com]
-- 💬 Discord: [Join our community]
 - 🐛 Issues: [GitHub Issues](https://github.com/LeoLin990405/ai-router-ccb/issues)
-- 📖 Docs: [Full Documentation](https://your-docs-site.com)
+- 📖 Docs: [Documentation](docs/)
 
 ---
 
