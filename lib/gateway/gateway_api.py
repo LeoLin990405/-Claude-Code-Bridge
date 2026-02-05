@@ -761,6 +761,91 @@ def create_api(
         """Simple health check endpoint."""
         return {"status": "ok"}
 
+    # ==================== Stream Output Endpoints ====================
+
+    @app.get("/api/stream/{request_id}")
+    async def get_stream_output(
+        request_id: str,
+        from_line: int = Query(0, ge=0, description="Start reading from this line"),
+    ) -> Dict[str, Any]:
+        """
+        Get stream output for a request.
+
+        Returns real-time log entries for the request execution.
+        Use `from_line` for incremental reading (like tail -f).
+        """
+        from .stream_output import get_stream_manager
+        stream_manager = get_stream_manager()
+
+        status = stream_manager.get_stream_status(request_id)
+        if not status.get("exists"):
+            raise HTTPException(status_code=404, detail="Stream not found")
+
+        entries = stream_manager.read_stream(request_id, from_line)
+        return {
+            "request_id": request_id,
+            "status": status,
+            "from_line": from_line,
+            "entries": entries,
+            "entry_count": len(entries),
+            "next_line": from_line + len(entries),
+        }
+
+    @app.get("/api/stream/{request_id}/tail")
+    async def tail_stream(
+        request_id: str,
+        lines: int = Query(20, ge=1, le=100, description="Number of lines to return"),
+    ) -> Dict[str, Any]:
+        """
+        Get the last N entries from a stream (like tail).
+        """
+        from .stream_output import get_stream_manager
+        stream_manager = get_stream_manager()
+
+        status = stream_manager.get_stream_status(request_id)
+        if not status.get("exists"):
+            raise HTTPException(status_code=404, detail="Stream not found")
+
+        all_entries = stream_manager.read_stream(request_id)
+        tail_entries = all_entries[-lines:] if len(all_entries) > lines else all_entries
+
+        return {
+            "request_id": request_id,
+            "status": status,
+            "total_entries": len(all_entries),
+            "entries": tail_entries,
+        }
+
+    @app.get("/api/streams")
+    async def list_streams(
+        limit: int = Query(20, ge=1, le=100),
+    ) -> Dict[str, Any]:
+        """
+        List recent stream logs.
+        """
+        from .stream_output import get_stream_manager
+        stream_manager = get_stream_manager()
+
+        streams = stream_manager.list_recent_streams(limit)
+        return {
+            "streams": streams,
+            "count": len(streams),
+        }
+
+    @app.delete("/api/streams/cleanup")
+    async def cleanup_streams() -> Dict[str, Any]:
+        """
+        Clean up old stream logs (older than retention period).
+        """
+        from .stream_output import get_stream_manager
+        stream_manager = get_stream_manager()
+
+        removed = stream_manager.cleanup_old_streams()
+        return {
+            "removed": removed,
+            "status": "ok",
+        }
+
     # ==================== Cache Endpoints ====================
 
     @app.get("/api/cache/stats", response_model=CacheStatsResponse)

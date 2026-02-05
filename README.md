@@ -146,6 +146,29 @@ ccb-mem consolidate --dry-run    # Preview LLM consolidation
 ccb-mem export --format json     # Export memories
 ```
 
+### Async & Streaming Mode (避免超时)
+
+```bash
+# 异步模式 - 立即返回 request_id，不等待完成
+ccb-cli --async kimi "你的问题"
+
+# 流式模式 - 异步提交 + 自动跟踪实时输出
+ccb-cli --stream kimi "你的问题"
+ccb-cli -s deepseek reasoner "复杂问题"
+
+# 实时查看任务输出
+ccb-tail <request_id>            # 查看输出
+ccb-tail -f <request_id>         # 持续跟踪 (like tail -f)
+ccb-tail --latest -f             # 跟踪最新请求
+ccb-tail --list                  # 列出所有流
+```
+
+**优势：**
+- 🚀 异步模式立即返回，避免 CLI 超时
+- 📺 实时查看思考链和输出块
+- 💾 所有输出持久化到 `~/.ccb/streams/`
+- 🔍 支持增量读取 (适合长任务)
+
 ---
 
 ## 📦 v0.20 Features (Previous)

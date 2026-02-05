@@ -9,6 +9,8 @@ SCRIPTS_DIR="$HOME/.ccb_config/scripts"
 GATEWAY_URL="${CCB_GATEWAY_URL:-http://localhost:8765}"
 GATEWAY_TIMEOUT="${CCB_GATEWAY_TIMEOUT:-300}"
 AGENT=""
+ASYNC_MODE=false
+STREAM_MODE=false
 
 # Colors for output
 RED='\033[0;31m'
@@ -29,6 +31,14 @@ while [[ $# -gt 0 ]]; do
         -t|--timeout)
             GATEWAY_TIMEOUT="$2"
             shift 2
+            ;;
+        --async)
+            ASYNC_MODE=true
+            shift
+            ;;
+        --stream|-s)
+            STREAM_MODE=true
+            shift
             ;;
         -h|--help|help)
             POSITIONAL_ARGS+=("help")
@@ -62,6 +72,8 @@ CCB CLI 统一执行脚本 (Gateway 模式)
 全局选项:
   -a, --agent <role>    指定 Agent 角色 (如 sisyphus, oracle, librarian)
   -t, --timeout <sec>   超时秒数 (默认: 300)
+  --async               异步模式: 立即返回 request_id，不等待完成
+  -s, --stream          流式模式: 异步提交后自动跟踪输出 (使用 ccb-tail)
 
 Agent 角色:
   sisyphus   🪨 持续改进、错误修复
@@ -158,7 +170,46 @@ call_gateway() {
             '{provider: $provider, message: $message, timeout_s: $timeout_s}')
     fi
 
-    # Call Gateway API with wait=true
+    # Async mode: submit and return immediately
+    if $ASYNC_MODE || $STREAM_MODE; then
+        local response
+        response=$(curl -s -X POST "${GATEWAY_URL}/api/ask?wait=false" \
+            -H "Content-Type: application/json" \
+            -d "$payload")
+
+        local curl_exit=$?
+        if [[ $curl_exit -ne 0 ]]; then
+            echo -e "${RED}错误: Gateway 请求失败 (curl exit: $curl_exit)${NC}" >&2
+            exit 1
+        fi
+
+        local request_id
+        request_id=$(echo "$response" | jq -r '.request_id // empty')
+
+        if [[ -z "$request_id" ]]; then
+            echo -e "${RED}错误: 未获取到 request_id${NC}" >&2
+            echo "$response" | jq . >&2
+            exit 1
+        fi
+
+        if $STREAM_MODE; then
+            # Stream mode: auto-tail the output
+            echo -e "${GREEN}✓ 已提交: ${request_id}${NC}" >&2
+            echo "" >&2
+            # Wait a moment for stream file to be created
+            sleep 0.5
+            exec ccb-tail -f "$request_id"
+        else
+            # Async mode: just print request_id
+            echo -e "${GREEN}✓ 已提交${NC}" >&2
+            echo -e "Request ID: ${BLUE}$request_id${NC}"
+            echo -e "查看输出: ${BLUE}ccb-tail -f $request_id${NC}"
+            echo -e "查询状态: ${BLUE}ccb-query get $request_id${NC}"
+        fi
+        return 0
+    fi
+
+    # Sync mode: Call Gateway API with wait=true
     local response
     response=$(curl -s -X POST "${GATEWAY_URL}/api/ask?wait=true&timeout=${timeout}" \
         -H "Content-Type: application/json" \

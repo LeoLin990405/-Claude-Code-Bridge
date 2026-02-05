@@ -17,6 +17,7 @@ from typing import Optional, List, Tuple
 from .base_backend import BaseBackend, BackendResult
 from ..models import GatewayRequest
 from ..gateway_config import ProviderConfig
+from ..stream_output import StreamOutput, get_stream_manager
 
 
 def estimate_tokens(text: str) -> int:
@@ -224,22 +225,32 @@ class CLIBackend(BaseBackend):
         return cmd
 
     async def execute(self, request: GatewayRequest) -> BackendResult:
-        """Execute request via CLI subprocess."""
+        """Execute request via CLI subprocess with streaming output."""
         start_time = time.time()
+
+        # Create stream output for real-time logging
+        stream_manager = get_stream_manager()
+        stream = stream_manager.create_stream(request.id, self.config.name)
+        stream.status(f"Starting {self.config.name} CLI execution")
 
         cli = self._find_cli()
         if not cli:
+            error_msg = f"CLI command not found: {self.config.cli_command}"
+            stream.error(error_msg)
+            stream.complete(error=error_msg)
             return BackendResult.fail(
-                f"CLI command not found: {self.config.cli_command}",
+                error_msg,
                 latency_ms=(time.time() - start_time) * 1000,
             )
 
         try:
             # For Gemini, ensure OAuth token is valid before executing
             if self.config.name == "gemini":
+                stream.status("Checking Gemini OAuth token...")
                 await self._ensure_gemini_token()
 
             cmd = self._build_command(request.message)
+            stream.status(f"Executing: {' '.join(cmd[:2])}...")
 
             # Set up environment for non-interactive execution
             env = os.environ.copy()
@@ -260,24 +271,62 @@ class CLIBackend(BaseBackend):
                 debug = os.environ.get("CCB_DEBUG", "0").lower() in ("1", "true", "yes")
                 if debug:
                     print(f"[CCB] Using WezTerm for Gemini, cmd: {cmd}")
+                stream.status("Using WezTerm mode for Gemini...")
                 result = await self._execute_with_wezterm(cmd, request.timeout_s or self.config.timeout_s)
                 if debug:
                     print(f"[CCB] WezTerm result: {result}")
                 if result is not None:
                     stdout, stderr, returncode = result
                     latency_ms = (time.time() - start_time) * 1000
-                    return self._process_output(stdout, stderr, returncode, latency_ms, request.message)
+                    backend_result = self._process_output(stdout, stderr, returncode, latency_ms, request.message)
+                    if backend_result.success:
+                        if backend_result.thinking:
+                            stream.thinking(backend_result.thinking)
+                        stream.output(backend_result.response or "")
+                        stream.complete(response=backend_result.response)
+                    else:
+                        stream.error(backend_result.error or "Unknown error")
+                        stream.complete(error=backend_result.error)
+                    return backend_result
                 if debug:
                     print(f"[CCB] WezTerm returned None, falling back to subprocess")
 
             if use_pty:
+                stream.status("Using PTY mode...")
                 result = await self._execute_with_pty(cmd, env, request.timeout_s or self.config.timeout_s)
                 if result is not None:
                     stdout, stderr, returncode = result
                     latency_ms = (time.time() - start_time) * 1000
-                    return self._process_output(stdout, stderr, returncode, latency_ms, request.message)
+                    backend_result = self._process_output(stdout, stderr, returncode, latency_ms, request.message)
+                    if backend_result.success:
+                        if backend_result.thinking:
+                            stream.thinking(backend_result.thinking)
+                        stream.output(backend_result.response or "")
+                        stream.complete(response=backend_result.response)
+                    else:
+                        stream.error(backend_result.error or "Unknown error")
+                        stream.complete(error=backend_result.error)
+                    return backend_result
 
-            # Fallback to regular subprocess
+            # Fallback to regular subprocess with streaming
+            stream.status("Starting subprocess...")
+            result = await self._execute_with_streaming(cmd, env, request.timeout_s or self.config.timeout_s, stream)
+
+            if result is not None:
+                stdout, stderr, returncode = result
+                latency_ms = (time.time() - start_time) * 1000
+                backend_result = self._process_output(stdout, stderr, returncode, latency_ms, request.message)
+
+                if backend_result.success:
+                    if backend_result.thinking:
+                        stream.thinking(backend_result.thinking)
+                    stream.complete(response=backend_result.response)
+                else:
+                    stream.complete(error=backend_result.error)
+
+                return backend_result
+
+            # Fallback without streaming
             process = await asyncio.create_subprocess_exec(
                 *cmd,
                 stdout=asyncio.subprocess.PIPE,
@@ -297,21 +346,23 @@ class CLIBackend(BaseBackend):
                 # On timeout, check if this provider needs auth
                 latency_ms = (time.time() - start_time) * 1000
                 provider_name = self.config.name
+                error_msg = f"CLI command timed out after {request.timeout_s}s"
+                stream.error(error_msg)
                 if provider_name in ("gemini", "claude", "codex") and _should_auto_open_auth():
                     opened = _open_auth_terminal(provider_name)
                     if opened:
+                        auth_error = f"CLI command timed out. This may be due to authentication. A terminal window has been opened for you to complete authentication for {provider_name}. Please retry after authenticating."
+                        stream.complete(error=auth_error)
                         return BackendResult.fail(
-                            f"CLI command timed out. This may be due to authentication. A terminal window has been opened for you to complete authentication for {provider_name}. Please retry after authenticating.",
+                            auth_error,
                             latency_ms=latency_ms,
                             metadata={"auth_required": True, "auth_terminal_opened": True},
                         )
-                return BackendResult.fail(
-                    f"CLI command timed out after {request.timeout_s}s",
-                    latency_ms=latency_ms,
-                )
+                stream.complete(error=error_msg)
+                return BackendResult.fail(error_msg, latency_ms=latency_ms)
 
             latency_ms = (time.time() - start_time) * 1000
-            return self._process_output(
+            backend_result = self._process_output(
                 stdout.decode("utf-8", errors="replace"),
                 stderr.decode("utf-8", errors="replace"),
                 process.returncode,
@@ -319,11 +370,91 @@ class CLIBackend(BaseBackend):
                 request.message,
             )
 
+            if backend_result.success:
+                if backend_result.thinking:
+                    stream.thinking(backend_result.thinking)
+                stream.output(backend_result.response or "")
+                stream.complete(response=backend_result.response)
+            else:
+                stream.error(backend_result.error or "Unknown error")
+                stream.complete(error=backend_result.error)
+
+            return backend_result
+
         except Exception as e:
+            error_msg = str(e)
+            stream.error(error_msg)
+            stream.complete(error=error_msg)
             return BackendResult.fail(
-                str(e),
+                error_msg,
                 latency_ms=(time.time() - start_time) * 1000,
             )
+
+    async def _execute_with_streaming(
+        self, cmd: List[str], env: dict, timeout: float, stream: StreamOutput
+    ) -> Optional[tuple]:
+        """Execute command with real-time streaming output."""
+        try:
+            process = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+                stdin=asyncio.subprocess.DEVNULL,
+                env=env,
+            )
+
+            stdout_parts = []
+            stderr_parts = []
+            deadline = time.time() + timeout
+            chunk_buffer = ""
+
+            async def read_stream(stream_reader, parts, stream_type):
+                nonlocal chunk_buffer
+                while True:
+                    try:
+                        remaining = deadline - time.time()
+                        if remaining <= 0:
+                            break
+                        chunk = await asyncio.wait_for(
+                            stream_reader.read(1024),
+                            timeout=min(5.0, remaining)
+                        )
+                        if not chunk:
+                            break
+                        decoded = chunk.decode("utf-8", errors="replace")
+                        parts.append(decoded)
+
+                        # Stream output chunks (dedupe rapid small chunks)
+                        chunk_buffer += decoded
+                        if len(chunk_buffer) > 100 or '\n' in chunk_buffer:
+                            stream.chunk(chunk_buffer, source=stream_type)
+                            chunk_buffer = ""
+
+                    except asyncio.TimeoutError:
+                        continue
+
+            # Read both streams concurrently
+            await asyncio.gather(
+                read_stream(process.stdout, stdout_parts, "stdout"),
+                read_stream(process.stderr, stderr_parts, "stderr"),
+            )
+
+            # Flush remaining buffer
+            if chunk_buffer:
+                stream.chunk(chunk_buffer, source="stdout")
+
+            # Wait for process
+            try:
+                await asyncio.wait_for(process.wait(), timeout=5.0)
+            except asyncio.TimeoutError:
+                process.kill()
+                await process.wait()
+
+            return "".join(stdout_parts), "".join(stderr_parts), process.returncode or 0
+
+        except Exception as e:
+            stream.error(f"Streaming execution error: {e}")
+            return None
 
     async def _execute_with_wezterm(
         self, cmd: List[str], timeout: float
