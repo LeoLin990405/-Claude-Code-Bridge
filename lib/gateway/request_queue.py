@@ -193,9 +193,8 @@ class RequestQueue:
                     if elapsed > request.timeout_s:
                         timed_out.append(request_id)
                         self._processing.pop(request_id, None)
-
-        for request_id in timed_out:
-            self.store.update_request_status(request_id, RequestStatus.TIMEOUT)
+                        # Update DB while holding lock to prevent race conditions
+                        self.store.update_request_status(request_id, RequestStatus.TIMEOUT)
 
         return timed_out
 

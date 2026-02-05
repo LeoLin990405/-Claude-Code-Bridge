@@ -1,0 +1,330 @@
+#!/usr/bin/env python3
+"""
+ccb-mem - CCB Memory System CLI
+
+Commands:
+  save [session_path]     Save a session to context archive
+  consolidate [--hours N] Consolidate recent sessions to long-term memory
+  search <keyword>        Search memory archives
+  show <date>             Show memory for a specific date
+  inject <date>           Output path for @ injection in new conversations
+  list                    List recent archives and memories
+"""
+
+import argparse
+import os
+import re
+import sys
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import List, Optional
+
+# Add lib directory to path
+LIB_DIR = Path(__file__).parent.parent / "lib"
+sys.path.insert(0, str(LIB_DIR))
+
+from memory.context_saver import ContextSaver, find_current_session
+from memory.consolidator import NightlyConsolidator
+
+
+class CCBMemoryCLI:
+    """CLI interface for CCB memory system."""
+
+    def __init__(self):
+        self.archive_dir = Path.home() / ".ccb" / "context_archive"
+        self.memory_dir = Path.home() / ".ccb" / "memories"
+
+        # Ensure directories exist
+        self.archive_dir.mkdir(parents=True, exist_ok=True)
+        self.memory_dir.mkdir(parents=True, exist_ok=True)
+
+    def cmd_save(self, session_path: Optional[str] = None, force: bool = False) -> int:
+        """Save a session to context archive."""
+        if session_path:
+            path = Path(session_path)
+        else:
+            # Try to get from environment (set by hook)
+            env_path = os.environ.get('CLAUDE_SESSION_PATH')
+            if env_path:
+                path = Path(env_path)
+            else:
+                path = find_current_session()
+
+        if not path:
+            print("✖ No session file found", file=sys.stderr)
+            print("  Usage: ccb-mem save <session.jsonl>", file=sys.stderr)
+            return 1
+
+        if not path.exists():
+            print(f"✖ Session file not found: {path}", file=sys.stderr)
+            return 1
+
+        saver = ContextSaver(archive_dir=self.archive_dir)
+        result = saver.save_session(path, force=force)
+
+        if result:
+            print(f"✓ Saved context to: {result}")
+            return 0
+        else:
+            print("Session too short or trivial, skipped")
+            return 0
+
+    def cmd_consolidate(self, hours: int = 24) -> int:
+        """Consolidate recent sessions into long-term memory."""
+        consolidator = NightlyConsolidator(
+            archive_dir=self.archive_dir,
+            memory_dir=self.memory_dir
+        )
+
+        print(f"Consolidating sessions from the last {hours} hours...")
+        memory = consolidator.consolidate(hours=hours)
+
+        if memory.get("status") == "no_sessions":
+            print("No sessions found in the specified time range")
+            return 0
+
+        print(f"\nConsolidation complete!")
+        print(f"  Sessions processed: {memory.get('sessions_processed', 0)}")
+        print(f"  Models used: {', '.join(memory.get('models_used', []))}")
+
+        if memory.get('project_progress'):
+            print(f"  Projects: {', '.join(memory['project_progress'].keys())}")
+
+        return 0
+
+    def cmd_search(self, keyword: str) -> int:
+        """Search memory archives for a keyword."""
+        print(f"Searching for: {keyword}\n")
+
+        results = []
+
+        # Search in context archives
+        for archive in self.archive_dir.glob("*.md"):
+            content = archive.read_text(encoding='utf-8')
+            if keyword.lower() in content.lower():
+                # Find matching lines
+                matches = []
+                for i, line in enumerate(content.split('\n')):
+                    if keyword.lower() in line.lower():
+                        matches.append((i + 1, line.strip()[:80]))
+                results.append({
+                    'type': 'archive',
+                    'path': archive,
+                    'matches': matches[:3]  # Limit to 3 matches per file
+                })
+
+        # Search in memory files
+        for memory in self.memory_dir.glob("*.md"):
+            content = memory.read_text(encoding='utf-8')
+            if keyword.lower() in content.lower():
+                matches = []
+                for i, line in enumerate(content.split('\n')):
+                    if keyword.lower() in line.lower():
+                        matches.append((i + 1, line.strip()[:80]))
+                results.append({
+                    'type': 'memory',
+                    'path': memory,
+                    'matches': matches[:3]
+                })
+
+        if not results:
+            print("No matches found")
+            return 0
+
+        print(f"Found {len(results)} files:\n")
+
+        for result in results[:20]:  # Limit to 20 results
+            type_emoji = "📝" if result['type'] == 'archive' else "🧠"
+            print(f"{type_emoji} {result['path'].name}")
+            for line_num, line in result['matches']:
+                # Highlight keyword
+                highlighted = re.sub(
+                    f'({re.escape(keyword)})',
+                    r'\033[1;33m\1\033[0m',
+                    line,
+                    flags=re.IGNORECASE
+                )
+                print(f"   L{line_num}: {highlighted}")
+            print()
+
+        return 0
+
+    def cmd_show(self, date_str: str) -> int:
+        """Show memory for a specific date."""
+        # Validate date format
+        try:
+            if date_str == 'today':
+                date = datetime.now()
+            elif date_str == 'yesterday':
+                date = datetime.now() - timedelta(days=1)
+            else:
+                date = datetime.strptime(date_str, "%Y-%m-%d")
+        except ValueError:
+            print(f"✖ Invalid date format: {date_str}", file=sys.stderr)
+            print("  Use: YYYY-MM-DD, 'today', or 'yesterday'", file=sys.stderr)
+            return 1
+
+        date_formatted = date.strftime("%Y-%m-%d")
+
+        # Look for memory file
+        memory_file = self.memory_dir / f"{date_formatted}.md"
+        if memory_file.exists():
+            print(f"=== Memory for {date_formatted} ===\n")
+            print(memory_file.read_text(encoding='utf-8'))
+            return 0
+
+        # Look for archives from that date
+        archives = list(self.archive_dir.glob(f"{date_formatted}*.md"))
+        if archives:
+            print(f"=== Archives for {date_formatted} ({len(archives)} files) ===\n")
+            for archive in archives:
+                print(f"📝 {archive.name}")
+                # Show first few lines
+                lines = archive.read_text(encoding='utf-8').split('\n')[:10]
+                for line in lines:
+                    print(f"   {line}")
+                print()
+            return 0
+
+        print(f"No memory or archives found for {date_formatted}")
+        return 1
+
+    def cmd_inject(self, date_str: str) -> int:
+        """Output path for @ injection in new conversations."""
+        # Validate date
+        try:
+            if date_str == 'today':
+                date = datetime.now()
+            elif date_str == 'yesterday':
+                date = datetime.now() - timedelta(days=1)
+            else:
+                date = datetime.strptime(date_str, "%Y-%m-%d")
+        except ValueError:
+            print(f"✖ Invalid date: {date_str}", file=sys.stderr)
+            return 1
+
+        date_formatted = date.strftime("%Y-%m-%d")
+
+        # Prefer memory file, then archives
+        memory_file = self.memory_dir / f"{date_formatted}.md"
+        if memory_file.exists():
+            print(str(memory_file))
+            return 0
+
+        archives = sorted(self.archive_dir.glob(f"{date_formatted}*.md"))
+        if archives:
+            # Return the most recent archive for that date
+            print(str(archives[-1]))
+            return 0
+
+        print(f"✖ No files found for {date_formatted}", file=sys.stderr)
+        return 1
+
+    def cmd_list(self, limit: int = 10) -> int:
+        """List recent archives and memories."""
+        print("=== Recent Context Archives ===\n")
+
+        archives = sorted(
+            self.archive_dir.glob("*.md"),
+            key=lambda p: p.stat().st_mtime,
+            reverse=True
+        )[:limit]
+
+        if archives:
+            for archive in archives:
+                mtime = datetime.fromtimestamp(archive.stat().st_mtime)
+                size = archive.stat().st_size
+                print(f"  📝 {archive.name:<40} {mtime.strftime('%m-%d %H:%M'):<12} {size:>6}B")
+        else:
+            print("  (no archives)")
+
+        print("\n=== Long-term Memories ===\n")
+
+        memories = sorted(
+            self.memory_dir.glob("*.md"),
+            key=lambda p: p.name,
+            reverse=True
+        )[:limit]
+
+        if memories:
+            for memory in memories:
+                size = memory.stat().st_size
+                print(f"  🧠 {memory.name:<40} {size:>6}B")
+        else:
+            print("  (no memories)")
+
+        return 0
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="CCB Memory System CLI",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  ccb-mem save                     # Save current session
+  ccb-mem save ~/path/to/session.jsonl
+  ccb-mem consolidate              # Consolidate last 24 hours
+  ccb-mem consolidate --hours 48   # Consolidate last 48 hours
+  ccb-mem search "gateway"         # Search for keyword
+  ccb-mem show today               # Show today's memory
+  ccb-mem show 2026-02-05          # Show specific date
+  ccb-mem inject yesterday         # Get path for @ injection
+  ccb-mem list                     # List recent files
+"""
+    )
+
+    subparsers = parser.add_subparsers(dest='command', help='Available commands')
+
+    # save command
+    save_parser = subparsers.add_parser('save', help='Save session to archive')
+    save_parser.add_argument('session_path', nargs='?', help='Path to session.jsonl')
+    save_parser.add_argument('--force', '-f', action='store_true', help='Save even trivial sessions')
+
+    # consolidate command
+    consolidate_parser = subparsers.add_parser('consolidate', help='Consolidate to long-term memory')
+    consolidate_parser.add_argument('--hours', '-H', type=int, default=24, help='Hours to look back')
+
+    # search command
+    search_parser = subparsers.add_parser('search', help='Search archives')
+    search_parser.add_argument('keyword', help='Keyword to search for')
+
+    # show command
+    show_parser = subparsers.add_parser('show', help='Show memory for date')
+    show_parser.add_argument('date', help='Date (YYYY-MM-DD, today, yesterday)')
+
+    # inject command
+    inject_parser = subparsers.add_parser('inject', help='Get path for @ injection')
+    inject_parser.add_argument('date', help='Date (YYYY-MM-DD, today, yesterday)')
+
+    # list command
+    list_parser = subparsers.add_parser('list', help='List recent files')
+    list_parser.add_argument('--limit', '-n', type=int, default=10, help='Max items to show')
+
+    args = parser.parse_args()
+
+    if not args.command:
+        parser.print_help()
+        return 0
+
+    cli = CCBMemoryCLI()
+
+    if args.command == 'save':
+        return cli.cmd_save(args.session_path, args.force)
+    elif args.command == 'consolidate':
+        return cli.cmd_consolidate(args.hours)
+    elif args.command == 'search':
+        return cli.cmd_search(args.keyword)
+    elif args.command == 'show':
+        return cli.cmd_show(args.date)
+    elif args.command == 'inject':
+        return cli.cmd_inject(args.date)
+    elif args.command == 'list':
+        return cli.cmd_list(args.limit)
+    else:
+        parser.print_help()
+        return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Load Index Debug</title>
+</head>
+<body style="background:#1a1a2e;color:white;padding:20px;font-family:monospace;">
+    <h1>Loading index.html in iframe...</h1>
+    <p>Check browser console (F12) for errors</p>
+    <div id="errors" style="background:#300;padding:10px;margin:10px 0;"></div>
+    <iframe id="frame" src="/web" style="width:100%;height:500px;border:1px solid #666;"></iframe>
+    <script>
+        window.onerror = function(msg, url, line, col, error) {
+            document.getElementById('errors').innerHTML += '<pre style="color:red;">' + msg + '</pre>';
+        };
+
+        var frame = document.getElementById('frame');
+        frame.onload = function() {
+            try {
+                var frameDoc = frame.contentDocument || frame.contentWindow.document;
+                console.log('Frame loaded, title:', frameDoc.title);
+            } catch (e) {
+                document.getElementById('errors').innerHTML += '<pre style="color:red;">Frame error: ' + e.message + '</pre>';
+            }
+        };
+
+        frame.onerror = function(e) {
+            document.getElementById('errors').innerHTML += '<pre style="color:red;">Frame load error</pre>';
+        };
+    </script>
+</body>
+</html>

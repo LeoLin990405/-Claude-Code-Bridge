@@ -1840,7 +1840,16 @@ def create_api(
     @app.get("/web/{file_path:path}")
     async def serve_web_files(file_path: str):
         """Serve static files from web directory."""
-        full_path = WEB_UI_DIR / file_path
+        # Security: Resolve to canonical path and validate it's within WEB_UI_DIR
+        try:
+            full_path = (WEB_UI_DIR / file_path).resolve()
+            web_ui_resolved = WEB_UI_DIR.resolve()
+            # Check path is within WEB_UI_DIR (prevent path traversal)
+            if not str(full_path).startswith(str(web_ui_resolved) + "/") and full_path != web_ui_resolved:
+                return HTMLResponse(content="Forbidden", status_code=403)
+        except (ValueError, OSError):
+            return HTMLResponse(content="Invalid path", status_code=400)
+
         if full_path.exists() and full_path.is_file():
             # Determine media type
             suffix = full_path.suffix.lower()
