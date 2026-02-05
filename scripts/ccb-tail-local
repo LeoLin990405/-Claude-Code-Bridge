@@ -1,0 +1,302 @@
+#!/usr/bin/env python3
+"""
+ccb-tail - Real-time stream output tracker for CCB Gateway requests.
+
+Usage:
+  ccb-tail <request_id>     # Tail output for a specific request
+  ccb-tail --list [n]       # List recent streams
+  ccb-tail --live           # Watch for new streams (coming soon)
+"""
+
+import argparse
+import json
+import os
+import sys
+import time
+from datetime import datetime
+from pathlib import Path
+from typing import Optional, List
+
+# Stream directory
+STREAM_DIR = Path.home() / ".ccb" / "streams"
+
+# ANSI colors
+COLORS = {
+    'reset': '\033[0m',
+    'bold': '\033[1m',
+    'dim': '\033[2m',
+    'red': '\033[31m',
+    'green': '\033[32m',
+    'yellow': '\033[33m',
+    'blue': '\033[34m',
+    'magenta': '\033[35m',
+    'cyan': '\033[36m',
+    'white': '\033[37m',
+}
+
+# Entry type to color mapping
+TYPE_COLORS = {
+    'start': 'blue',
+    'status': 'cyan',
+    'thinking': 'yellow',
+    'chunk': 'white',
+    'output': 'green',
+    'error': 'red',
+    'complete': 'magenta',
+}
+
+# Entry type to icon mapping
+TYPE_ICONS = {
+    'start': '🚀',
+    'status': '📋',
+    'thinking': '🧠',
+    'chunk': '📝',
+    'output': '✅',
+    'error': '❌',
+    'complete': '🏁',
+}
+
+
+def colorize(text: str, color: str) -> str:
+    """Add ANSI color codes to text."""
+    if color not in COLORS:
+        return text
+    return f"{COLORS[color]}{text}{COLORS['reset']}"
+
+
+def format_entry(entry: dict, show_content: bool = True, first_ts: float = None) -> str:
+    """Format a stream entry for display."""
+    entry_type = entry.get('type', 'unknown')
+    ts = entry.get('ts', 0)
+    time_str = entry.get('time', datetime.fromtimestamp(ts).strftime("%H:%M:%S.%f")[:-3] if ts else '?')
+    content = entry.get('content', '')
+    meta = entry.get('meta', {})
+
+    # Calculate delta from first timestamp
+    delta_str = ""
+    if first_ts and ts:
+        delta_ms = (ts - first_ts) * 1000
+        delta_str = f"+{delta_ms:>7.0f}ms"
+
+    # Get color and icon
+    color = TYPE_COLORS.get(entry_type, 'white')
+    icon = TYPE_ICONS.get(entry_type, '•')
+
+    # Build output line
+    parts = [time_str]
+    if delta_str:
+        parts.append(colorize(delta_str, 'dim'))
+    parts.append(f"{icon} {colorize(f'[{entry_type:8}]', color)}")
+
+    if show_content and content:
+        # Truncate long content for display
+        max_len = 100
+        if len(content) > max_len:
+            content_display = content[:max_len] + '...'
+        else:
+            content_display = content
+        parts.append(content_display)
+
+    return '  '.join(parts)
+
+
+def tail_stream(request_id: str, follow: bool = True, show_full: bool = False) -> int:
+    """Tail stream output for a request."""
+    # Find stream file
+    stream_file = STREAM_DIR / f"{request_id}.jsonl"
+
+    # Try partial match if exact file not found
+    if not stream_file.exists():
+        matches = list(STREAM_DIR.glob(f"{request_id}*.jsonl"))
+        if len(matches) == 1:
+            stream_file = matches[0]
+            request_id = stream_file.stem
+        elif len(matches) > 1:
+            print(f"Multiple matches for '{request_id}':", file=sys.stderr)
+            for m in matches[:5]:
+                print(f"  {m.stem}", file=sys.stderr)
+            return 1
+        else:
+            print(f"✖ No stream found for request: {request_id}", file=sys.stderr)
+            print(f"  Looking in: {STREAM_DIR}", file=sys.stderr)
+            return 1
+
+    print(f"=== Tailing: {request_id} ===")
+    print(f"File: {stream_file}")
+    print()
+
+    # Read and display entries
+    displayed = 0
+    first_ts = None
+    completed = False
+
+    try:
+        while True:
+            if not stream_file.exists():
+                if displayed == 0:
+                    print("Waiting for stream to start...")
+                time.sleep(0.5)
+                continue
+
+            with open(stream_file, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+
+            # Display new entries
+            for i, line in enumerate(lines[displayed:], start=displayed):
+                try:
+                    entry = json.loads(line.strip())
+
+                    # Track first timestamp
+                    if first_ts is None:
+                        first_ts = entry.get('ts', 0)
+
+                    # Format and print
+                    if show_full and entry.get('type') in ('thinking', 'output'):
+                        # Show full content for thinking/output
+                        print(format_entry(entry, show_content=False, first_ts=first_ts))
+                        content = entry.get('content', '')
+                        if content:
+                            print(f"\n{content}\n")
+                    else:
+                        print(format_entry(entry, first_ts=first_ts))
+
+                    # Check for completion
+                    if entry.get('type') == 'complete':
+                        completed = True
+                        meta = entry.get('meta', {})
+                        elapsed = meta.get('elapsed_s', 0)
+                        success = meta.get('success', False)
+
+                        print()
+                        if success:
+                            print(colorize(f"✓ Completed in {elapsed:.2f}s", 'green'))
+                        else:
+                            error = meta.get('error', 'Unknown error')
+                            print(colorize(f"✖ Failed: {error}", 'red'))
+
+                except json.JSONDecodeError:
+                    continue
+
+            displayed = len(lines)
+
+            # Exit if completed or not following
+            if completed or not follow:
+                break
+
+            # Wait for more entries
+            time.sleep(0.1)
+
+    except KeyboardInterrupt:
+        print("\n\nInterrupted")
+        return 0
+
+    return 0
+
+
+def list_streams(limit: int = 10) -> int:
+    """List recent stream files."""
+    if not STREAM_DIR.exists():
+        print("No streams directory found")
+        return 0
+
+    # Get all stream files sorted by modification time
+    streams = []
+    for path in STREAM_DIR.glob("*.jsonl"):
+        try:
+            stat = path.stat()
+
+            # Read first and last entry
+            with open(path, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+
+            first_entry = json.loads(lines[0].strip()) if lines else {}
+            last_entry = json.loads(lines[-1].strip()) if lines else {}
+
+            streams.append({
+                'request_id': path.stem,
+                'path': path,
+                'size': stat.st_size,
+                'mtime': stat.st_mtime,
+                'entries': len(lines),
+                'provider': first_entry.get('meta', {}).get('provider', '?'),
+                'status': last_entry.get('type', '?'),
+                'success': last_entry.get('meta', {}).get('success') if last_entry.get('type') == 'complete' else None,
+            })
+        except Exception:
+            continue
+
+    streams.sort(key=lambda x: x['mtime'], reverse=True)
+
+    print(f"=== Recent Streams ({len(streams)} total) ===\n")
+
+    print(f"{'Request ID':<20} {'Provider':<10} {'Entries':<8} {'Status':<10} {'Time':<16}")
+    print("-" * 70)
+
+    for s in streams[:limit]:
+        req_id = s['request_id'][:18]
+        provider = s['provider'][:8]
+        entries = s['entries']
+        status = s['status']
+        mtime = datetime.fromtimestamp(s['mtime']).strftime("%m-%d %H:%M:%S")
+
+        # Color status
+        if s['success'] is True:
+            status_display = colorize('✓ complete', 'green')
+        elif s['success'] is False:
+            status_display = colorize('✖ error', 'red')
+        elif status == 'complete':
+            status_display = colorize(status, 'green')
+        else:
+            status_display = colorize(status, 'yellow')
+
+        print(f"{req_id:<20} {provider:<10} {entries:<8} {status_display:<19} {mtime:<16}")
+
+    print()
+    print("Use: ccb-tail <request_id> to tail a specific stream")
+
+    return 0
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Real-time stream output tracker for CCB Gateway requests",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  ccb-tail abc123                # Tail stream for request abc123
+  ccb-tail abc123 --no-follow    # Show current state only
+  ccb-tail abc123 --full         # Show full thinking/output content
+  ccb-tail --list                # List recent streams
+  ccb-tail --list 20             # List last 20 streams
+"""
+    )
+
+    parser.add_argument('request_id', nargs='?', help='Request ID to tail')
+    parser.add_argument('--list', '-l', nargs='?', const=10, type=int, metavar='N',
+                        help='List recent streams (default: 10)')
+    parser.add_argument('--no-follow', '-n', action='store_true',
+                        help='Do not follow, just show current state')
+    parser.add_argument('--full', '-f', action='store_true',
+                        help='Show full content for thinking/output entries')
+
+    args = parser.parse_args()
+
+    # List mode
+    if args.list is not None:
+        return list_streams(args.list)
+
+    # Tail mode
+    if args.request_id:
+        return tail_stream(
+            args.request_id,
+            follow=not args.no_follow,
+            show_full=args.full
+        )
+
+    # No arguments - show help
+    parser.print_help()
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

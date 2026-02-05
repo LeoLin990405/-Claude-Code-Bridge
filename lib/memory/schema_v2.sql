@@ -279,6 +279,42 @@ CREATE INDEX IF NOT EXISTS idx_skills_feedback_timestamp ON skills_feedback(time
 CREATE INDEX IF NOT EXISTS idx_skills_feedback_rating ON skills_feedback(rating);
 
 -- ============================================================================
+-- 13. Stream Entries Table - 流输出记录（Phase 8: Stream Sync）
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS stream_entries (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    request_id TEXT NOT NULL,           -- Gateway Request ID
+    entry_type TEXT NOT NULL,           -- start, status, thinking, chunk, output, error, complete
+    timestamp REAL NOT NULL,            -- Unix timestamp (高精度)
+    content TEXT,                       -- 条目内容
+    metadata TEXT,                      -- JSON: 扩展元数据
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_stream_request_id ON stream_entries(request_id);
+CREATE INDEX IF NOT EXISTS idx_stream_type ON stream_entries(entry_type);
+CREATE INDEX IF NOT EXISTS idx_stream_timestamp ON stream_entries(timestamp);
+
+-- 思考链专用视图 (方便查询)
+CREATE VIEW IF NOT EXISTS thinking_chains AS
+SELECT request_id, content, timestamp, metadata
+FROM stream_entries
+WHERE entry_type = 'thinking'
+ORDER BY timestamp;
+
+-- 请求执行时间线视图
+CREATE VIEW IF NOT EXISTS request_timeline AS
+SELECT
+    request_id,
+    entry_type,
+    content,
+    timestamp,
+    datetime(timestamp, 'unixepoch', 'localtime') as time_str,
+    metadata
+FROM stream_entries
+ORDER BY request_id, timestamp;
+
+-- ============================================================================
 -- Triggers - 自动维护
 -- ============================================================================
 

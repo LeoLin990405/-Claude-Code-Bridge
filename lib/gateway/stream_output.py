@@ -3,6 +3,7 @@ Stream Output Manager for CCB Gateway.
 
 Provides real-time output streaming for async tasks.
 Each request gets a dedicated log file that can be tailed for live output.
+Supports dual-write to both file and SQLite database for persistence.
 """
 from __future__ import annotations
 
@@ -10,13 +11,17 @@ import asyncio
 import os
 import time
 import json
+import sqlite3
 from pathlib import Path
-from typing import Optional, Dict, Any, Callable
+from typing import Optional, Dict, Any, Callable, List
 from dataclasses import dataclass, field
 from datetime import datetime
 
 # Default stream directory
 STREAM_DIR = Path(os.path.expanduser("~/.ccb/streams"))
+
+# Default database path
+DB_PATH = Path(os.path.expanduser("~/.ccb/ccb_memory.db"))
 
 
 @dataclass
@@ -42,9 +47,11 @@ class StreamOutput:
     Manages streaming output for a single request.
 
     Writes to a log file that can be tailed for real-time updates.
+    Also syncs entries to SQLite database for persistence.
     """
 
-    def __init__(self, request_id: str, provider: str, stream_dir: Optional[Path] = None):
+    def __init__(self, request_id: str, provider: str, stream_dir: Optional[Path] = None,
+                 db_path: Optional[Path] = None, buffer_size: int = 10):
         self.request_id = request_id
         self.provider = provider
         self.stream_dir = stream_dir or STREAM_DIR
@@ -55,6 +62,12 @@ class StreamOutput:
         self.started_at = time.time()
         self._closed = False
 
+        # Database sync configuration
+        self._db_path = db_path or DB_PATH
+        self._entries_buffer: List[StreamEntry] = []
+        self._buffer_size = buffer_size
+        self._db_enabled = self._db_path.exists()
+
         # Write initial entry
         self._write_entry(StreamEntry(
             timestamp=time.time(),
@@ -64,15 +77,49 @@ class StreamOutput:
         ))
 
     def _write_entry(self, entry: StreamEntry) -> None:
-        """Write an entry to the log file."""
+        """Write an entry to the log file and buffer for DB sync."""
         if self._closed:
             return
         try:
+            # 1. Write to JSONL file (original behavior)
             with open(self.log_path, "a", encoding="utf-8") as f:
                 f.write(entry.to_json() + "\n")
                 f.flush()
+
+            # 2. Buffer for database sync
+            if self._db_enabled:
+                self._entries_buffer.append(entry)
+                if len(self._entries_buffer) >= self._buffer_size:
+                    self._flush_to_db()
         except Exception as e:
             print(f"[StreamOutput] Error writing to {self.log_path}: {e}")
+
+    def _flush_to_db(self) -> None:
+        """Batch write buffered entries to database."""
+        if not self._entries_buffer or not self._db_enabled:
+            return
+        try:
+            conn = sqlite3.connect(str(self._db_path), timeout=5.0)
+            cursor = conn.cursor()
+            cursor.executemany(
+                """INSERT INTO stream_entries
+                   (request_id, entry_type, timestamp, content, metadata)
+                   VALUES (?, ?, ?, ?, ?)""",
+                [(self.request_id, e.type, e.timestamp, e.content,
+                  json.dumps(e.metadata, ensure_ascii=False)) for e in self._entries_buffer]
+            )
+            conn.commit()
+            conn.close()
+            self._entries_buffer = []
+        except sqlite3.OperationalError as e:
+            # Table might not exist yet, disable DB sync
+            if "no such table" in str(e):
+                print(f"[StreamOutput] stream_entries table not found, disabling DB sync")
+                self._db_enabled = False
+            else:
+                print(f"[StreamOutput] DB sync error: {e}")
+        except Exception as e:
+            print(f"[StreamOutput] DB sync error: {e}")
 
     def status(self, message: str, **meta) -> None:
         """Write a status update."""
@@ -134,10 +181,14 @@ class StreamOutput:
                 **meta
             }
         ))
+        # Force flush remaining entries to DB on completion
+        self._flush_to_db()
         self._closed = True
 
     def close(self) -> None:
         """Close the stream without completion marker."""
+        # Flush any remaining entries before closing
+        self._flush_to_db()
         self._closed = True
 
 

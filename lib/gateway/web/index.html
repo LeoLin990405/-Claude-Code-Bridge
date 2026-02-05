@@ -349,7 +349,7 @@
                             </div>
                             <div>
                                 <h1 class="text-xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">CCB Gateway</h1>
-                                <p class="text-xs" :class="theme === 'light' ? 'text-gray-600' : 'text-gray-500'">Multi-AI Orchestrator</p>
+                                <p class="text-xs" :class="theme === 'light' ? 'text-gray-600' : 'text-gray-500'">{{ t('multiAiOrchestrator') }}</p>
                             </div>
                         </div>
                         <div class="flex items-center space-x-2 px-3 py-1.5 rounded-full"
@@ -617,7 +617,7 @@
                                     <div class="flex items-center space-x-2">
                                         <span v-if="provider.requestId" class="text-xs text-gray-500 font-mono">{{ provider.requestId }}</span>
                                         <button @click="monitorFocusProvider = provider.name; monitorLayout = 'focus'"
-                                                class="text-gray-400 hover:text-white transition-colors" title="Focus">
+                                                class="text-gray-400 hover:text-white transition-colors" :title="t('focus')">
                                             <i class="fas fa-expand-alt"></i>
                                         </button>
                                     </div>
@@ -683,7 +683,7 @@
                     <div class="stat-card p-4">
                         <div class="flex items-center justify-between">
                             <div>
-                                <div class="text-sm text-gray-400 mb-1">Total Sessions</div>
+                                <div class="text-sm text-gray-400 mb-1">{{ t('totalSessions') }}</div>
                                 <div class="text-2xl font-semibold text-white">{{ memoryStats.total_sessions || 0 }}</div>
                             </div>
                             <div class="w-10 h-10 bg-indigo-500/20 rounded-lg flex items-center justify-center">
@@ -694,7 +694,7 @@
                     <div class="stat-card p-4">
                         <div class="flex items-center justify-between">
                             <div>
-                                <div class="text-sm text-gray-400 mb-1">Total Messages</div>
+                                <div class="text-sm text-gray-400 mb-1">{{ t('totalMessages') }}</div>
                                 <div class="text-2xl font-semibold text-white">{{ memoryStats.total_messages || 0 }}</div>
                             </div>
                             <div class="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
@@ -705,7 +705,7 @@
                     <div class="stat-card p-4">
                         <div class="flex items-center justify-between">
                             <div>
-                                <div class="text-sm text-gray-400 mb-1">Total Tokens</div>
+                                <div class="text-sm text-gray-400 mb-1">{{ t('totalTokensLabel') }}</div>
                                 <div class="text-2xl font-semibold text-white">{{ formatNumber(memoryStats.total_tokens || 0) }}</div>
                             </div>
                             <div class="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center">
@@ -758,17 +758,17 @@
                         <label class="block text-sm font-medium text-gray-400 mb-2">{{ t('searchConversations') }}</label>
                         <div class="flex gap-2">
                             <input v-model="memorySearchQuery" @keyup.enter="searchMemory" type="text"
-                                   placeholder="Search messages..."
+                                   :placeholder="t('searchMessages')"
                                    class="flex-1 px-4 py-2 bg-gray-900/50 border border-gray-700/50 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500/50">
                             <button @click="searchMemory" class="btn-primary">
-                                <i class="fas fa-search mr-2"></i>Search
+                                <i class="fas fa-search mr-2"></i>{{ t('search') }}
                             </button>
                         </div>
                     </div>
 
                     <!-- Search Results -->
                     <div v-if="memorySearchResults.length > 0" class="space-y-2 mt-4">
-                        <div class="text-sm text-gray-400 mb-2">Found {{ memorySearchResults.length }} results</div>
+                        <div class="text-sm text-gray-400 mb-2">{{ t('foundResults') }} {{ memorySearchResults.length }} {{ t('results') }}</div>
                         <div v-for="result in memorySearchResults" :key="result.message_id"
                              class="p-4 bg-gray-900/30 border border-gray-700/30 rounded-lg hover:border-indigo-500/30 cursor-pointer transition-colors"
                              @click="viewSession(result.session_id)">
@@ -939,11 +939,297 @@
                     </div>
                 </div>
 
+                <!-- System 2 Sub-tab -->
+                <div v-show="memorySubTab === 'system2'" class="space-y-6">
+                    <!-- System 2 Stats Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div class="stat-card purple p-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <div class="text-sm text-gray-400 mb-1">{{ t('totalArchives') }}</div>
+                                    <div class="text-2xl font-semibold text-white">{{ consolidationStats.total_archives || 0 }}</div>
+                                </div>
+                                <div class="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-archive text-purple-400"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="stat-card cyan p-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <div class="text-sm text-gray-400 mb-1">{{ t('totalConsolidated') }}</div>
+                                    <div class="text-2xl font-semibold text-white">{{ consolidationStats.total_consolidated || 0 }}</div>
+                                </div>
+                                <div class="w-10 h-10 bg-cyan-500/20 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-compress-arrows-alt text-cyan-400"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="stat-card emerald p-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <div class="text-sm text-gray-400 mb-1">{{ t('avgImportance') }}</div>
+                                    <div class="text-2xl font-semibold text-white">{{ (consolidationStats.avg_importance || 0).toFixed(2) }}</div>
+                                </div>
+                                <div class="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-star text-emerald-400"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="stat-card amber p-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <div class="text-sm text-gray-400 mb-1">{{ t('lastConsolidation') }}</div>
+                                    <div class="text-lg font-semibold text-white">{{ consolidationStats.last_run ? formatDate(consolidationStats.last_run) : 'Never' }}</div>
+                                </div>
+                                <div class="w-10 h-10 bg-amber-500/20 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-clock text-amber-400"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- System 2 Operations -->
+                    <div class="glass-card p-6">
+                        <h2 class="text-lg font-semibold mb-4 flex items-center">
+                            <i class="fas fa-cogs text-purple-400 mr-3"></i>{{ t('system2Operations') }}
+                        </h2>
+                        <div class="system2-ops">
+                            <button @click="showConsolidateModal = true" class="system2-op-btn consolidate" :disabled="system2Loading">
+                                <i class="fas fa-compress-arrows-alt"></i>
+                                <span>{{ t('runConsolidation') }}</span>
+                            </button>
+                            <button @click="applyDecay" class="system2-op-btn decay" :disabled="system2Loading">
+                                <i class="fas fa-hourglass-half"></i>
+                                <span>{{ t('applyDecay') }}</span>
+                            </button>
+                            <button @click="mergeMemories" class="system2-op-btn merge" :disabled="system2Loading">
+                                <i class="fas fa-object-group"></i>
+                                <span>{{ t('mergeMemories') }}</span>
+                            </button>
+                            <button @click="showForgetModal = true" class="system2-op-btn forget" :disabled="system2Loading">
+                                <i class="fas fa-eraser"></i>
+                                <span>{{ t('forgetMemories') }}</span>
+                            </button>
+                        </div>
+                        <div v-if="system2Loading" class="mt-4 flex items-center text-sm text-gray-400">
+                            <i class="fas fa-spinner fa-spin mr-2"></i>{{ t('processingText') }}
+                        </div>
+                    </div>
+
+                    <!-- Consolidated Memories List -->
+                    <div class="glass-card p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-lg font-semibold flex items-center">
+                                <i class="fas fa-brain text-purple-400 mr-3"></i>{{ t('consolidatedMemories') }}
+                            </h2>
+                            <button @click="fetchConsolidatedMemories" class="btn-secondary text-sm">
+                                <i class="fas fa-sync mr-2"></i>{{ t('refresh') }}
+                            </button>
+                        </div>
+
+                        <div v-if="consolidatedMemories.length > 0" class="space-y-4">
+                            <div v-for="mem in consolidatedMemories" :key="mem.id" class="consolidation-card">
+                                <div class="flex items-start justify-between mb-3">
+                                    <div class="date-badge">
+                                        <i class="fas fa-calendar-alt"></i>
+                                        {{ formatDate(mem.consolidation_date) }}
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs text-gray-500">{{ mem.session_count || 0 }} sessions</span>
+                                        <span v-if="mem.llm_enhanced" class="px-2 py-0.5 bg-purple-500/20 text-purple-400 text-xs rounded-full">
+                                            <i class="fas fa-magic mr-1"></i>LLM Enhanced
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="summary">{{ mem.summary }}</div>
+                                <div v-if="mem.learnings && mem.learnings.length" class="mt-3">
+                                    <div class="text-xs text-gray-500 mb-2">{{ t('learnings') }}:</div>
+                                    <div class="learnings-list">
+                                        <span v-for="(learning, idx) in mem.learnings.slice(0, 5)" :key="idx" class="learning-tag">
+                                            {{ learning }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div v-if="mem.patterns && mem.patterns.length" class="mt-3">
+                                    <div class="text-xs text-gray-500 mb-2">{{ t('patterns') }}:</div>
+                                    <div v-for="(pattern, idx) in mem.patterns.slice(0, 2)" :key="idx" class="pattern-card">
+                                        {{ pattern }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div v-else class="text-center py-12 text-gray-500">
+                            <i class="fas fa-brain text-5xl mb-4"></i>
+                            <p class="text-lg">{{ t('noConsolidatedMemories') }}</p>
+                            <p class="text-sm mt-2">{{ t('runConsolidationHint') }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Heuristic Sub-tab -->
+                <div v-show="memorySubTab === 'heuristic'" class="space-y-6">
+                    <!-- Heuristic Configuration Card -->
+                    <div class="glass-card p-6">
+                        <h2 class="text-lg font-semibold mb-4 flex items-center">
+                            <i class="fas fa-sliders-h text-cyan-400 mr-3"></i>{{ t('heuristicConfig') }}
+                        </h2>
+                        <p class="text-sm text-gray-400 mb-4">{{ t('scoreFormula') }}</p>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Alpha (Relevance) -->
+                            <div>
+                                <div class="flex items-center justify-between mb-2">
+                                    <label class="text-sm font-medium text-gray-300">{{ t('relevanceWeight') }}</label>
+                                    <span class="score-badge relevance">{{ heuristicConfig.alpha.toFixed(2) }}</span>
+                                </div>
+                                <input type="range" v-model.number="heuristicConfig.alpha" min="0" max="1" step="0.05"
+                                       class="heuristic-slider relevance w-full" @change="debouncedSaveHeuristicConfig">
+                            </div>
+
+                            <!-- Beta (Importance) -->
+                            <div>
+                                <div class="flex items-center justify-between mb-2">
+                                    <label class="text-sm font-medium text-gray-300">{{ t('importanceWeight') }}</label>
+                                    <span class="score-badge importance">{{ heuristicConfig.beta.toFixed(2) }}</span>
+                                </div>
+                                <input type="range" v-model.number="heuristicConfig.beta" min="0" max="1" step="0.05"
+                                       class="heuristic-slider importance w-full" @change="debouncedSaveHeuristicConfig">
+                            </div>
+
+                            <!-- Gamma (Recency) -->
+                            <div>
+                                <div class="flex items-center justify-between mb-2">
+                                    <label class="text-sm font-medium text-gray-300">{{ t('recencyWeight') }}</label>
+                                    <span class="score-badge recency">{{ heuristicConfig.gamma.toFixed(2) }}</span>
+                                </div>
+                                <input type="range" v-model.number="heuristicConfig.gamma" min="0" max="1" step="0.05"
+                                       class="heuristic-slider recency w-full" @change="debouncedSaveHeuristicConfig">
+                            </div>
+
+                            <!-- Lambda (Decay Rate) -->
+                            <div>
+                                <div class="flex items-center justify-between mb-2">
+                                    <label class="text-sm font-medium text-gray-300">{{ t('decayRate') }}</label>
+                                    <span class="score-badge final">{{ heuristicConfig.lambda.toFixed(2) }}</span>
+                                </div>
+                                <input type="range" v-model.number="heuristicConfig.lambda" min="0" max="0.5" step="0.01"
+                                       class="heuristic-slider decay w-full" @change="debouncedSaveHeuristicConfig">
+                            </div>
+                        </div>
+
+                        <div class="mt-4 flex justify-end">
+                            <button @click="saveHeuristicConfig" class="btn-primary text-sm">
+                                <i class="fas fa-save mr-2"></i>{{ t('saveConfig') }}
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Memory Health -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <!-- Health Score -->
+                        <div class="glass-card p-6 flex flex-col items-center">
+                            <h3 class="text-sm font-medium text-gray-400 mb-4">{{ t('memoryHealth') }}</h3>
+                            <div class="health-meter" :style="{ '--health-score': memoryHealth.health_score || 0 }">
+                                <svg viewBox="0 0 120 120" class="w-full h-full">
+                                    <circle cx="60" cy="60" r="50" class="health-meter-ring health-meter-bg"/>
+                                    <circle cx="60" cy="60" r="50"
+                                            :class="['health-meter-ring health-meter-value',
+                                                     memoryHealth.health_score < 40 ? 'danger' :
+                                                     memoryHealth.health_score < 70 ? 'warning' : '']"/>
+                                </svg>
+                                <div class="health-meter-text">
+                                    <div class="health-meter-score">{{ memoryHealth.health_score || 0 }}</div>
+                                    <div class="health-meter-label">{{ t('scoreLabel') }}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Importance Distribution -->
+                        <div class="glass-card p-6">
+                            <h3 class="text-sm font-medium text-gray-400 mb-4">{{ t('importanceDistribution') }}</h3>
+                            <div class="distribution-bar mb-2">
+                                <div class="distribution-bar-segment high"
+                                     :style="{ width: (memoryHealth.importance_distribution?.high || 0) / Math.max(1, (memoryHealth.importance_distribution?.high || 0) + (memoryHealth.importance_distribution?.medium || 0) + (memoryHealth.importance_distribution?.low || 0)) * 100 + '%' }"></div>
+                                <div class="distribution-bar-segment medium"
+                                     :style="{ width: (memoryHealth.importance_distribution?.medium || 0) / Math.max(1, (memoryHealth.importance_distribution?.high || 0) + (memoryHealth.importance_distribution?.medium || 0) + (memoryHealth.importance_distribution?.low || 0)) * 100 + '%' }"></div>
+                                <div class="distribution-bar-segment low"
+                                     :style="{ width: (memoryHealth.importance_distribution?.low || 0) / Math.max(1, (memoryHealth.importance_distribution?.high || 0) + (memoryHealth.importance_distribution?.medium || 0) + (memoryHealth.importance_distribution?.low || 0)) * 100 + '%' }"></div>
+                            </div>
+                            <div class="distribution-legend">
+                                <div class="distribution-legend-item">
+                                    <span class="distribution-legend-dot high"></span>
+                                    <span>{{ t('highImportance') }}: {{ memoryHealth.importance_distribution?.high || 0 }}</span>
+                                </div>
+                                <div class="distribution-legend-item">
+                                    <span class="distribution-legend-dot medium"></span>
+                                    <span>{{ t('mediumImportance') }}: {{ memoryHealth.importance_distribution?.medium || 0 }}</span>
+                                </div>
+                                <div class="distribution-legend-item">
+                                    <span class="distribution-legend-dot low"></span>
+                                    <span>{{ t('lowImportance') }}: {{ memoryHealth.importance_distribution?.low || 0 }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Retrieval Performance -->
+                        <div class="glass-card p-6">
+                            <h3 class="text-sm font-medium text-gray-400 mb-4">{{ t('retrievalPerformance') }}</h3>
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-400">{{ t('avgQueryTime') }}</span>
+                                    <span class="text-sm font-mono text-cyan-400">{{ memoryHealth.retrieval_performance?.avg_query_ms || 0 }}ms</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-400">{{ t('cacheHitRate') }}</span>
+                                    <span class="text-sm font-mono text-emerald-400">{{ ((memoryHealth.retrieval_performance?.cache_hit_rate || 0) * 100).toFixed(1) }}%</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-400">{{ t('p95Latency') }}</span>
+                                    <span class="text-sm font-mono text-amber-400">{{ memoryHealth.retrieval_performance?.p95_ms || 0 }}ms</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detailed Stats -->
+                    <div class="glass-card p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-lg font-semibold flex items-center">
+                                <i class="fas fa-chart-bar text-amber-400 mr-3"></i>{{ t('heuristicStats') }}
+                            </h2>
+                            <button @click="fetchMemoryHealth" class="btn-secondary text-sm">
+                                <i class="fas fa-sync mr-2"></i>{{ t('refresh') }}
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div class="p-4 bg-gray-900/30 rounded-lg">
+                                <div class="text-xs text-gray-500 mb-1">{{ t('totalMemories') }}</div>
+                                <div class="text-xl font-semibold text-white">{{ detailedStats.total_memories || 0 }}</div>
+                            </div>
+                            <div class="p-4 bg-gray-900/30 rounded-lg">
+                                <div class="text-xs text-gray-500 mb-1">{{ t('totalAccessCount') }}</div>
+                                <div class="text-xl font-semibold text-white">{{ detailedStats.total_access_count || 0 }}</div>
+                            </div>
+                            <div class="p-4 bg-gray-900/30 rounded-lg">
+                                <div class="text-xs text-gray-500 mb-1">{{ t('avgImportance') }}</div>
+                                <div class="text-xl font-semibold text-white">{{ (detailedStats.avg_importance || 0).toFixed(3) }}</div>
+                            </div>
+                            <div class="p-4 bg-gray-900/30 rounded-lg">
+                                <div class="text-xs text-gray-500 mb-1">{{ t('freshnessScore') }}</div>
+                                <div class="text-xl font-semibold text-white">{{ (detailedStats.freshness_score || 0).toFixed(2) }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Session Detail Modal -->
                 <div v-if="selectedSession" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" @click="selectedSession = null">
                     <div class="modal-content max-w-4xl w-full max-h-[80vh] overflow-y-auto" @click.stop>
                         <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-lg font-semibold">Session: {{ selectedSession.session_id.substring(0, 16) }}...</h3>
+                            <h3 class="text-lg font-semibold">{{ t('sessionLabel') }}: {{ selectedSession.session_id.substring(0, 16) }}...</h3>
                             <button @click="selectedSession = null" class="text-gray-400 hover:text-white">
                                 <i class="fas fa-times"></i>
                             </button>
@@ -986,8 +1272,8 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-sm text-gray-400 mb-1">Content</label>
-                                <textarea v-model="newObservation.content" rows="4" class="input-field" placeholder="Enter observation..."></textarea>
+                                <label class="block text-sm text-gray-400 mb-1">{{ t('content') }}</label>
+                                <textarea v-model="newObservation.content" rows="4" class="input-field" :placeholder="t('enterObservation')"></textarea>
                             </div>
                             <div>
                                 <label class="block text-sm text-gray-400 mb-1">{{ t('observationTags') }} (comma-separated)</label>
@@ -1003,39 +1289,191 @@
 
                 <!-- Memory Config Modal -->
                 <div v-if="showMemoryConfigModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" @click="showMemoryConfigModal = false">
-                    <div class="modal-content max-w-lg w-full p-6" @click.stop>
+                    <div class="modal-content max-w-xl w-full max-h-[80vh] overflow-y-auto p-6" @click.stop>
                         <div class="flex items-center justify-between mb-4">
                             <h3 class="text-lg font-semibold">{{ t('memorySettings') }}</h3>
                             <button @click="showMemoryConfigModal = false" class="text-gray-400 hover:text-white">
                                 <i class="fas fa-times"></i>
                             </button>
                         </div>
+
+                        <!-- Basic Memory Settings -->
+                        <div class="settings-section">
+                            <div class="settings-section-title">
+                                <i class="fas fa-memory"></i>
+                                Basic Settings
+                            </div>
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <label class="text-sm text-gray-300">{{ t('memoryEnabled') }}</label>
+                                    <div @click="memoryConfig.enabled = !memoryConfig.enabled"
+                                         :class="['toggle-switch', memoryConfig.enabled ? 'active' : '']"></div>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <label class="text-sm text-gray-300">{{ t('autoInject') }}</label>
+                                    <div @click="memoryConfig.auto_inject = !memoryConfig.auto_inject"
+                                         :class="['toggle-switch', memoryConfig.auto_inject ? 'active' : '']"></div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm text-gray-400 mb-2">{{ t('maxInjected') }}: {{ memoryConfig.max_injected_memories }}</label>
+                                    <input type="range" v-model.number="memoryConfig.max_injected_memories" min="1" max="20" class="w-full">
+                                </div>
+                                <div>
+                                    <label class="block text-sm text-gray-400 mb-1">{{ t('injectionStrategy') }}</label>
+                                    <select v-model="memoryConfig.injection_strategy" class="input-field">
+                                        <option value="recent">{{ t('recent') }}</option>
+                                        <option value="relevant">{{ t('relevant') }}</option>
+                                        <option value="recent_plus_relevant">{{ t('recentPlusRelevant') }}</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Heuristic Retrieval Settings -->
+                        <div class="settings-section">
+                            <div class="settings-section-title">
+                                <i class="fas fa-sliders-h"></i>
+                                {{ t('heuristicSection') }}
+                            </div>
+                            <div class="space-y-4">
+                                <div>
+                                    <div class="flex items-center justify-between mb-1">
+                                        <label class="text-sm text-gray-300">{{ t('relevanceWeight') }}</label>
+                                        <span class="text-sm font-mono text-cyan-400">{{ heuristicConfig.alpha.toFixed(2) }}</span>
+                                    </div>
+                                    <input type="range" v-model.number="heuristicConfig.alpha" min="0" max="1" step="0.05" class="heuristic-slider relevance w-full">
+                                </div>
+                                <div>
+                                    <div class="flex items-center justify-between mb-1">
+                                        <label class="text-sm text-gray-300">{{ t('importanceWeight') }}</label>
+                                        <span class="text-sm font-mono text-amber-400">{{ heuristicConfig.beta.toFixed(2) }}</span>
+                                    </div>
+                                    <input type="range" v-model.number="heuristicConfig.beta" min="0" max="1" step="0.05" class="heuristic-slider importance w-full">
+                                </div>
+                                <div>
+                                    <div class="flex items-center justify-between mb-1">
+                                        <label class="text-sm text-gray-300">{{ t('recencyWeight') }}</label>
+                                        <span class="text-sm font-mono text-emerald-400">{{ heuristicConfig.gamma.toFixed(2) }}</span>
+                                    </div>
+                                    <input type="range" v-model.number="heuristicConfig.gamma" min="0" max="1" step="0.05" class="heuristic-slider recency w-full">
+                                </div>
+                                <div>
+                                    <div class="flex items-center justify-between mb-1">
+                                        <label class="text-sm text-gray-300">{{ t('decayRate') }}</label>
+                                        <span class="text-sm font-mono text-rose-400">{{ heuristicConfig.lambda.toFixed(2) }}</span>
+                                    </div>
+                                    <input type="range" v-model.number="heuristicConfig.lambda" min="0" max="0.5" step="0.01" class="heuristic-slider decay w-full">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- System 2 Settings -->
+                        <div class="settings-section">
+                            <div class="settings-section-title">
+                                <i class="fas fa-brain"></i>
+                                {{ t('system2Section') }}
+                            </div>
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <div class="settings-label">
+                                        <span class="settings-label-text">{{ t('enableNightlyConsolidation') }}</span>
+                                        <span class="settings-label-hint">{{ t('runNightlyAuto') }}</span>
+                                    </div>
+                                    <div @click="system2Config.nightly_enabled = !system2Config.nightly_enabled"
+                                         :class="['toggle-switch', system2Config.nightly_enabled ? 'active' : '']"></div>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <div class="settings-label">
+                                        <span class="settings-label-text">{{ t('enableLlmInsights') }}</span>
+                                        <span class="settings-label-hint">{{ t('useLlmInsights') }}</span>
+                                    </div>
+                                    <div @click="system2Config.llm_insights = !system2Config.llm_insights"
+                                         :class="['toggle-switch', system2Config.llm_insights ? 'active' : '']"></div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm text-gray-400 mb-1">{{ t('llmProvider') }}</label>
+                                    <select v-model="system2Config.llm_provider" class="input-field">
+                                        <option value="kimi">Kimi</option>
+                                        <option value="qwen">Qwen</option>
+                                        <option value="deepseek">DeepSeek</option>
+                                        <option value="codex">Codex</option>
+                                        <option value="gemini">Gemini</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end gap-2 mt-4">
+                            <button @click="resetMemoryConfig" class="btn-secondary">{{ t('reset') }}</button>
+                            <button @click="saveAllMemoryConfig" class="btn-primary">{{ t('save') }}</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Consolidate Modal -->
+                <div v-if="showConsolidateModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" @click="showConsolidateModal = false">
+                    <div class="modal-content max-w-md w-full p-6" @click.stop>
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold flex items-center">
+                                <i class="fas fa-compress-arrows-alt text-purple-400 mr-2"></i>
+                                {{ t('runConsolidation') }}
+                            </h3>
+                            <button @click="showConsolidateModal = false" class="text-gray-400 hover:text-white">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
                         <div class="space-y-4">
-                            <div class="flex items-center justify-between">
-                                <label class="text-sm text-gray-300">{{ t('memoryEnabled') }}</label>
-                                <div @click="memoryConfig.enabled = !memoryConfig.enabled"
-                                     :class="['toggle-switch', memoryConfig.enabled ? 'active' : '']"></div>
+                            <div>
+                                <label class="block text-sm text-gray-400 mb-2">{{ t('hoursToConsolidate') }}: {{ consolidateOptions.hours }}</label>
+                                <input type="range" v-model.number="consolidateOptions.hours" min="1" max="168" step="1" class="w-full">
                             </div>
                             <div class="flex items-center justify-between">
-                                <label class="text-sm text-gray-300">{{ t('autoInject') }}</label>
-                                <div @click="memoryConfig.auto_inject = !memoryConfig.auto_inject"
-                                     :class="['toggle-switch', memoryConfig.auto_inject ? 'active' : '']"></div>
+                                <label class="text-sm text-gray-300">{{ t('enableLlmEnhancement') }}</label>
+                                <div @click="consolidateOptions.llm_enhanced = !consolidateOptions.llm_enhanced"
+                                     :class="['toggle-switch', consolidateOptions.llm_enhanced ? 'active' : '']"></div>
+                            </div>
+                            <div class="flex justify-end gap-2 mt-6">
+                                <button @click="showConsolidateModal = false" class="btn-secondary">{{ t('cancelBtn') }}</button>
+                                <button @click="runConsolidation" class="btn-primary" :disabled="system2Loading">
+                                    <i v-if="system2Loading" class="fas fa-spinner fa-spin mr-2"></i>
+                                    {{ t('runConsolidation') }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Forget Modal -->
+                <div v-if="showForgetModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" @click="showForgetModal = false">
+                    <div class="modal-content max-w-md w-full p-6" @click.stop>
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold flex items-center">
+                                <i class="fas fa-eraser text-rose-400 mr-2"></i>
+                                {{ t('forgetMemories') }}
+                            </h3>
+                            <button @click="showForgetModal = false" class="text-gray-400 hover:text-white">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm text-gray-400 mb-2">{{ t('minImportanceThreshold') }}: {{ forgetOptions.min_importance.toFixed(2) }}</label>
+                                <input type="range" v-model.number="forgetOptions.min_importance" min="0" max="0.5" step="0.01" class="w-full">
                             </div>
                             <div>
-                                <label class="block text-sm text-gray-400 mb-2">{{ t('maxInjected') }}: {{ memoryConfig.max_injected_memories }}</label>
-                                <input type="range" v-model.number="memoryConfig.max_injected_memories" min="1" max="20" class="w-full">
+                                <label class="block text-sm text-gray-400 mb-2">{{ t('maxAgeDays') }}: {{ forgetOptions.max_age_days }}</label>
+                                <input type="range" v-model.number="forgetOptions.max_age_days" min="7" max="365" step="1" class="w-full">
                             </div>
-                            <div>
-                                <label class="block text-sm text-gray-400 mb-1">{{ t('injectionStrategy') }}</label>
-                                <select v-model="memoryConfig.injection_strategy" class="input-field">
-                                    <option value="recent">{{ t('recent') }}</option>
-                                    <option value="relevant">{{ t('relevant') }}</option>
-                                    <option value="recent_plus_relevant">{{ t('recentPlusRelevant') }}</option>
-                                </select>
+                            <div class="p-3 bg-rose-500/10 border border-rose-500/30 rounded-lg text-sm text-rose-400">
+                                <i class="fas fa-exclamation-triangle mr-2"></i>
+                                This will permanently delete memories with importance below {{ forgetOptions.min_importance.toFixed(2) }} and older than {{ forgetOptions.max_age_days }} days.
                             </div>
-                            <div class="flex justify-end gap-2">
-                                <button @click="resetMemoryConfig" class="btn-secondary">Reset</button>
-                                <button @click="saveMemoryConfig" class="btn-primary">{{ t('save') }}</button>
+                            <div class="flex justify-end gap-2 mt-6">
+                                <button @click="showForgetModal = false" class="btn-secondary">{{ t('cancelBtn') }}</button>
+                                <button @click="forgetMemoriesAction" class="btn-primary bg-rose-500 hover:bg-rose-600" :disabled="system2Loading">
+                                    <i v-if="system2Loading" class="fas fa-spinner fa-spin mr-2"></i>
+                                    {{ t('forgetMemories') }}
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -1106,13 +1544,13 @@
                 <!-- Skills Search -->
                 <div class="glass-card p-6">
                     <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-400 mb-2">Find Skills for Your Task</label>
+                        <label class="block text-sm font-medium text-gray-400 mb-2">{{ t('findSkillsForTask') }}</label>
                         <div class="flex gap-2">
                             <input v-model="skillsSearchQuery" @keyup.enter="searchSkills" type="text"
-                                   placeholder="E.g., create PDF, analyze data, test React..."
+                                   :placeholder="t('skillSearchPlaceholder')"
                                    class="flex-1 px-4 py-2 bg-gray-900/50 border border-gray-700/50 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500/50">
                             <button @click="searchSkills" class="btn-primary">
-                                <i class="fas fa-search mr-2"></i>Find Skills
+                                <i class="fas fa-search mr-2"></i>{{ t('findSkillsBtn') }}
                             </button>
                         </div>
                     </div>
@@ -1128,14 +1566,14 @@
                                 <div class="flex items-center gap-2">
                                     <span class="text-lg font-semibold text-white">/{{ skill.name }}</span>
                                     <span v-if="skill.installed" class="px-2 py-0.5 bg-emerald-500/20 text-emerald-400 text-xs rounded-full">
-                                        <i class="fas fa-check mr-1"></i>Installed
+                                        <i class="fas fa-check mr-1"></i>{{ t('installed') }}
                                     </span>
                                     <span v-else class="px-2 py-0.5 bg-gray-500/20 text-gray-400 text-xs rounded-full">
-                                        <i class="fas fa-download mr-1"></i>Available
+                                        <i class="fas fa-download mr-1"></i>{{ t('available') }}
                                     </span>
                                 </div>
                                 <div class="flex items-center gap-3">
-                                    <span class="text-sm text-indigo-400">Score: {{ skill.relevance_score }}</span>
+                                    <span class="text-sm text-indigo-400">{{ t('skillScore') }}: {{ skill.relevance_score }}</span>
                                     <button @click="openSkillFeedback(skill)" class="text-gray-400 hover:text-amber-400 text-sm" :title="t('giveFeedback')">
                                         <i class="fas fa-star"></i>
                                     </button>
@@ -1143,7 +1581,7 @@
                             </div>
                             <div class="text-sm text-gray-300 mb-2">{{ skill.description }}</div>
                             <div class="flex items-center gap-4 text-xs text-gray-500">
-                                <span v-if="skill.usage_count > 0">Used {{ skill.usage_count }} times</span>
+                                <span v-if="skill.usage_count > 0">{{ t('usedTimes') }} {{ skill.usage_count }} {{ t('times') }}</span>
                                 <span v-if="skill.feedback_boost" class="text-amber-400">
                                     <i class="fas fa-arrow-up mr-1"></i>{{ t('feedbackBoost') }}: +{{ (skill.feedback_boost * 100).toFixed(0) }}%
                                 </span>
@@ -1220,7 +1658,7 @@
                             </div>
                             <div>
                                 <label class="block text-sm text-gray-400 mb-1">{{ t('feedbackTask') }} (optional)</label>
-                                <input v-model="skillFeedback.task_description" type="text" class="input-field" placeholder="What task did you use this skill for?">
+                                <input v-model="skillFeedback.task_description" type="text" class="input-field" :placeholder="t('whatTaskForSkill')">
                             </div>
                             <div class="flex justify-end gap-2">
                                 <button @click="showSkillFeedbackModal = false" class="btn-secondary">{{ t('cancelBtn') }}</button>
@@ -1246,10 +1684,10 @@
                                 <i class="fas fa-plus mr-2"></i>{{ t('newDiscussion') }}
                             </button>
                             <button @click="showTemplateModal = true; fetchDiscussionTemplates();" class="btn-secondary bg-purple-500/10 border-purple-500/30 text-purple-400 hover:bg-purple-500/20">
-                                <i class="fas fa-magic mr-2"></i>Use Template
+                                <i class="fas fa-magic mr-2"></i>{{ t('useTemplate') }}
                             </button>
-                            <button @click="exportDiscussionsJSON" class="btn-secondary" :title="'Export discussions to JSON'">
-                                <i class="fas fa-download mr-2"></i>Export
+                            <button @click="exportDiscussionsJSON" class="btn-secondary" :title="t('exportData')">
+                                <i class="fas fa-download mr-2"></i>{{ t('exportData') }}
                             </button>
                             <button @click="fetchDiscussions" class="btn-secondary">
                                 <i class="fas fa-sync-alt mr-2" :class="{'fa-spin': loading.discussions}"></i>{{ t('refreshDiscussions') }}
@@ -1379,7 +1817,7 @@
                             </select>
                             <div class="relative">
                                 <button class="btn-secondary flex items-center" @click="showExportMenu = !showExportMenu">
-                                    <i class="fas fa-download mr-2"></i>Export
+                                    <i class="fas fa-download mr-2"></i>{{ t('exportData') }}
                                     <i class="fas fa-chevron-down ml-2 text-xs"></i>
                                 </button>
                                 <div v-if="showExportMenu" class="absolute right-0 mt-2 w-40 bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-10">
@@ -1469,23 +1907,23 @@
             <div v-show="activeTab === 'costs'" class="space-y-6">
                 <div class="glass-card p-6">
                     <h2 class="text-lg font-semibold flex items-center mb-6">
-                        <i class="fas fa-dollar-sign text-emerald-400 mr-3"></i>Cost Analysis
+                        <i class="fas fa-dollar-sign text-emerald-400 mr-3"></i>{{ t('costAnalysis') }}
                     </h2>
 
                     <!-- Cost Summary Cards -->
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                         <div class="glass-card p-4 border-l-4 border-emerald-500">
-                            <div class="text-sm text-gray-400 mb-1">Today</div>
+                            <div class="text-sm text-gray-400 mb-1">{{ t('today') }}</div>
                             <div class="text-2xl font-bold text-emerald-400">${{ formatCost(costSummary.today?.total_cost || 0) }}</div>
                             <div class="text-xs text-gray-500 mt-1">{{ (costSummary.today?.total_tokens || 0).toLocaleString() }} tokens</div>
                         </div>
                         <div class="glass-card p-4 border-l-4 border-cyan-500">
-                            <div class="text-sm text-gray-400 mb-1">This Week</div>
+                            <div class="text-sm text-gray-400 mb-1">{{ t('thisWeek') }}</div>
                             <div class="text-2xl font-bold text-cyan-400">${{ formatCost(costSummary.week?.total_cost || 0) }}</div>
                             <div class="text-xs text-gray-500 mt-1">{{ (costSummary.week?.total_tokens || 0).toLocaleString() }} tokens</div>
                         </div>
                         <div class="glass-card p-4 border-l-4 border-purple-500">
-                            <div class="text-sm text-gray-400 mb-1">This Month</div>
+                            <div class="text-sm text-gray-400 mb-1">{{ t('thisMonth') }}</div>
                             <div class="text-2xl font-bold text-purple-400">${{ formatCost(costSummary.month?.total_cost || 0) }}</div>
                             <div class="text-xs text-gray-500 mt-1">{{ (costSummary.month?.total_tokens || 0).toLocaleString() }} tokens</div>
                         </div>
@@ -1493,7 +1931,7 @@
 
                     <!-- Cost Trend Chart -->
                     <div class="glass-card p-4 mb-6">
-                        <h3 class="text-sm font-semibold text-gray-300 mb-4">Daily Cost Trend (Last 7 Days)</h3>
+                        <h3 class="text-sm font-semibold text-gray-300 mb-4">{{ t('dailyCostTrend') }}</h3>
                         <div style="height: 200px;">
                             <canvas ref="costChart"></canvas>
                         </div>
@@ -1542,17 +1980,17 @@
                         <div class="flex items-center space-x-3">
                             <i class="fas fa-rocket text-indigo-400 text-xl"></i>
                             <div>
-                                <h3 class="font-semibold text-white">Gateway Mode Active</h3>
-                                <p class="text-sm text-gray-400">All requests go through Gateway API with caching, retry, and monitoring</p>
+                                <h3 class="font-semibold text-white">{{ t('gatewayModeActive') }}</h3>
+                                <p class="text-sm text-gray-400">{{ t('gatewayModeDesc') }}</p>
                             </div>
                         </div>
                         <div class="flex items-center space-x-4">
                             <div class="text-right">
-                                <div class="text-xs text-gray-400">Sync API</div>
+                                <div class="text-xs text-gray-400">{{ t('syncApi') }}</div>
                                 <code class="text-xs text-cyan-400">/api/ask?wait=true</code>
                             </div>
                             <label class="flex items-center space-x-2 cursor-pointer">
-                                <span class="text-sm text-gray-400">Wait Mode</span>
+                                <span class="text-sm text-gray-400">{{ t('waitMode') }}</span>
                                 <div @click="testForm.waitMode = !testForm.waitMode" :class="['toggle-switch', testForm.waitMode ? 'active' : '']"></div>
                             </label>
                         </div>
@@ -1598,7 +2036,7 @@
                                     </select>
                                 </div>
                                 <div v-if="testForm.waitMode">
-                                    <label class="block text-sm text-gray-400 mb-2">Timeout (seconds)</label>
+                                    <label class="block text-sm text-gray-400 mb-2">{{ t('timeoutSeconds') }}</label>
                                     <input type="number" v-model.number="testForm.timeout" class="input-field" min="10" max="300" placeholder="120">
                                 </div>
                             </div>
@@ -1616,12 +2054,12 @@
                                     <span class="text-sm">{{ t('bypassCache') }}</span>
                                 </label>
                                 <label class="flex items-center space-x-2 cursor-pointer" v-if="testForm.waitMode">
-                                    <span class="px-2 py-1 bg-amber-500/20 text-amber-400 text-xs rounded-full">Sync Mode</span>
+                                    <span class="px-2 py-1 bg-amber-500/20 text-amber-400 text-xs rounded-full">{{ t('syncMode') }}</span>
                                 </label>
                             </div>
                             <button @click="sendTestRequest" :disabled="testSending" class="w-full btn-primary py-3 text-base">
                                 <i v-if="testSending" class="fas fa-spinner fa-spin mr-2"></i>
-                                {{ testSending ? (testForm.waitMode ? 'Waiting for response...' : t('sending')) : (testForm.waitMode ? 'Send (Sync)' : t('sendTest')) }}
+                                {{ testSending ? (testForm.waitMode ? t('waitingForResponse') : t('sending')) : (testForm.waitMode ? t('sendSync') : t('sendTest')) }}
                             </button>
                         </div>
                     </div>
@@ -1805,7 +2243,7 @@
                         <div class="bg-gradient-to-br from-indigo-900/30 to-purple-900/30 rounded-xl p-5 border border-indigo-500/30">
                             <h3 class="font-medium text-indigo-400 mb-4 flex items-center">
                                 <i class="fas fa-rocket mr-2"></i>ccb-cli (Gateway Mode)
-                                <span class="ml-2 px-2 py-0.5 bg-emerald-500/20 text-emerald-400 text-xs rounded-full">Recommended</span>
+                                <span class="ml-2 px-2 py-0.5 bg-emerald-500/20 text-emerald-400 text-xs rounded-full">{{ t('recommended') }}</span>
                             </h3>
                             <div class="space-y-3 font-mono text-sm">
                                 <div class="bg-gray-900/50 rounded-lg p-3">
@@ -1834,7 +2272,7 @@
                         </div>
                         <!-- Sync API Mode -->
                         <div class="bg-gray-800/50 rounded-xl p-5 border border-gray-700/50">
-                            <h3 class="font-medium text-amber-400 mb-4 flex items-center"><i class="fas fa-sync mr-2"></i>Sync API (wait=true)</h3>
+                            <h3 class="font-medium text-amber-400 mb-4 flex items-center"><i class="fas fa-sync mr-2"></i>{{ t('syncApiTitle') }}</h3>
                             <div class="space-y-3 font-mono text-sm">
                                 <div class="bg-gray-900/50 rounded-lg p-3">
                                     <div class="text-gray-400 text-xs mb-1"># Sync call - wait for completion</div>
@@ -1879,14 +2317,14 @@
                     <!-- Model Shortcuts Reference -->
                     <div class="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <div class="bg-gray-800/50 rounded-xl p-5 border border-gray-700/50">
-                            <h3 class="font-medium text-purple-400 mb-4 flex items-center"><i class="fas fa-magic mr-2"></i>Model Shortcuts</h3>
+                            <h3 class="font-medium text-purple-400 mb-4 flex items-center"><i class="fas fa-magic mr-2"></i>{{ t('modelShortcuts') }}</h3>
                             <div class="overflow-x-auto">
                                 <table class="w-full text-sm">
                                     <thead>
                                         <tr class="text-gray-400 text-xs">
-                                            <th class="text-left py-2">Provider</th>
-                                            <th class="text-left py-2">Shortcuts</th>
-                                            <th class="text-left py-2">Speed</th>
+                                            <th class="text-left py-2">{{ t('provider') }}</th>
+                                            <th class="text-left py-2">{{ t('shortcuts') }}</th>
+                                            <th class="text-left py-2">{{ t('speed') }}</th>
                                         </tr>
                                     </thead>
                                     <tbody class="font-mono text-cyan-300">
@@ -1902,21 +2340,21 @@
                             </div>
                         </div>
                         <div class="bg-gray-800/50 rounded-xl p-5 border border-gray-700/50">
-                            <h3 class="font-medium text-cyan-400 mb-4 flex items-center"><i class="fas fa-users mr-2"></i>Provider Groups</h3>
+                            <h3 class="font-medium text-cyan-400 mb-4 flex items-center"><i class="fas fa-users mr-2"></i>{{ t('providerGroups') }}</h3>
                             <div class="overflow-x-auto">
                                 <table class="w-full text-sm">
                                     <thead>
                                         <tr class="text-gray-400 text-xs">
-                                            <th class="text-left py-2">Group</th>
-                                            <th class="text-left py-2">Providers</th>
-                                            <th class="text-left py-2">Use Case</th>
+                                            <th class="text-left py-2">{{ t('group') }}</th>
+                                            <th class="text-left py-2">{{ t('providers') }}</th>
+                                            <th class="text-left py-2">{{ t('useCase') }}</th>
                                         </tr>
                                     </thead>
                                     <tbody class="text-gray-300">
-                                        <tr class="border-t border-gray-700/50"><td class="py-2 font-mono text-indigo-400">@all</td><td class="text-xs">All 7 providers</td><td class="text-xs">Comprehensive</td></tr>
-                                        <tr class="border-t border-gray-700/50"><td class="py-2 font-mono text-emerald-400">@fast</td><td class="text-xs">Kimi, Qwen</td><td class="text-xs">Quick responses</td></tr>
-                                        <tr class="border-t border-gray-700/50"><td class="py-2 font-mono text-purple-400">@coding</td><td class="text-xs">Kimi, Qwen, DS, Codex, Gemini</td><td class="text-xs">Code tasks</td></tr>
-                                        <tr class="border-t border-gray-700/50"><td class="py-2 font-mono text-amber-400">@chinese</td><td class="text-xs">Kimi, Qwen, DeepSeek</td><td class="text-xs">Chinese NLP</td></tr>
+                                        <tr class="border-t border-gray-700/50"><td class="py-2 font-mono text-indigo-400">@all</td><td class="text-xs">{{ t('allProviders7') }}</td><td class="text-xs">{{ t('comprehensive') }}</td></tr>
+                                        <tr class="border-t border-gray-700/50"><td class="py-2 font-mono text-emerald-400">@fast</td><td class="text-xs">Kimi, Qwen</td><td class="text-xs">{{ t('quickResponses') }}</td></tr>
+                                        <tr class="border-t border-gray-700/50"><td class="py-2 font-mono text-purple-400">@coding</td><td class="text-xs">Kimi, Qwen, DS, Codex, Gemini</td><td class="text-xs">{{ t('codeTasks') }}</td></tr>
+                                        <tr class="border-t border-gray-700/50"><td class="py-2 font-mono text-amber-400">@chinese</td><td class="text-xs">Kimi, Qwen, DeepSeek</td><td class="text-xs">{{ t('chineseNlp') }}</td></tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -2037,7 +2475,7 @@
                 <div class="space-y-4">
                     <div>
                         <label class="block text-sm text-gray-400 mb-2">{{ t('name') }}</label>
-                        <input v-model="newKeyName" type="text" class="input-field" placeholder="My API Key">
+                        <input v-model="newKeyName" type="text" class="input-field" :placeholder="t('myApiKey')">
                     </div>
                     <div>
                         <label class="block text-sm text-gray-400 mb-2">{{ t('rateLimitRpm') }}</label>
@@ -2291,7 +2729,7 @@
 
                     <!-- Provider Selection -->
                     <div v-if="selectedDiscussionTemplate">
-                        <label class="block text-sm text-gray-400 mb-2">Participating Providers</label>
+                        <label class="block text-sm text-gray-400 mb-2">{{ t('participatingProviders') }}</label>
                         <div class="grid grid-cols-3 gap-2">
                             <label v-for="p in availableDiscussionProviders" :key="p"
                                    class="flex items-center space-x-2 p-2 rounded-lg border cursor-pointer transition-all"
@@ -2496,9 +2934,54 @@
                 });
                 const showMemoryConfigModal = ref(false);
                 // v0.21: Memory sub-tabs
-                const memorySubTab = ref('sessions');  // 'sessions', 'observations', 'injections', 'discussions'
+                const memorySubTab = ref('sessions');  // 'sessions', 'observations', 'injections', 'discussions', 'system2', 'heuristic'
                 // v0.21: Discussion memories
                 const discussionMemories = ref([]);
+
+                // v0.22: System 2 state
+                const consolidatedMemories = ref([]);
+                const consolidationStats = ref({
+                    total_archives: 0,
+                    total_consolidated: 0,
+                    avg_importance: 0,
+                    last_run: null
+                });
+                const showConsolidateModal = ref(false);
+                const showForgetModal = ref(false);
+                const system2Loading = ref(false);
+                const consolidateOptions = ref({
+                    hours: 24,
+                    llm_enhanced: true
+                });
+                const forgetOptions = ref({
+                    min_importance: 0.1,
+                    max_age_days: 90
+                });
+                const system2Config = ref({
+                    nightly_enabled: false,
+                    llm_insights: true,
+                    llm_provider: 'kimi'
+                });
+
+                // v0.22: Heuristic retrieval state
+                const heuristicConfig = ref({
+                    alpha: 0.4,
+                    beta: 0.3,
+                    gamma: 0.3,
+                    lambda: 0.1
+                });
+                const memoryHealth = ref({
+                    health_score: 0,
+                    importance_distribution: { high: 0, medium: 0, low: 0 },
+                    retrieval_performance: { avg_query_ms: 0, cache_hit_rate: 0, p95_ms: 0 }
+                });
+                const detailedStats = ref({
+                    total_memories: 0,
+                    total_access_count: 0,
+                    avg_importance: 0,
+                    freshness_score: 0
+                });
+                let heuristicConfigDebounceTimer = null;
 
                 // Skills tab state
                 const skillsStats = ref({});
@@ -2703,7 +3186,7 @@
                         recentSessions: 'Recent Sessions', topUsedSkills: 'Most Used Skills',
                         costByProvider: 'Cost by Provider', tokens: 'Tokens',
                         // v0.21: Memory enhancements
-                        memorySubTabs: { sessions: 'Sessions', observations: 'Observations', injections: 'Injections', discussions: 'Discussions' },
+                        memorySubTabs: { sessions: 'Sessions', observations: 'Observations', injections: 'Injections', discussions: 'Discussions', system2: 'System 2', heuristic: 'Heuristic' },
                         memoryInjections: 'Memory Injections', injectedMemories: 'Injected Memories',
                         viewInjection: 'View Injection', noInjections: 'No injection records yet',
                         observations: 'Observations', addObservation: 'Add Observation',
@@ -2725,6 +3208,47 @@
                         feedbackBoost: 'Feedback Boost',
                         // Discussion templates
                         loadingTemplates: 'Loading templates...', noTemplatesAvailable: 'No templates available',
+                        // v0.22: Additional UI translations
+                        multiAiOrchestrator: 'Multi-AI Orchestrator',
+                        totalSessions: 'Total Sessions', totalMessages: 'Total Messages', totalTokensLabel: 'Total Tokens',
+                        search: 'Search', foundResults: 'Found', results: 'results',
+                        system2Operations: 'System 2 Operations', processingText: 'Processing...',
+                        noConsolidatedMemories: 'No consolidated memories yet',
+                        runConsolidationHint: 'Run consolidation to generate insights from your sessions',
+                        scoreLabel: 'Score', sessionLabel: 'Session',
+                        content: 'Content', reset: 'Reset',
+                        runNightlyAuto: 'Run consolidation automatically at night',
+                        useLlmInsights: 'Use LLM to generate insights from memories',
+                        findSkillsForTask: 'Find Skills for Your Task',
+                        findSkillsBtn: 'Find Skills', available: 'Available',
+                        skillScore: 'Score', usedTimes: 'Used', times: 'times',
+                        useTemplate: 'Use Template', exportData: 'Export',
+                        costAnalysis: 'Cost Analysis',
+                        today: 'Today', thisWeek: 'This Week', thisMonth: 'This Month',
+                        dailyCostTrend: 'Daily Cost Trend (Last 7 Days)',
+                        cost: 'Cost',
+                        gatewayModeActive: 'Gateway Mode Active',
+                        gatewayModeDesc: 'All requests go through Gateway API with caching, retry, and monitoring',
+                        syncApi: 'Sync API', waitMode: 'Wait Mode',
+                        timeoutSeconds: 'Timeout (seconds)',
+                        syncMode: 'Sync Mode', waitingForResponse: 'Waiting for response...',
+                        sendSync: 'Send (Sync)',
+                        recommended: 'Recommended',
+                        syncApiTitle: 'Sync API (wait=true)',
+                        modelShortcuts: 'Model Shortcuts',
+                        shortcuts: 'Shortcuts',
+                        totalAccessCount: 'Total Access Count', avgImportance: 'Avg Importance',
+                        freshnessScore: 'Freshness Score', totalMemories: 'Total Memories',
+                        searchMessages: 'Search messages...',
+                        enterObservation: 'Enter observation...',
+                        whatTaskForSkill: 'What task did you use this skill for?',
+                        myApiKey: 'My API Key', focus: 'Focus', requests: 'Requests',
+                        // v0.22 additional
+                        speed: 'Speed', providerGroups: 'Provider Groups', group: 'Group', useCase: 'Use Case',
+                        allProviders7: 'All 7 providers', quickResponses: 'Quick responses', codeTasks: 'Code tasks',
+                        comprehensive: 'Comprehensive', participatingProviders: 'Participating Providers',
+                        skillSearchPlaceholder: 'E.g., create PDF, analyze data, test React...',
+                        chineseNlp: 'Chinese NLP',
                     },
                     zh: {
                         // Header
@@ -2857,7 +3381,7 @@
                         // Memory & Skills tab
                         recentSessions: '最近会话', topUsedSkills: '常用技能',
                         // v0.21: Memory enhancements
-                        memorySubTabs: { sessions: '会话', observations: '观察', injections: '注入记录', discussions: '讨论' },
+                        memorySubTabs: { sessions: '会话', observations: '观察', injections: '注入记录', discussions: '讨论', system2: '系统 2', heuristic: '启发式' },
                         memoryInjections: '记忆注入', injectedMemories: '注入的记忆',
                         viewInjection: '查看注入', noInjections: '暂无注入记录',
                         observations: '观察', addObservation: '添加观察',
@@ -2881,6 +3405,47 @@
                         costByProvider: '各提供者成本', tokens: 'Token数',
                         // Discussion templates
                         loadingTemplates: '加载模板中...', noTemplatesAvailable: '暂无可用模板',
+                        // v0.22: Additional UI translations
+                        multiAiOrchestrator: '多 AI 协调器',
+                        totalSessions: '总会话数', totalMessages: '总消息数', totalTokensLabel: '总 Token 数',
+                        search: '搜索', foundResults: '找到', results: '条结果',
+                        system2Operations: '系统 2 操作', processingText: '处理中...',
+                        noConsolidatedMemories: '暂无整合记忆',
+                        runConsolidationHint: '运行整合以从会话中生成洞察',
+                        scoreLabel: '分数', sessionLabel: '会话',
+                        content: '内容', reset: '重置',
+                        runNightlyAuto: '每晚自动运行整合',
+                        useLlmInsights: '使用 LLM 从记忆中生成洞察',
+                        findSkillsForTask: '为任务查找技能',
+                        findSkillsBtn: '查找技能', available: '可用',
+                        skillScore: '分数', usedTimes: '已使用', times: '次',
+                        useTemplate: '使用模板', exportData: '导出',
+                        costAnalysis: '成本分析',
+                        today: '今日', thisWeek: '本周', thisMonth: '本月',
+                        dailyCostTrend: '每日成本趋势（近 7 天）',
+                        cost: '成本',
+                        gatewayModeActive: 'Gateway 模式已启用',
+                        gatewayModeDesc: '所有请求通过 Gateway API 处理，支持缓存、重试和监控',
+                        syncApi: '同步 API', waitMode: '等待模式',
+                        timeoutSeconds: '超时时间（秒）',
+                        syncMode: '同步模式', waitingForResponse: '等待响应中...',
+                        sendSync: '发送（同步）',
+                        recommended: '推荐',
+                        syncApiTitle: '同步 API (wait=true)',
+                        modelShortcuts: '模型快捷方式',
+                        shortcuts: '快捷方式',
+                        totalAccessCount: '总访问次数', avgImportance: '平均重要性',
+                        freshnessScore: '新鲜度分数', totalMemories: '总记忆数',
+                        searchMessages: '搜索消息...',
+                        enterObservation: '输入观察内容...',
+                        whatTaskForSkill: '你用这个技能完成了什么任务？',
+                        myApiKey: '我的 API 密钥', focus: '聚焦', requests: '请求',
+                        // v0.22 additional
+                        speed: '速度', providerGroups: '提供者分组', group: '分组', useCase: '用途',
+                        allProviders7: '全部 7 个提供者', quickResponses: '快速响应', codeTasks: '编程任务',
+                        comprehensive: '全面', participatingProviders: '参与的提供者',
+                        skillSearchPlaceholder: '例如：创建 PDF、分析数据、测试 React...',
+                        chineseNlp: '中文 NLP',
                     }
                 };
 
@@ -3593,6 +4158,185 @@
                     } catch (e) {
                         console.error('Failed to save discussion to memory:', e);
                         showToast('error', 'Failed to save to memory');
+                    }
+                };
+
+                // v0.22: System 2 - Consolidated Memory Methods
+                const fetchConsolidatedMemories = async () => {
+                    try {
+                        const res = await fetch('/api/memory/consolidated?days=30&limit=20');
+                        const data = await res.json();
+                        consolidatedMemories.value = data.memories || [];
+                    } catch (e) {
+                        console.error('Failed to fetch consolidated memories:', e);
+                    }
+                };
+
+                const fetchConsolidationStats = async () => {
+                    try {
+                        const res = await fetch('/api/memory/consolidation/stats');
+                        const data = await res.json();
+                        consolidationStats.value = data;
+                    } catch (e) {
+                        console.error('Failed to fetch consolidation stats:', e);
+                    }
+                };
+
+                const runConsolidation = async () => {
+                    system2Loading.value = true;
+                    try {
+                        const res = await fetch('/api/memory/consolidate', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(consolidateOptions.value)
+                        });
+                        const data = await res.json();
+                        showConsolidateModal.value = false;
+                        showToast('success', t('consolidationComplete'));
+                        fetchConsolidatedMemories();
+                        fetchConsolidationStats();
+                    } catch (e) {
+                        console.error('Failed to run consolidation:', e);
+                        showToast('error', 'Consolidation failed');
+                    } finally {
+                        system2Loading.value = false;
+                    }
+                };
+
+                const applyDecay = async () => {
+                    system2Loading.value = true;
+                    try {
+                        const res = await fetch('/api/memory/decay', { method: 'POST' });
+                        const data = await res.json();
+                        showToast('success', t('decayApplied').replace('{count}', data.affected || 0));
+                        fetchConsolidationStats();
+                        fetchMemoryHealth();
+                    } catch (e) {
+                        console.error('Failed to apply decay:', e);
+                        showToast('error', 'Failed to apply decay');
+                    } finally {
+                        system2Loading.value = false;
+                    }
+                };
+
+                const mergeMemories = async () => {
+                    system2Loading.value = true;
+                    try {
+                        const res = await fetch('/api/memory/merge', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({})
+                        });
+                        const data = await res.json();
+                        showToast('success', t('mergeComplete').replace('{count}', data.merged_count || 0));
+                        fetchConsolidatedMemories();
+                        fetchConsolidationStats();
+                    } catch (e) {
+                        console.error('Failed to merge memories:', e);
+                        showToast('error', 'Failed to merge memories');
+                    } finally {
+                        system2Loading.value = false;
+                    }
+                };
+
+                const forgetMemoriesAction = async () => {
+                    system2Loading.value = true;
+                    try {
+                        const res = await fetch('/api/memory/forget', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(forgetOptions.value)
+                        });
+                        const data = await res.json();
+                        showForgetModal.value = false;
+                        showToast('success', t('forgetComplete').replace('{count}', data.deleted_count || 0));
+                        fetchConsolidatedMemories();
+                        fetchConsolidationStats();
+                        fetchMemoryHealth();
+                    } catch (e) {
+                        console.error('Failed to forget memories:', e);
+                        showToast('error', 'Failed to cleanup memories');
+                    } finally {
+                        system2Loading.value = false;
+                    }
+                };
+
+                // v0.22: Heuristic Retrieval Methods
+                const fetchHeuristicConfig = async () => {
+                    try {
+                        const res = await fetch('/api/memory/heuristic/config');
+                        const data = await res.json();
+                        if (data.config) {
+                            heuristicConfig.value = data.config;
+                        }
+                    } catch (e) {
+                        console.error('Failed to fetch heuristic config:', e);
+                    }
+                };
+
+                const saveHeuristicConfig = async () => {
+                    try {
+                        await fetch('/api/memory/heuristic/config', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(heuristicConfig.value)
+                        });
+                        showToast('success', t('configSaved'));
+                    } catch (e) {
+                        console.error('Failed to save heuristic config:', e);
+                        showToast('error', t('configSaveFailed'));
+                    }
+                };
+
+                const debouncedSaveHeuristicConfig = () => {
+                    if (heuristicConfigDebounceTimer) {
+                        clearTimeout(heuristicConfigDebounceTimer);
+                    }
+                    heuristicConfigDebounceTimer = setTimeout(() => {
+                        saveHeuristicConfig();
+                    }, 500);
+                };
+
+                const fetchMemoryHealth = async () => {
+                    try {
+                        const res = await fetch('/api/memory/stats/health');
+                        const data = await res.json();
+                        memoryHealth.value = data;
+                    } catch (e) {
+                        console.error('Failed to fetch memory health:', e);
+                    }
+                };
+
+                const fetchDetailedStats = async () => {
+                    try {
+                        const res = await fetch('/api/memory/stats/detailed');
+                        const data = await res.json();
+                        detailedStats.value = data;
+                    } catch (e) {
+                        console.error('Failed to fetch detailed stats:', e);
+                    }
+                };
+
+                // v0.22: Save all memory config (basic + heuristic + system2)
+                const saveAllMemoryConfig = async () => {
+                    try {
+                        // Save basic memory config
+                        await fetch('/api/memory/config', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(memoryConfig.value)
+                        });
+                        // Save heuristic config
+                        await fetch('/api/memory/heuristic/config', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(heuristicConfig.value)
+                        });
+                        showMemoryConfigModal.value = false;
+                        showToast('success', t('configSaved'));
+                    } catch (e) {
+                        console.error('Failed to save memory config:', e);
+                        showToast('error', 'Failed to save configuration');
                     }
                 };
 
@@ -4775,6 +5519,11 @@
                     fetchMemoryStats();
                     fetchMemorySessions();
                     fetchSkillsStats();
+                    // v0.22: Fetch System 2 and Heuristic data
+                    fetchConsolidationStats();
+                    fetchHeuristicConfig();
+                    fetchMemoryHealth();
+                    fetchDetailedStats();
                     connectWebSocket();
                     nextTick(() => {
                         initCharts();
@@ -4801,6 +5550,14 @@
                                 fetchMemoryInjections();
                             } else if (memorySubTab.value === 'discussions') {
                                 fetchDiscussionMemories();
+                            } else if (memorySubTab.value === 'system2') {
+                                // v0.22: Refresh System 2 data
+                                fetchConsolidatedMemories();
+                                fetchConsolidationStats();
+                            } else if (memorySubTab.value === 'heuristic') {
+                                // v0.22: Refresh Heuristic data
+                                fetchMemoryHealth();
+                                fetchDetailedStats();
                             }
                         }
                         if (activeTab.value === 'skills') {
@@ -4857,6 +5614,14 @@
                     memoryInjections, selectedInjection, fetchMemoryInjections, viewInjectionDetails,
                     memoryConfig, showMemoryConfigModal, fetchMemoryConfig, saveMemoryConfig, resetMemoryConfig,
                     discussionMemories, fetchDiscussionMemories, saveDiscussionToMemory,
+                    // v0.22: System 2 & Heuristic
+                    consolidatedMemories, consolidationStats, showConsolidateModal, showForgetModal,
+                    system2Loading, consolidateOptions, forgetOptions, system2Config,
+                    fetchConsolidatedMemories, fetchConsolidationStats, runConsolidation,
+                    applyDecay, mergeMemories, forgetMemoriesAction,
+                    heuristicConfig, memoryHealth, detailedStats,
+                    fetchHeuristicConfig, saveHeuristicConfig, debouncedSaveHeuristicConfig,
+                    fetchMemoryHealth, fetchDetailedStats, saveAllMemoryConfig,
                     // Skills tab
                     skillsStats, skillsSearchQuery, skillRecommendations,
                     fetchSkillsStats, searchSkills,

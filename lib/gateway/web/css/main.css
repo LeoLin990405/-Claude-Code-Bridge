@@ -342,3 +342,416 @@ body { background: var(--bg-primary); color: var(--text-primary); min-height: 10
 }
 .light-theme .glass-card { background: rgba(255,255,255,0.9); box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
 .light-theme .stat-card { background: var(--bg-card); box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+
+/* ==================== Memory v0.22 Variables ==================== */
+:root, .dark {
+    /* Memory importance colors */
+    --memory-importance-high: #10b981;
+    --memory-importance-medium: #f59e0b;
+    --memory-importance-low: #6b7280;
+
+    /* System 2 colors */
+    --system2-consolidated: #8b5cf6;
+    --system2-archive: #6366f1;
+
+    /* Heuristic score colors */
+    --score-relevance: #22d3ee;
+    --score-importance: #f59e0b;
+    --score-recency: #10b981;
+}
+
+/* ==================== Memory Sub-Navigation ==================== */
+.memory-subtabs {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+}
+
+.memory-subtab {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.memory-subtab:hover {
+    color: var(--text-primary);
+    background: var(--bg-elevated);
+}
+
+.memory-subtab.active {
+    color: var(--text-primary);
+    background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.1));
+    border-color: var(--border-accent);
+}
+
+/* ==================== Heuristic Slider ==================== */
+.heuristic-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    background: var(--bg-secondary);
+    border-radius: 3px;
+    outline: none;
+    transition: background 0.2s;
+}
+
+.heuristic-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(99,102,241,0.4);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.heuristic-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.15);
+    box-shadow: 0 4px 12px rgba(99,102,241,0.5);
+}
+
+.heuristic-slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 8px rgba(99,102,241,0.4);
+}
+
+.heuristic-slider.relevance { --accent-primary: #22d3ee; --accent-secondary: #06b6d4; }
+.heuristic-slider.importance { --accent-primary: #f59e0b; --accent-secondary: #d97706; }
+.heuristic-slider.recency { --accent-primary: #10b981; --accent-secondary: #059669; }
+.heuristic-slider.decay { --accent-primary: #f43f5e; --accent-secondary: #e11d48; }
+
+/* ==================== Score Badge ==================== */
+.score-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.625rem;
+    border-radius: 16px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.score-badge.relevance {
+    background: rgba(34,211,238,0.15);
+    color: var(--score-relevance);
+}
+
+.score-badge.importance {
+    background: rgba(245,158,11,0.15);
+    color: var(--score-importance);
+}
+
+.score-badge.recency {
+    background: rgba(16,185,129,0.15);
+    color: var(--score-recency);
+}
+
+.score-badge.final {
+    background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.15));
+    color: var(--accent-primary);
+}
+
+/* ==================== Consolidation Card ==================== */
+.consolidation-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: 1.25rem;
+    transition: all 0.3s ease;
+}
+
+.consolidation-card:hover {
+    border-color: var(--system2-consolidated);
+    box-shadow: 0 0 20px rgba(139,92,246,0.15);
+}
+
+.consolidation-card .date-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.75rem;
+    background: rgba(139,92,246,0.15);
+    color: var(--system2-consolidated);
+    border-radius: 16px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.consolidation-card .summary {
+    color: var(--text-primary);
+    line-height: 1.6;
+    margin: 1rem 0;
+}
+
+.consolidation-card .learnings-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.consolidation-card .learning-tag {
+    padding: 0.25rem 0.625rem;
+    background: rgba(99,102,241,0.1);
+    color: var(--accent-primary);
+    border-radius: 6px;
+    font-size: 0.75rem;
+}
+
+.consolidation-card .pattern-card {
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    padding: 0.75rem;
+    margin-top: 0.5rem;
+    font-size: 0.8125rem;
+}
+
+/* ==================== Health Meter ==================== */
+.health-meter {
+    position: relative;
+    width: 120px;
+    height: 120px;
+}
+
+.health-meter-ring {
+    fill: none;
+    stroke-width: 8;
+    stroke-linecap: round;
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+}
+
+.health-meter-bg {
+    stroke: var(--bg-secondary);
+}
+
+.health-meter-value {
+    stroke: var(--accent-emerald);
+    stroke-dasharray: 314;
+    stroke-dashoffset: calc(314 - (314 * var(--health-score, 0) / 100));
+    transition: stroke-dashoffset 1s ease-out, stroke 0.3s;
+}
+
+.health-meter-value.warning { stroke: var(--accent-amber); }
+.health-meter-value.danger { stroke: var(--accent-rose); }
+
+.health-meter-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+.health-meter-score {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.health-meter-label {
+    font-size: 0.6875rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* ==================== Distribution Charts ==================== */
+.distribution-bar {
+    display: flex;
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+    background: var(--bg-secondary);
+}
+
+.distribution-bar-segment {
+    height: 100%;
+    transition: width 0.5s ease-out;
+}
+
+.distribution-bar-segment.high { background: var(--memory-importance-high); }
+.distribution-bar-segment.medium { background: var(--memory-importance-medium); }
+.distribution-bar-segment.low { background: var(--memory-importance-low); }
+
+.distribution-legend {
+    display: flex;
+    gap: 1rem;
+    margin-top: 0.75rem;
+}
+
+.distribution-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.distribution-legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.distribution-legend-dot.high { background: var(--memory-importance-high); }
+.distribution-legend-dot.medium { background: var(--memory-importance-medium); }
+.distribution-legend-dot.low { background: var(--memory-importance-low); }
+
+/* ==================== System 2 Operation Buttons ==================== */
+.system2-ops {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.system2-op-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1rem;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.system2-op-btn:hover {
+    border-color: var(--border-accent);
+    background: var(--bg-card);
+}
+
+.system2-op-btn.consolidate {
+    border-color: rgba(139,92,246,0.3);
+}
+.system2-op-btn.consolidate:hover {
+    background: rgba(139,92,246,0.1);
+    border-color: var(--system2-consolidated);
+}
+
+.system2-op-btn.decay {
+    border-color: rgba(34,211,238,0.3);
+}
+.system2-op-btn.decay:hover {
+    background: rgba(34,211,238,0.1);
+    border-color: var(--accent-cyan);
+}
+
+.system2-op-btn.merge {
+    border-color: rgba(245,158,11,0.3);
+}
+.system2-op-btn.merge:hover {
+    background: rgba(245,158,11,0.1);
+    border-color: var(--accent-amber);
+}
+
+.system2-op-btn.forget {
+    border-color: rgba(244,63,94,0.3);
+}
+.system2-op-btn.forget:hover {
+    background: rgba(244,63,94,0.1);
+    border-color: var(--accent-rose);
+}
+
+.system2-op-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ==================== Memory Settings Modal Sections ==================== */
+.settings-section {
+    padding: 1.25rem;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    margin-bottom: 1rem;
+}
+
+.settings-section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+}
+
+.settings-section-title i {
+    color: var(--accent-primary);
+}
+
+.settings-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.settings-row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.settings-label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.settings-label-text {
+    font-size: 0.875rem;
+    color: var(--text-primary);
+}
+
+.settings-label-hint {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+/* ==================== Light Theme Overrides for Memory v0.22 ==================== */
+.light .memory-subtabs {
+    background: var(--bg-card);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.light .consolidation-card {
+    background: var(--bg-card);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.light .settings-section {
+    background: var(--bg-card);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+.light .system2-op-btn {
+    background: var(--bg-card);
+}
+
+.light .heuristic-slider {
+    background: var(--bg-card);
+}
+
