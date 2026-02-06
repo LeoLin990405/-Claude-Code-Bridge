@@ -331,6 +331,11 @@ class GatewayServer:
                 # Apply pre-request hook (context injection)
                 enhanced_dict = await self.memory_middleware.pre_request(request_dict)
 
+                # Fix Issue #8: Check if enhanced_dict is None
+                if enhanced_dict is None:
+                    print(f"[GatewayServer] WARNING: pre_request returned None, using original request")
+                    enhanced_dict = request_dict
+
                 # Update request message if context was injected
                 if enhanced_dict.get("_memory_injected"):
                     request.message = enhanced_dict["message"]
