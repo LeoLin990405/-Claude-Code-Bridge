@@ -309,24 +309,125 @@ class MemoryMiddleware:
             print(f"[MemoryMiddleware] Post-response error: {e}")
 
     def _extract_keywords(self, text: str) -> List[str]:
-        """提取任务关键词（简单实现）"""
-        # 中文停用词
+        """提取任务关键词（v3: 使用本地 LLM 提取语义关键词）"""
+        # 尝试使用 LLM 提取，如果失败则回退到正则提取
+        try:
+            return self._extract_keywords_with_llm(text)
+        except Exception as e:
+            print(f"[MemoryMiddleware] LLM extraction failed: {e}, fallback to regex")
+            return self._extract_keywords_regex(text)
+
+    def _extract_keywords_with_llm(self, text: str) -> List[str]:
+        """使用本地 LLM (Ollama + qwen2.5:7b) 提取关键词"""
+        import requests
+        import re
+
+        # 清理文本
+        cleaned = re.sub(r'\s+', ' ', text).strip()
+
+        # 短查询直接返回
+        if len(cleaned) <= 10:
+            return [cleaned]
+
+        # 构造提示词
+        prompt = f"""从下面的问题中提取2-3个最核心的关键词（名词或名词短语），用逗号分隔。
+只返回关键词，不要其他解释。
+
+问题：{cleaned}
+
+关键词："""
+
+        try:
+            # 调用 Ollama API
+            response = requests.post(
+                'http://localhost:11434/api/generate',
+                json={
+                    'model': 'qwen2.5:7b',
+                    'prompt': prompt,
+                    'stream': False,
+                    'options': {
+                        'temperature': 0.3,  # 低温度保证稳定输出
+                        'num_predict': 50    # 限制生成长度
+                    }
+                },
+                timeout=5  # 5秒超时
+            )
+
+            if response.status_code == 200:
+                result = response.json()
+                keywords_str = result.get('response', '').strip()
+
+                # 解析关键词（支持中英文逗号分隔）
+                keywords = []
+                # 分割：支持中文逗号和英文逗号
+                raw_keywords = re.split(r'[,，、]', keywords_str)
+
+                for kw in raw_keywords:
+                    # 清理：去除编号、空格、标点
+                    cleaned_kw = re.sub(r'^[\d\.\s、]+', '', kw.strip())
+                    cleaned_kw = re.sub(r'[。！？,.!?、]+$', '', cleaned_kw)
+
+                    if cleaned_kw and len(cleaned_kw) >= 2:
+                        keywords.append(cleaned_kw)
+
+                if keywords:
+                    print(f"[MemoryMiddleware] LLM extracted: {keywords}")
+                    return keywords[:5]  # 最多返回5个
+
+        except requests.exceptions.Timeout:
+            print(f"[MemoryMiddleware] Ollama timeout (5s)")
+        except requests.exceptions.ConnectionError:
+            print(f"[MemoryMiddleware] Ollama not running on localhost:11434")
+        except Exception as e:
+            print(f"[MemoryMiddleware] Ollama API error: {e}")
+
+        # 如果 LLM 失败，抛出异常让上层回退
+        raise Exception("LLM extraction failed")
+
+    def _extract_keywords_regex(self, text: str) -> List[str]:
+        """正则提取关键词（回退方案）"""
+        import re
+
+        # 清理：移除多余空格和换行
+        cleaned = re.sub(r'\s+', ' ', text).strip()
+
+        # 中文停用词（疑问词和助词）
         stop_words = {
             "的", "是", "在", "有", "和", "了", "我", "你", "他", "她",
-            "这", "那", "一个", "怎么", "如何", "什么", "为什么",
-            "help", "me", "with", "can", "you", "please", "the", "a", "an"
+            "这", "那", "一个", "怎么", "如何", "什么", "为什么", "需要",
+            "可以", "还", "刚才", "提到", "考虑", "吗", "呢", "吧", "要",
+            "会", "能", "将", "被", "把", "对", "给", "让", "向", "从",
+            "注意", "关注", "思考", "想要", "知道", "了解", "哪些",
         }
 
-        # 分词（简单空格分割）
-        words = text.lower().split()
+        # 提取 3-4 字的中文名词（通常是实体词）
+        # 如："购物车"、"电商网站"、"React组件"
+        chinese_keywords = re.findall(r'[\u4e00-\u9fff]{3,4}', cleaned)
 
-        # 过滤停用词和短词
-        keywords = [
-            w for w in words
-            if len(w) > 1 and w not in stop_words
-        ]
+        # 提取英文单词（3字母以上）
+        english_keywords = re.findall(r'\b[a-zA-Z]{3,}\b', cleaned.lower())
 
-        return keywords[:10]  # 最多保留 10 个关键词
+        # 过滤停用词
+        keywords = []
+        for word in chinese_keywords + english_keywords:
+            if word not in stop_words and len(word) >= 2:
+                keywords.append(word)
+
+        # 去重
+        seen = set()
+        unique_keywords = []
+        for k in keywords:
+            if k not in seen:
+                seen.add(k)
+                unique_keywords.append(k)
+
+        # 如果提取到关键词，返回前5个最重要的
+        # 如果没有关键词，返回清理后的原文（短查询）
+        if unique_keywords:
+            return unique_keywords[:5]
+        else:
+            # 对于短查询（如"购物车"），直接返回
+            return [cleaned] if len(cleaned) <= 10 else []
 
     def _format_memory_context(self, memories: List[Dict[str, Any]]) -> str:
         """格式化记忆上下文（v2.0: 包含评分信息）"""
