@@ -68,12 +68,20 @@ CCB CLI 统一执行脚本 (Gateway 模式)
   - 响应缓存
   - 自动重试
   - 数据持久化
+  - 🆕 同步超时自动切换异步（避免阻塞）
 
 全局选项:
   -a, --agent <role>    指定 Agent 角色 (如 sisyphus, oracle, librarian)
   -t, --timeout <sec>   超时秒数 (默认: 300)
   --async               异步模式: 立即返回 request_id，不等待完成
   -s, --stream          流式模式: 异步提交后自动跟踪输出 (使用 ccb-tail)
+
+🆕 自动切换机制:
+  当同步请求超时时，自动切换到异步模式：
+  1. 保留 request_id 继续后台处理
+  2. 提示用户可实时跟踪 (ccb-tail -f <id>)
+  3. 交互模式下询问是否立即跟踪
+  4. 避免 CLI 长时间阻塞
 
 Agent 角色:
   sisyphus   🪨 持续改进、错误修复
@@ -255,9 +263,30 @@ call_gateway() {
         timeout)
             local request_id
             request_id=$(echo "$response" | jq -r '.request_id // "unknown"')
-            echo -e "${YELLOW}请求超时 (${timeout}s)${NC}" >&2
-            echo -e "可稍后查询: ${BLUE}ccb-query get $request_id${NC}" >&2
-            exit 1
+            echo -e "${YELLOW}⏱️  同步请求超时 (${timeout}s)，自动切换到异步模式${NC}" >&2
+            echo -e "${GREEN}✓ Request ID: ${BLUE}$request_id${NC}" >&2
+            echo "" >&2
+            echo -e "${BLUE}📊 后台继续处理中...${NC}" >&2
+            echo -e "${BLUE}实时跟踪输出: ccb-tail -f $request_id${NC}" >&2
+            echo -e "${BLUE}查询最终结果: ccb-query get $request_id${NC}" >&2
+            echo "" >&2
+
+            # Auto-switch: Ask user if they want to tail the output
+            if [[ -t 0 ]]; then  # Check if stdin is a terminal (interactive)
+                read -t 5 -p "是否实时跟踪输出？[Y/n] " -n 1 -r
+                echo "" >&2
+                if [[ $REPLY =~ ^[Yy]$ ]] || [[ -z $REPLY ]]; then
+                    echo -e "${GREEN}开始实时跟踪...${NC}" >&2
+                    sleep 0.5
+                    exec ccb-tail -f "$request_id"
+                else
+                    echo -e "${BLUE}任务在后台继续执行${NC}" >&2
+                fi
+            else
+                # Non-interactive: just print info
+                echo -e "${BLUE}任务在后台继续执行（非交互模式）${NC}" >&2
+            fi
+            exit 0  # Changed from exit 1 to exit 0 (not an error, just async now)
             ;;
         *)
             echo -e "${RED}未知状态: $status${NC}" >&2
