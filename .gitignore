@@ -1,20 +1,39 @@
+# Database files
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Test files
+test_*.py
+*_test.py
+
+# AGI sandbox
+.agi/
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Python cache
 __pycache__/
 *.pyc
-.venv/
-.pytest_cache/
-docs/
-tests/
-.ccb_config/
-.codex-session
-.gemini-session
-.claude-session
-.opencode-session
-opencode.json
-.claude/
-*.mp4
-tmp/
-compare_with_mcp/
-CLAUDE.md
-AGENTS.md
-GEMINI.md
-openspec
+*.pyo
+*.pyd
+.Python
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# OS
+.DS_Store
+Thumbs.db
