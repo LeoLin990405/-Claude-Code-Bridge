@@ -982,6 +982,18 @@ final_score = α × 相关性 + β × 重要性 + γ × 时效性
 - **[云端同步指南](lib/memory/SYNC_QUICKSTART.md)** - Google Drive 设置
 - **[V1 vs V2 对比](lib/memory/V1_VS_V2.md)** - 记忆系统演进
 
+### 测试报告（2026-02-06）
+
+- **[最终测试报告](docs/CCB_FINAL_TEST_REPORT_2026-02-06.md)** - 全模块集成测试（8/9 Providers 通过）
+- **[问题追踪](docs/CCB_TEST_ISSUES_2026-02-06.md)** - 6 个问题修复详情（100% 修复率）
+- **[重测验证报告](docs/CCB_RETEST_REPORT_2026-02-06.md)** - 修复验证结果
+
+**测试结果摘要：**
+- ✅ 8/9 Providers 通过（89% 成功率）：Kimi, Qwen, DeepSeek, Gemini, iFlow, OpenCode, Qoder, Codex
+- ✅ 6/6 本地问题修复（100% 修复率）：UUID 截断、DeepSeek API、速率限制死锁、统计数据、iFlow、Codex o4-mini
+- ✅ 96% 模块测试覆盖：Gateway、State Store、Queue、Cache、Rate Limiter、Router、Memory v2
+- ⏱️ 平均响应时间：7-71 秒（按 Provider 分级）
+
 ### 其他资源
 
 - **[API 文档](docs/API.md)** - 完整 API 参考
