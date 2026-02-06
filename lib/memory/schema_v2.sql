@@ -135,7 +135,7 @@ CREATE VIRTUAL TABLE IF NOT EXISTS messages_fts USING fts5(
     skills_used,                           -- 使用的技能
     content='messages',
     content_rowid='rowid',
-    tokenize='porter unicode61'           -- 支持中文
+    tokenize='trigram'                    -- 三元组分词，适合中文搜索
 );
 
 -- ============================================================================
@@ -232,7 +232,7 @@ CREATE VIRTUAL TABLE IF NOT EXISTS observations_fts USING fts5(
     tags,
     content='observations',
     content_rowid='rowid',
-    tokenize='porter unicode61'
+    tokenize='trigram'
 );
 
 -- 自动更新 Observations FTS5 索引
