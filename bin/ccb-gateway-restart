@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+#
+# ccb-gateway-restart - 重启 CCB Gateway 并确保环境变量正确加载
+#
+
+set -e
+
+# 颜色输出
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+echo -e "${YELLOW}CCB Gateway Restart${NC}"
+echo "================================"
+
+# 加载 shell 配置以获取环境变量
+if [ -f ~/.zshrc ]; then
+    echo "Loading ~/.zshrc..."
+    source ~/.zshrc
+elif [ -f ~/.bashrc ]; then
+    echo "Loading ~/.bashrc..."
+    source ~/.bashrc
+fi
+
+# 检查必要的环境变量
+echo ""
+echo "Checking environment variables..."
+
+if [ -z "$ANTHROPIC_API_KEY" ]; then
+    echo -e "${RED}✗ ANTHROPIC_API_KEY not set${NC}"
+    echo "Please set ANTHROPIC_API_KEY in your shell config"
+    exit 1
+else
+    echo -e "${GREEN}✓ ANTHROPIC_API_KEY${NC} = ${ANTHROPIC_API_KEY:0:15}..."
+fi
+
+# 设置执行渠道 API key（如果未设置）
+if [ -z "$ANTHROPIC_API_KEY_EXECUTOR" ]; then
+    echo -e "${YELLOW}! ANTHROPIC_API_KEY_EXECUTOR not set, using ANTHROPIC_API_KEY${NC}"
+    export ANTHROPIC_API_KEY_EXECUTOR="$ANTHROPIC_API_KEY"
+fi
+echo -e "${GREEN}✓ ANTHROPIC_API_KEY_EXECUTOR${NC} = ${ANTHROPIC_API_KEY_EXECUTOR:0:15}..."
+
+# 停止现有 Gateway
+echo ""
+echo "Stopping existing Gateway..."
+if pgrep -f "gateway_server" > /dev/null; then
+    pkill -f "gateway_server"
+    sleep 2
+    echo -e "${GREEN}✓ Gateway stopped${NC}"
+else
+    echo "Gateway not running"
+fi
+
+# 启动 Gateway
+echo ""
+echo "Starting Gateway..."
+cd ~/.local/share/codex-dual
+
+# 导出环境变量给 nohup
+export ANTHROPIC_API_KEY
+export ANTHROPIC_API_KEY_EXECUTOR
+
+nohup python3 -m lib.gateway.gateway_server --port 8765 > /tmp/gateway.log 2>&1 &
+GATEWAY_PID=$!
+
+sleep 3
+
+# 验证 Gateway 是否启动
+if curl -s http://localhost:8765/api/health > /dev/null 2>&1; then
+    echo -e "${GREEN}✓ Gateway started successfully${NC}"
+    echo "  PID: $GATEWAY_PID"
+    echo "  URL: http://localhost:8765"
+    echo "  Logs: tail -f /tmp/gateway.log"
+    echo ""
+
+    # 显示 Claude 状态
+    echo "Checking Claude provider..."
+    curl -s http://localhost:8765/api/status | jq '.providers[] | select(.name == "claude") | {name, enabled, status, backend_type}' 2>/dev/null || echo "  Status check failed"
+
+    exit 0
+else
+    echo -e "${RED}✗ Gateway failed to start${NC}"
+    echo "Check logs: tail -f /tmp/gateway.log"
+    exit 1
+fi

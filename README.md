@@ -8,9 +8,9 @@
 [![License](https://img.shields.io/github/license/LeoLin990405/ai-router-ccb?color=blue)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.9+-3776AB?logo=python&logoColor=white)](https://www.python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
-[![Version](https://img.shields.io/badge/version-0.23.1--alpha-brightgreen)](https://github.com/LeoLin990405/ai-router-ccb/releases)
+[![Version](https://img.shields.io/badge/version-0.24.0--alpha-brightgreen)](https://github.com/LeoLin990405/ai-router-ccb/releases)
 
-**Claude orchestrates 9 AI providers through unified Gateway API with LLM-powered memory and real-time monitoring**
+**Claude orchestrates 10 AI providers through unified Gateway API with LLM-powered memory and real-time monitoring**
 
 [Features](#-features) • [Quick Start](#-quick-start) • [Documentation](#-documentation) • [Architecture](#-architecture) • [API](#-api-reference)
 
@@ -25,6 +25,7 @@
 ## 📖 Table of Contents
 
 - [Overview](#-overview)
+- [What's New in v0.24](#-whats-new-in-v024)
 - [What's New in v0.23.1](#-whats-new-in-v0231)
 - [What's New in v0.23](#-whats-new-in-v023)
 - [Why CCB Gateway?](#-why-ccb-gateway)
@@ -46,15 +47,17 @@
 
 ## 🌟 Overview
 
-**CCB Gateway** is a production-ready multi-AI orchestration platform where **Claude acts as the intelligent orchestrator**, routing tasks to 9 specialized AI providers through a unified Gateway API with LLM-powered memory, caching, retry, and real-time monitoring.
+**CCB Gateway** is a production-ready multi-AI orchestration platform where **Claude acts as the intelligent orchestrator**, routing tasks to 10 specialized AI providers (including Antigravity Tools local proxy) through a unified Gateway API with LLM-powered memory, caching, retry, and real-time monitoring.
 
 **What makes it unique:**
 - 🧠 **LLM-Powered Memory** - Semantic keyword extraction via Ollama + qwen2.5:7b
 - 🎯 **Heuristic Retrieval** - αR + βI + γT scoring (Relevance + Importance + Recency)
 - 🔄 **Dual-System Memory** - System 1 (instant archiving) + System 2 (nightly consolidation)
-- 📚 **Pre-loaded Context** - 53 Skills + 9 Providers + 4 MCP Servers embedded in every request
+- 📚 **Pre-loaded Context** - 53 Skills + 10 Providers + 4 MCP Servers embedded in every request
 - 🔍 **Skills Discovery** - Auto-find and recommend relevant skills via Vercel Skills CLI
 - ⚡ **Intelligent Routing** - Speed-tiered fallback with smart provider selection
+- 🔀 **CC Switch Integration** - Provider management with failover queue and parallel testing
+- 🏠 **Antigravity Tools** - Local Claude 4.5 proxy for unlimited API access
 - 📊 **Real-time Monitoring** - WebSocket-based dashboard with live metrics
 - 🔄 **Multi-AI Discussion** - Collaborative problem-solving across multiple AIs
 
@@ -73,17 +76,81 @@
               │                  │                   │
               └──────────────────┼───────────────────┘
                                  │
-          ┌──────────┬───────────┼───────────┬───────────┬─────────┐
-          ▼          ▼           ▼           ▼           ▼         ▼
-     ┌────────┐ ┌────────┐ ┌─────────┐ ┌────────┐ ┌────────┐ ┌────────┐
-     │ Kimi   │ │ Qwen   │ │DeepSeek │ │ Codex  │ │Gemini  │ │ iFlow  │
-     │ 🚀 7s  │ │ 🚀 12s │ │ ⚡ 16s  │ │ 🐢 48s │ │ 🐢 71s │ │ ⚡ 25s │
-     └────────┘ └────────┘ └─────────┘ └────────┘ └────────┘ └────────┘
-                           ┌─────────┐ ┌─────────┐ ┌─────────┐
-                           │ Qoder   │ │OpenCode │ │ Claude  │
-                           │ ⚡ 30s  │ │ ⚡ 42s  │ │ ⚡ 20s  │
-                           └─────────┘ └─────────┘ └─────────┘
+          ┌──────────┬───────────┼───────────┬───────────┬─────────┬──────────┐
+          ▼          ▼           ▼           ▼           ▼         ▼          ▼
+     ┌────────┐ ┌────────┐ ┌─────────┐ ┌────────┐ ┌────────┐ ┌────────┐ ┌──────────┐
+     │ Kimi   │ │ Qwen   │ │DeepSeek │ │ Codex  │ │Gemini  │ │ iFlow  │ │Antigrav. │
+     │ 🚀 7s  │ │ 🚀 12s │ │ ⚡ 16s  │ │ 🐢 48s │ │ 🐢 71s │ │ ⚡ 25s │ │ ⚡ 4s    │
+     └────────┘ └────────┘ └─────────┘ └────────┘ └────────┘ └────────┘ └──────────┘
+                           ┌─────────┐ ┌─────────┐
+                           │ Qoder   │ │OpenCode │
+                           │ ⚡ 30s  │ │ ⚡ 42s  │
+                           └─────────┘ └─────────┘
 ```
+
+---
+
+## 🆕 What's New in v0.24
+
+### 🏠 Antigravity Tools Integration ⭐⭐⭐
+
+**Local Claude 4.5 Sonnet proxy** - Unlimited API access through self-hosted Antigravity Tools application.
+
+**Key Features:**
+- 🚀 **Ultra-Fast** - 3-8 second response time (local proxy)
+- 🔓 **Unlimited Access** - No rate limits or token quotas
+- 🎯 **Claude 4.5 Sonnet** - Latest model with thinking capabilities
+- 🔌 **Dual API Support** - Claude API + OpenAI API compatible
+- 🛡️ **Offline Capable** - Works without internet (local processing)
+
+**Quick Start:**
+```bash
+# Use Antigravity through Gateway
+ccb-cli antigravity "你的问题"
+ccb-cli antigravity -a sisyphus "修复这个 bug"
+
+# Test Antigravity directly
+curl -X POST http://127.0.0.1:8045/v1/messages \
+  -H "x-api-key: YOUR_KEY" \
+  -d '{"model":"claude-sonnet-4-5-20250929","messages":[...]}'
+```
+
+**Architecture:**
+```
+CC Switch Failover Queue:
+  #1 Claude Official (官方 API)
+  #2 AiGoCode (第三方代理)
+  #3 Antigravity Tools (本地代理) ← New!
+```
+
+**Documentation:** [Antigravity Tools Guide](docs/ANTIGRAVITY_TOOLS_GUIDE.md)
+
+---
+
+### 🔧 Provider Management Improvements
+
+**Enhanced CLI tools** - New commands for seamless provider switching and CC Switch synchronization.
+
+**New Commands:**
+```bash
+# Switch Claude channels
+ccb-switch-claude [official|aigocode|antigravity]
+
+# Sync CC Switch selection to environment
+ccb-sync-cc-switch
+
+# CC Switch status and testing
+ccb-cc-switch status
+ccb-cc-switch test "问题" -p "反重力" -p "AiGoCode"
+```
+
+**Fixed Issues:**
+- ✅ CC Switch database adapter now correctly parses `settings_config` JSON
+- ✅ Removed redundant claude provider (conflicts with Claude Code)
+- ✅ Fixed failover queue ordering (sort_index ascending)
+- ✅ Environment variable conflicts resolved (no more token deduction issues)
+
+**Documentation:** [CC Switch Integration](docs/CCB_FINAL_REPORT.md)
 
 ---
 

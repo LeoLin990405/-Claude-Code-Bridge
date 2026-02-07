@@ -1,0 +1,8 @@
+{"version":3,"term":{"cols":80,"rows":24,"type":"xterm-256color"},"timestamp":1770017784,"idle_time_limit":1.0,"command":"zsh -c 'echo \"# 查看 Gateway 状态\"; curl -s http://localhost:8765/api/status | jq; sleep 2; echo \"\\n# 发送请求到 Qwen\"; curl -s -X POST http://localhost:8765/api/ask -H \"Content-Type: application/json\" -d \"{\\\"provider\\\":\\\"qwen\\\",\\\"message\\\":\\\"Hello\\\"}\" | jq; sleep 2; echo \"\\n# 查看最近请求\"; curl -s http://localhost:8765/api/requests | jq \".[0:2]\"'","title":"CCB Real Demo","env":{"SHELL":"/bin/zsh"}}
+[0.021, "o", "# 查看 Gateway 状态\r\n"]
+[0.010, "o", "zsh:1: command not found: jq\r\n"]
+[2.076, "o", "\r\n# 发送请求到 Qwen\r\n"]
+[0.005, "o", "zsh:1: command not found: jq\r\n"]
+[2.069, "o", "\r\n# 查看最近请求\r\n"]
+[0.026, "o", "zsh:1: command not found: jq\r\n"]
+[0.015, "x", "127"]

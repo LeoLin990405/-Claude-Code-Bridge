@@ -106,26 +106,49 @@ class CCSwitch:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
 
-            # Load providers
+            # Load Claude providers from CC Switch
+            # CC Switch stores config in settings_config JSON field
             cursor.execute("""
-                SELECT id, provider_name, api_base, api_key, priority, status,
-                       last_success, fail_count
+                SELECT id, name, settings_config, in_failover_queue, sort_index,
+                       is_current, created_at
                 FROM providers
-                ORDER BY priority DESC
+                WHERE app_type='claude'
+                ORDER BY sort_index
             """)
 
             for row in cursor.fetchall():
-                provider = CCProvider(
-                    id=row[0],
-                    provider_name=row[1],
-                    api_base=row[2],
-                    api_key=row[3],
-                    priority=row[4],
-                    status=row[5],
-                    last_success=row[6],
-                    fail_count=row[7],
-                )
-                self.providers[provider.id] = provider
+                provider_id = row[0]
+                name = row[1]
+                settings_json = row[2]
+                in_failover = row[3]
+                sort_index = row[4]
+                is_current = row[5]
+
+                # Parse settings_config JSON
+                try:
+                    settings = json.loads(settings_json) if settings_json else {}
+                    env_config = settings.get('env', {})
+
+                    # Extract API configuration from env
+                    api_base = env_config.get('ANTHROPIC_BASE_URL', '')
+                    api_key = env_config.get('ANTHROPIC_AUTH_TOKEN', '')
+
+                    # Create CCProvider instance
+                    provider = CCProvider(
+                        id=provider_id,
+                        provider_name=name,
+                        api_base=api_base,
+                        api_key=api_key,
+                        priority=sort_index if sort_index else 0,
+                        status=1 if in_failover else 0,  # 1=active, 0=inactive
+                        last_success=None,
+                        fail_count=0,
+                    )
+                    self.providers[provider_id] = provider
+
+                except json.JSONDecodeError as e:
+                    print(f"⚠️  Failed to parse settings for provider {name}: {e}")
+                    continue
 
             conn.close()
             print(f"✓ Loaded {len(self.providers)} providers from CC Switch")
@@ -134,11 +157,10 @@ class CCSwitch:
             print(f"✖ Failed to load CC Switch database: {e}")
 
     def get_active_providers(self) -> List[CCProvider]:
-        """Get all active providers sorted by priority."""
+        """Get all active providers sorted by priority (ascending sort_index)."""
         return sorted(
             [p for p in self.providers.values() if p.status == 1],
-            key=lambda x: x.priority,
-            reverse=True
+            key=lambda x: x.priority  # 按 sort_index 升序，数字越小优先级越高
         )
 
     def get_failover_queue(self) -> List[str]:

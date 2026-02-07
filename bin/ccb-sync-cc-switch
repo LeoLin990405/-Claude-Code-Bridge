@@ -1,0 +1,67 @@
+#!/bin/bash
+# CCB - Sync CC Switch current provider to environment
+# 将 CC Switch 中选择的当前 Provider 同步到环境变量
+
+set -e
+
+CC_SWITCH_DB="$HOME/.cc-switch/cc-switch.db"
+
+if [[ ! -f "$CC_SWITCH_DB" ]]; then
+    echo "❌ CC Switch database not found: $CC_SWITCH_DB" >&2
+    exit 1
+fi
+
+# 获取当前选择的 Claude Provider
+CURRENT_PROVIDER=$(sqlite3 "$CC_SWITCH_DB" "
+    SELECT
+        name,
+        json_extract(settings_config, '$.env.ANTHROPIC_BASE_URL') as api_base,
+        json_extract(settings_config, '$.env.ANTHROPIC_AUTH_TOKEN') as api_key
+    FROM providers
+    WHERE app_type='claude' AND is_current=1
+    LIMIT 1;
+")
+
+if [[ -z "$CURRENT_PROVIDER" ]]; then
+    echo "⚠️  No current Claude provider found in CC Switch" >&2
+    exit 1
+fi
+
+# 解析结果
+IFS='|' read -r NAME API_BASE API_KEY <<< "$CURRENT_PROVIDER"
+
+echo "📌 CC Switch 当前选择: $NAME"
+
+# 如果 API_BASE 和 API_KEY 都为空，说明是官方 API
+if [[ -z "$API_BASE" ]] && [[ -z "$API_KEY" ]]; then
+    echo "   使用 Claude 官方 API"
+    echo "   需要从环境变量或 CC Switch 获取认证"
+
+    # 清除自定义 BASE_URL，使用官方 API
+    echo ""
+    echo "🔧 建议执行以下命令："
+    echo "   unset ANTHROPIC_BASE_URL"
+    echo "   # 或者在 ~/.zshrc 中删除 ANTHROPIC_BASE_URL 配置"
+
+    exit 0
+fi
+
+# 输出环境变量设置
+echo ""
+echo "🔧 请执行以下命令来同步配置："
+echo ""
+
+if [[ -n "$API_BASE" ]]; then
+    echo "export ANTHROPIC_BASE_URL=\"$API_BASE\""
+fi
+
+if [[ -n "$API_KEY" ]]; then
+    echo "export ANTHROPIC_API_KEY=\"$API_KEY\""
+    echo "export ANTHROPIC_API_KEY_EXECUTOR=\"$API_KEY\""
+fi
+
+echo ""
+echo "💡 提示：将以上命令添加到 ~/.zshrc 的 CC Switch 配置部分"
+echo ""
+echo "或者使用以下命令直接应用到当前 shell："
+echo "  eval \"\$(ccb-sync-cc-switch | grep 'export')\""

@@ -1,0 +1,67 @@
+#!/bin/bash
+# CCB - Switch Claude Provider
+# 在 Claude 官方 API 和第三方代理之间切换
+
+print_usage() {
+    echo "Usage: ccb-switch-claude [official|aigocode|antigravity]"
+    echo ""
+    echo "Options:"
+    echo "  official      使用 Claude Code 官方登录认证（默认）"
+    echo "  aigocode      使用 AiGoCode 代理"
+    echo "  antigravity   使用 Antigravity Tools 本地代理"
+    echo ""
+    echo "当前配置："
+    if [[ -z "$ANTHROPIC_BASE_URL" ]]; then
+        echo "  ✓ Claude 官方 API (无自定义 BASE_URL)"
+    else
+        echo "  ANTHROPIC_BASE_URL: $ANTHROPIC_BASE_URL"
+    fi
+    if [[ -n "$ANTHROPIC_API_KEY" ]]; then
+        echo "  ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:0:20}..."
+    fi
+}
+
+if [[ $# -eq 0 ]]; then
+    print_usage
+    exit 0
+fi
+
+case "$1" in
+    official)
+        echo "🔄 切换到 Claude 官方 API"
+        echo ""
+        echo "在当前 shell 执行："
+        echo "  unset ANTHROPIC_BASE_URL"
+        echo "  unset ANTHROPIC_API_KEY"
+        echo ""
+        echo "或者在新的 shell 中生效（已注释 .zshrc 配置）"
+        echo "  source ~/.zshrc"
+        ;;
+
+    aigocode)
+        echo "🔄 切换到 AiGoCode 代理"
+        echo ""
+        echo "在当前 shell 执行："
+        echo "  export ANTHROPIC_API_KEY=\"sk-5036c0b7c88aaac76975afd1bc4afe1b20b0789fc2185fafce16fe18ea28281f\""
+        echo "  export ANTHROPIC_BASE_URL=\"https://api.aigocode.com\""
+        echo ""
+        echo "⚠️  警告：这会影响 Claude Code 主脑的 API 调用"
+        ;;
+
+    antigravity)
+        echo "🔄 切换到 Antigravity Tools 本地代理"
+        echo ""
+        echo "在当前 shell 执行："
+        echo "  export ANTHROPIC_API_KEY=\"sk-89f5748589e74b55926fb869d53e01e6\""
+        echo "  export ANTHROPIC_BASE_URL=\"http://127.0.0.1:8045\""
+        echo ""
+        echo "⚠️  确保 Antigravity Tools 应用正在运行"
+        ;;
+
+    *)
+        echo "❌ 未知选项: $1"
+        echo ""
+        print_usage
+        exit 1
+        ;;
+esac

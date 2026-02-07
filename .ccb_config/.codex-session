@@ -1,0 +1,22 @@
+{
+  "session_id": "ai-1769826561-39760",
+  "ccb_project_id": "88aad094e4995a1f6b3cdc3ab224d383ebc9fff9a34070bb243f0b040954680d",
+  "runtime_dir": "/var/folders/8k/rsg3bc7s5qd3v07_19wz50rc0000gn/T/claude-ai-leo/ai-1769826561-39760/codex",
+  "input_fifo": "/var/folders/8k/rsg3bc7s5qd3v07_19wz50rc0000gn/T/claude-ai-leo/ai-1769826561-39760/codex/input.fifo",
+  "output_fifo": "/var/folders/8k/rsg3bc7s5qd3v07_19wz50rc0000gn/T/claude-ai-leo/ai-1769826561-39760/codex/output.fifo",
+  "terminal": "wezterm",
+  "tmux_session": null,
+  "pane_id": "84",
+  "pane_title_marker": "CCB-Codex",
+  "tmux_log": "/var/folders/8k/rsg3bc7s5qd3v07_19wz50rc0000gn/T/claude-ai-leo/ai-1769826561-39760/codex/bridge_output.log",
+  "work_dir": "/Users/leo/.local/share/codex-dual",
+  "work_dir_norm": "/Users/leo/.local/share/codex-dual",
+  "start_dir": "/Users/leo/.local/share/codex-dual",
+  "active": false,
+  "started_at": "2026-01-31 10:29:21",
+  "codex_start_cmd": "codex resume 019c11e2-81ec-7db0-b38d-970441df8948",
+  "start_cmd": "codex -c disable_paste_burst=true; code=$?; echo; echo \"[codex] exited with code $code. Press Enter to close...\"; read -r _; exit $code",
+  "codex_session_path": "/Users/leo/.codex/sessions/2026/01/31/rollout-2026-01-31T10-29-43-019c11e2-81ec-7db0-b38d-970441df8948.jsonl",
+  "codex_session_id": "019c11e2-81ec-7db0-b38d-970441df8948",
+  "ended_at": "2026-01-31 10:42:45"
+}

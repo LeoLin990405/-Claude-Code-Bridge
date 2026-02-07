@@ -396,6 +396,10 @@ parse_and_call() {
             # Claude: call another Claude instance via Gateway
             message="${args[*]}"
             ;;
+        antigravity)
+            # Antigravity Tools: local proxy
+            message="${args[*]}"
+            ;;
         *)
             echo -e "${RED}未知 provider: $provider${NC}" >&2
             show_help
