@@ -2,19 +2,18 @@
 
 # 🤖 CCB Gateway
 
-### 企业级多 AI 编排平台
+**企业级多 AI 编排平台**
 
-[![Stars](https://img.shields.io/github/stars/LeoLin990405/ai-router-ccb?style=social)](https://github.com/LeoLin990405/ai-router-ccb)
+让 Claude 成为智能编排者，统一管理 10 个 AI Provider，配备 LLM 驱动的记忆系统、智能路由和实时监控。
+
+[![Version](https://img.shields.io/badge/version-0.24.1-brightgreen)](https://github.com/LeoLin990405/ai-router-ccb/releases)
 [![License](https://img.shields.io/github/license/LeoLin990405/ai-router-ccb?color=blue)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.9+-3776AB?logo=python&logoColor=white)](https://www.python.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
-[![Version](https://img.shields.io/badge/version-0.24.1-brightgreen)](https://github.com/LeoLin990405/ai-router-ccb/releases)
+[![Stars](https://img.shields.io/github/stars/LeoLin990405/ai-router-ccb?style=social)](https://github.com/LeoLin990405/ai-router-ccb)
 
-**Claude 通过统一的 Gateway API 编排 10 个 AI Provider（含 Antigravity 本地代理），LLM 驱动的记忆系统和实时监控**
+[快速开始](#-快速开始) • [功能特性](#-功能特性) • [使用文档](#-使用文档)
 
-[功能特性](#-功能特性) • [快速开始](#-快速开始) • [使用文档](#-使用文档) • [系统架构](#-系统架构) • [API 参考](#-api-参考)
-
-[🇺🇸 English](README.md) | [🇨🇳 简体中文](README.zh-CN.md)
+[🇺🇸 English](README.md) | **🇨🇳 简体中文**
 
 <img src="screenshots/webui-demo.gif" alt="CCB Gateway 演示" width="800">
 
@@ -24,184 +23,208 @@
 
 ## 📖 目录
 
-- [概述](#-概述)
-- [v0.24.1 新特性](#-v0241-新特性)
-- [v0.24 新特性](#-v024-新特性)
-- [v0.23.1 新特性](#-v0231-新特性)
-- [v0.23 新特性](#-v023-新特性)
-- [为什么选择 CCB Gateway](#-为什么选择-ccb-gateway)
-- [功能特性](#-功能特性)
-- [系统架构](#-系统架构)
+- [什么是 CCB Gateway？](#-什么是-ccb-gateway)
 - [快速开始](#-快速开始)
+- [核心功能](#-核心功能)
+- [系统架构](#-系统架构)
 - [使用文档](#-使用文档)
-- [记忆系统](#-记忆系统-v020)
-- [技能发现](#-技能发现)
-- [多 AI 讨论](#-多-ai-讨论)
-- [Web UI](#-web-ui)
 - [API 参考](#-api-参考)
-- [文档资源](#-文档资源)
 - [开发路线](#-开发路线)
 - [贡献指南](#-贡献指南)
 - [开源许可](#-开源许可)
 
 ---
 
-## 🌟 概述
+## 🌟 什么是 CCB Gateway？
 
-**CCB Gateway** 是生产级的多 AI 编排平台，**Claude 作为智能编排者**，通过统一的 Gateway API 将任务路由到 10 个专业 AI Provider（含 Antigravity Tools 本地代理），提供 LLM 驱动的记忆系统、缓存、重试和实时监控功能。
+**CCB Gateway** 是生产级的多 AI 编排平台，**Claude 作为智能编排者**，通过统一的 Gateway API 将任务路由到 10 个专业 AI Provider（包括 Antigravity 本地代理），提供 LLM 驱动的记忆系统、智能路由和实时监控。
 
-**独特优势：**
-- 🧠 **LLM 驱动的记忆** - 通过 Ollama + qwen2.5:7b 实现语义关键词提取
-- 🎯 **启发式检索** - αR + βI + γT 评分（相关性 + 重要性 + 时效性）
-- 🔄 **双系统记忆** - System 1（即时归档）+ System 2（夜间整合）
-- 📚 **预加载上下文** - 55 个 Skills + 10 个 Providers + 4 个 MCP Servers 嵌入每个请求
-- 🔍 **技能发现** - 通过 Vercel Skills CLI 自动发现和推荐相关技能
-- ⚡ **智能路由** - 基于速度分级的自动降级和智能 Provider 选择
-- 🔀 **CC Switch 集成** - Provider 管理、故障转移队列和并行测试
-- 🏠 **Antigravity Tools** - 本地 Claude 4.5 代理，无限 API 访问
-- 📊 **实时监控** - 基于 WebSocket 的仪表盘和实时指标
-- 🔄 **多 AI 讨论** - 多个 AI 协作解决问题
+### 为什么选择 CCB Gateway？
 
-```
-                    ┌─────────────────────────────┐
-                    │   Claude (Orchestrator)     │
-                    │      Claude Code CLI        │
-                    └─────────────┬───────────────┘
-                                  │
-              ┌───────────────────┼───────────────────┐
-              │                   │                   │
-    ┌─────────▼─────────┐ ┌──────▼──────┐ ┌─────────▼─────────┐
-    │   ccb-cli         │ │ Gateway API │ │   Web UI          │
-    │  直接调用         │ │  REST/WS    │ │   仪表盘          │
-    └─────────┬─────────┘ └──────┬──────┘ └─────────┬─────────┘
-              │                  │                   │
-              └──────────────────┼───────────────────┘
-                                 │
-          ┌──────────┬───────────┼───────────┬───────────┬─────────┬──────────┐
-          ▼          ▼           ▼           ▼           ▼         ▼          ▼
-     ┌────────┐ ┌────────┐ ┌─────────┐ ┌────────┐ ┌────────┐ ┌────────┐ ┌──────────┐
-     │ Kimi   │ │ Qwen   │ │DeepSeek │ │ Codex  │ │Gemini  │ │ iFlow  │ │Antigrav. │
-     │ 🚀 7s  │ │ 🚀 12s │ │ ⚡ 16s  │ │ 🐢 48s │ │ 🐢 71s │ │ ⚡ 25s │ │ ⚡ 4s    │
-     └────────┘ └────────┘ └─────────┘ └────────┘ └────────┘ └────────┘ └──────────┘
-                           ┌─────────┐ ┌─────────┐
-                           │ Qoder   │ │OpenCode │
-                           │ ⚡ 30s  │ │ ⚡ 42s  │
-                           └─────────┘ └─────────┘
-```
+<table>
+<tr>
+<td width="50%">
 
----
+**❌ 没有 CCB Gateway**
 
-## 🆕 v0.24.1 新特性
+- 多个 CLI 接口，管理复杂
+- 手动选择 Provider，效率低下
+- 会话之间无记忆
+- 上下文丢失，AI 不知道可用工具
+- 无法观察操作过程
+- AI 之间无法协作
+- 失败请求浪费时间
 
-### 🔧 Antigravity 集成修复 ⭐
+</td>
+<td width="50%">
 
-**生产就绪的 Antigravity Tools 支持** - 修复环境变量传递问题并改进 API Key 处理机制。
+**✅ 使用 CCB Gateway**
 
-**核心修复：**
-- ✅ **智能 API Key 检测** - 同时支持环境变量和直接 API key 配置
-- ✅ **HTTP Backend 增强** - 自动检测 `sk-` 前缀值作为直接密钥
-- ✅ **Gateway 启动包装器** - 通过 wrapper 脚本正确加载环境变量
-- ✅ **向后兼容** - 现有的基于环境变量的配置仍然有效
+- **统一 Gateway API** - 一个接口调用全部
+- **智能路由** - 自动选择最佳 AI
+- **双系统记忆** - 快速 + 深度处理
+- **预加载上下文** - 55 个 Skills 自动嵌入
+- **实时仪表盘** - 完全可观测
+- **多 AI 讨论** - 协作式问题解决
+- **重试与降级** - 内置弹性机制
 
-**问题解决：**
-```bash
-# 问题：ANTIGRAVITY_API_KEY 无法通过 nohup 传递到 Gateway 子进程
-# 解决：gateway.yaml 支持直接 API key + 智能检测
+</td>
+</tr>
+</table>
 
-# 之前（失败）
-api_key_env: "ANTIGRAVITY_API_KEY"  # 环境变量未加载 ❌
+### 支持的 AI Provider（10 个）
 
-# 之后（成功）
-api_key_env: "sk-89f574858..."      # 本地服务直接密钥 ✅
-```
-
-**技术细节：**
-- 修改 `http_backend.py` 的 `_get_api_key()` 方法检测密钥前缀
-- 创建 `ccb-gateway-start.sh` 包装器确保环境正确加载
-- 更新 `ccb-cli` 使用包装器脚本启动 Gateway
-- 所有测试通过：API 直连、ccb-cli、CC Switch、Web UI
-
-**测试验证：**
-```bash
-✅ Antigravity 直连 API：3-8秒响应时间
-✅ ccb-cli antigravity：成功
-✅ CC Switch 状态：6 个 providers，3 个在故障转移队列
-✅ Gateway /api/providers：Antigravity 可见
-```
-
-**完整文档：** [系统测试报告](docs/CCB_SYSTEM_TEST_2026-02-07.md)
+| Provider | 速度 | 特长 | 响应时间 |
+|----------|:----:|------|----------|
+| **Antigravity** | 🚀 | 本地 Claude 4.5 代理，无限访问 | 3-8秒 |
+| **Kimi** | 🚀 | 中文对话，长文本 (128k) | 7秒 |
+| **Qwen** | 🚀 | 代码生成，多语言 | 12秒 |
+| **DeepSeek** | ⚡ | 深度推理，算法分析 | 16秒 |
+| **iFlow** | ⚡ | 工作流自动化 | 25秒 |
+| **Codex** | 🐢 | 代码审查，复杂重构 | 48秒 |
+| **Gemini** | 🐢 | 前端开发，多模态 | 71秒 |
+| **Claude** | ⚡ | 通用任务 | 30秒 |
+| **Qoder** | ⚡ | 编程任务 | 30秒 |
+| **OpenCode** | ⚡ | 多模型切换 | 42秒 |
 
 ---
 
-## 🆕 v0.24 新特性
+## 🚀 快速开始
 
-### 🏠 Antigravity Tools 集成 ⭐⭐⭐
+### 前置条件
 
-**本地 Claude 4.5 Sonnet 代理** - 通过自托管 Antigravity Tools 应用实现无限 API 访问。
+- **Python 3.9+**
+- **Node.js 16+**（用于 MCP servers）
+- **Git**
 
-**核心功能：**
+### 安装步骤
+
+```bash
+# 1. 克隆仓库
+git clone https://github.com/LeoLin990405/ai-router-ccb.git
+cd ai-router-ccb
+
+# 2. 安装依赖
+pip install -r requirements.txt
+npm install
+
+# 3. 配置 AI Provider
+# 编辑 ~/.claude/ 中的配置文件或设置环境变量
+```
+
+### 启动 Gateway
+
+```bash
+# 启动 Gateway Server
+python3 -m lib.gateway.gateway_server --port 8765
+
+# 输出示例：
+# [SystemContext] Preloading system information...
+# [SystemContext] Loaded 55 skills
+# [SystemContext] Loaded 10 providers
+# [MemoryMiddleware] Initialized (enabled=True)
+# ✓ Server running at http://localhost:8765
+```
+
+### 第一个请求
+
+```bash
+# 使用 ccb-cli（推荐）
+ccb-cli kimi "解释 React Hooks"
+
+# 或使用 curl
+curl -X POST http://localhost:8765/api/ask \
+  -H "Content-Type: application/json" \
+  -d '{
+    "provider": "kimi",
+    "message": "解释 React Hooks",
+    "wait": true,
+    "timeout": 60
+  }'
+```
+
+### 访问 Web UI
+
+打开浏览器访问：**http://localhost:8765/web**
+
+---
+
+## ✨ 核心功能
+
+### 🧠 双系统记忆（v0.20-v0.23）
+
+<details>
+<summary><b>灵感来自人类认知的记忆架构</b></summary>
+
+**System 1（快速）** - 自动归档会话上下文
+- 在 `/clear` 或 `/compact` 时自动触发
+- 解析 session.jsonl，提取关键消息
+- 保存为 Markdown 归档
+
+**System 2（深度）** - 夜间整合处理
+- 凌晨 3 点自动运行或手动触发
+- 按项目/主题聚类记忆
+- 提取模式和学习要点
+- 生成结构化长期记忆
+
+**启发式检索（v0.22）**
+```
+最终分数 = α × 相关性 + β × 重要性 + γ × 时效性
+默认权重：α=0.4, β=0.3, γ=0.3
+```
+
+**LLM 驱动的关键词提取（v0.23）**
+- 使用 Ollama + qwen2.5:7b 实现语义理解
+- 优秀的中文 + 英文关键词提取
+- 1-2 秒本地推理，95%+ 准确率
+
+**命令示例：**
+```bash
+ccb-mem save                      # 保存当前会话
+ccb-mem consolidate --hours 24    # 整合最近 24 小时
+ccb-mem search "认证"              # 搜索记忆
+ccb-mem search-scored "认证" --limit 5  # 启发式评分搜索
+```
+
+</details>
+
+### 🏠 Antigravity Tools 集成（v0.24+）
+
+<details>
+<summary><b>本地 Claude 4.5 Sonnet 代理</b></summary>
+
+**核心优势：**
 - 🚀 **超快速度** - 3-8 秒响应时间（本地代理）
 - 🔓 **无限访问** - 无速率限制或 token 配额
-- 🎯 **Claude 4.5 Sonnet** - 最新模型，带思考能力
+- 🎯 **最新模型** - Claude 4.5 Sonnet，带思考能力
 - 🔌 **双 API 支持** - Claude API + OpenAI API 兼容
-- 🛡️ **离线可用** - 无需互联网即可工作（本地处理）
 
-**快速开始：**
+**快速使用：**
 ```bash
-# 通过 Gateway 使用 Antigravity
+# 通过 Gateway 调用
 ccb-cli antigravity "你的问题"
 ccb-cli antigravity -a sisyphus "修复这个 bug"
 
-# 直接测试 Antigravity
+# 直接测试
 curl -X POST http://127.0.0.1:8045/v1/messages \
   -H "x-api-key: YOUR_KEY" \
   -d '{"model":"claude-sonnet-4-5-20250929","messages":[...]}'
 ```
 
-**架构：**
-```
-CC Switch 故障转移队列：
-  #1 Claude Official (官方 API)
-  #2 AiGoCode (第三方代理)
-  #3 Antigravity Tools (本地代理) ← 新增！
-```
+**v0.24.1 修复：**
+- ✅ 智能 API Key 检测（环境变量 + 直接配置）
+- ✅ HTTP Backend 增强
+- ✅ Gateway 启动包装器
+- ✅ 向后兼容
 
-**完整文档：** [Antigravity Tools 指南](docs/ANTIGRAVITY_TOOLS_GUIDE.md)
+📖 **详细文档：** [Antigravity Tools 指南](docs/ANTIGRAVITY_TOOLS_GUIDE.md)
 
----
+</details>
 
-### 🔧 Provider 管理改进
+### 🔀 CC Switch 集成（v0.23.1）
 
-**增强的 CLI 工具** - 新增命令实现无缝 provider 切换和 CC Switch 同步。
-
-**新增命令：**
-```bash
-# 切换 Claude 通道
-ccb-switch-claude [official|aigocode|antigravity]
-
-# 同步 CC Switch 选择到环境变量
-ccb-sync-cc-switch
-
-# CC Switch 状态和测试
-ccb-cc-switch status
-ccb-cc-switch test "问题" -p "反重力" -p "AiGoCode"
-```
-
-**已修复问题：**
-- ✅ CC Switch 数据库适配器现在正确解析 `settings_config` JSON
-- ✅ 移除冗余的 claude provider（与 Claude Code 冲突）
-- ✅ 修复故障转移队列排序（sort_index 升序）
-- ✅ 解决环境变量冲突（不再有 token 扣费问题）
-
-**完整文档：** [CC Switch 集成](docs/CCB_FINAL_REPORT.md)
-
----
-
-## 🆕 v0.23.1 新特性
-
-### 🔄 CC Switch 集成 ⭐
-
-**高级 Provider 管理和并行测试** - 集成 CC Switch 实现智能故障转移和多 Provider 测试。
+<details>
+<summary><b>高级 Provider 管理和并行测试</b></summary>
 
 **核心功能：**
 - 🔀 **故障转移队列** - 基于优先级的自动 Provider 切换
@@ -211,606 +234,39 @@ ccb-cc-switch test "问题" -p "反重力" -p "AiGoCode"
 
 **CLI 命令：**
 ```bash
-# Provider 状态和故障转移队列
-ccb-cc-switch status
-
-# 从数据库重新加载 Provider
-ccb-cc-switch reload
-
-# 并行测试所有活跃 Provider
-ccb-cc-switch test "用一句话解释递归"
-
-# 测试指定 Provider
-ccb-cc-switch test "解释递归" \
-  -p "反重力" \
-  -p "AiGoCode-优质逆向" \
-  -t 60
+ccb-cc-switch status              # Provider 状态
+ccb-cc-switch reload              # 重新加载配置
+ccb-cc-switch test "解释递归"     # 并行测试所有
+ccb-cc-switch test "问题" -p "反重力" -p "Kimi" -t 60
 ```
 
-**Gateway API 端点：**
+**API 端点：**
 ```
-GET  /api/cc-switch/status            # Provider 状态
-POST /api/cc-switch/reload            # 重新加载配置
-POST /api/cc-switch/parallel-test     # 运行并行测试
-GET  /api/cc-switch/failover-queue    # 获取队列
-```
-
-**主要优势：**
-- ⚡ **快速 Provider 发现** - 秒级识别最快的 Provider
-- 🔍 **质量对比** - 跨 Provider 比较响应
-- 🛡️ **可靠性测试** - 使用前验证 Provider 可用性
-- 📊 **性能指标** - 跟踪延迟、Token 和成功率
-
-**相关文档：** [CC Switch 集成指南](docs/CC_SWITCH_INTEGRATION.md)
-
----
-
-### 🎨 Web UI 优化
-
-**精简界面** - 减少标签页并清理冗余文件：
-
-**变更内容：**
-- 📉 **标签页精简** - 11 → 7 个标签页（移除 Test、Costs、Compare）
-- 🔄 **设置统一** - 合并 API Keys + Config 到 Settings 标签
-- 🗑️ **文件清理** - 删除 7 个冗余 HTML 文件（~292KB）
-- 📏 **大小减少** - 348KB → 331KB（-5%）
-
-**新标签页结构：**
-1. **Dashboard** - 概览和指标
-2. **Monitor** - 实时请求监控
-3. **Memory** - 6 个子标签（Sessions、Observations、Injections 等）
-4. **Skills** - Skills 发现和反馈
-5. **Discussions** - 多 AI 协作
-6. **Requests** - 请求历史和跟踪
-7. **Settings** - 系统配置 + API 密钥（2 个子标签）
-
-**相关文档：** [Web UI 优化报告](lib/gateway/web/OPTIMIZATION_REPORT.md)
-
----
-
-### 🔌 Gemini CLI 双路径集成
-
-**灵活的集成策略** - 根据使用场景选择原生 CLI 或 Gateway 自动化模式：
-
-| 使用模式 | 命令 | 适用场景 |
-|----------|------|----------|
-| **原生 CLI** | `gemini` | 交互式日常使用，完整功能 |
-| **Gateway 模式** | `ccb-cli gemini 3f "问题"` | 自动化、脚本、CCB 系统 |
-
-**核心优势：**
-- 🔓 **保留原生体验** - Gemini CLI 完整功能不受影响
-- 🚀 **避免认证跳转** - Gateway 使用 API Key，无 OAuth 循环
-- 🎯 **场景化选择** - 根据任务选择最佳方式
-- 🔄 **无缝集成** - CCB 系统自动通过 Gateway 路由
-
-**原生 CLI（交互式）：**
-```bash
-gemini                    # 交互模式，支持认证
-gemini "快速提问"          # 单次查询
-```
-
-**Gateway 模式（自动化）：**
-```bash
-ccb-cli gemini 3f "问题"      # Gemini 3 Flash
-ccb-cli gemini 3p "问题"      # Gemini 3 Pro
-ccb-cli gemini 2.5f "问题"    # Gemini 2.5 Flash
-```
-
-**配置方式：**
-- **API Key 模式**（推荐用于自动化）：在 `~/.zshrc` 配置反向代理 API
-- **OAuth 模式**（原生 CLI）：标准浏览器认证
-- **快速切换**：使用 `~/.gemini/switch-to-*.sh` 脚本
-
-**相关文档：**
-- 📖 [Gemini CLI 集成指南](docs/GEMINI_CLI_INTEGRATION_GUIDE.md) - 完整设置说明
-- 📖 [Gemini 认证配置](docs/GEMINI_AUTH_SETUP.md) - 认证方式配置
-
----
-
-## 🆕 v0.23 新特性
-
-### 🧠 LLM 驱动的关键词提取 ⭐
-
-**本地 LLM 赋能的语义理解** - 记忆系统现在使用 Ollama + qwen2.5:7b 实现智能的中英文关键词提取。
-
-**之前（正则表达式）：**
-```python
-查询："购物车功能需要考虑哪些边界情况？"
-关键词：["购物车功能需要考虑哪些边界情况？"]  # ❌ 整个句子
-结果：找到 0 条记忆
-```
-
-**现在（LLM）：**
-```python
-查询："购物车功能需要考虑哪些边界情况？"
-关键词：["购物车功能", "边界情况"]  # ✅ 语义关键词
-结果：找到 3 条相关记忆
-```
-
-**核心优势：**
-- 🎯 **语义理解** - 提取核心概念，而非简单模式匹配
-- 🌏 **多语言支持** - 优秀的中文 + 英文关键词提取
-- ⚡ **快速本地推理** - 通过 Ollama 实现 1-2 秒响应
-- 🔄 **健壮的降级机制** - Ollama 不可用时自动降级到正则表达式
-
-**安装步骤：**
-```bash
-# 安装 Ollama（macOS）
-curl -fsSL https://ollama.com/install.sh | sh
-open -a Ollama
-
-# 下载 qwen2.5:7b 模型（4.7GB）
-ollama pull qwen2.5:7b
-
-# 验证
-curl http://localhost:11434/api/version
-```
-
-**性能指标：**
-| 指标 | 数值 | 说明 |
-|------|------|------|
-| 响应时间 | 1-2秒 | 本地推理 |
-| 关键词数量 | 2-3个 | 最优检索数量 |
-| 准确率 | 95%+ | 100+ 查询测试 |
-| 降级成功率 | 100% | 无缝降级到正则 |
-
----
-
-## 📦 v0.22 功能（之前版本）
-
-### 启发式记忆检索
-
-**基于 Stanford Generative Agents 的多维评分检索**：
-
-```
-final_score = α × 相关性 + β × 重要性 + γ × 时效性
-
-默认权重：α=0.4, β=0.3, γ=0.3
-时间衰减：exp(-λ × 访问后小时数), λ=0.1
-```
-
-| 维度 | 来源 | 描述 |
-|------|------|------|
-| **相关性 (Relevance)** | FTS5 BM25 | 关键词匹配质量 |
-| **重要性 (Importance)** | 用户/LLM 评分 | 0.0-1.0 重要性分数 |
-| **时效性 (Recency)** | 艾宾浩斯曲线 | 基于时间衰减的访问分数 |
-
-### 增强的 System 2 操作
-
-| 操作 | 描述 | 触发命令 |
-|------|------|----------|
-| **衰减 (Decay)** | 应用艾宾浩斯遗忘曲线 | `ccb-consolidate decay` |
-| **合并 (Merge)** | 合并相似记忆 (>90% 相似度) | `ccb-consolidate merge` |
-| **抽象 (Abstract)** | LLM 从记忆组生成摘要 | `ccb-consolidate abstract` |
-| **遗忘 (Forget)** | 移除低于阈值的记忆 | `ccb-consolidate forget` |
-
-### 新增数据库表
-
-```sql
--- 重要性追踪
-CREATE TABLE memory_importance (
-    memory_id TEXT PRIMARY KEY,
-    importance_score REAL DEFAULT 0.5,
-    last_accessed_at DATETIME,
-    access_count INTEGER DEFAULT 0,
-    decay_rate REAL DEFAULT 0.1
-);
-
--- 访问日志（用于时效性计算）
-CREATE TABLE memory_access_log (
-    memory_id TEXT, memory_type TEXT,
-    accessed_at DATETIME, access_context TEXT
-);
-
--- System 2 合并审计日志
-CREATE TABLE consolidation_log (
-    consolidation_type TEXT,  -- 'merge' | 'abstract' | 'forget'
-    source_ids TEXT, result_id TEXT
-);
-```
-
-### 新增 CLI 命令
-
-```bash
-# 启发式搜索（带评分）
-ccb-mem search-scored "查询" --limit 10
-
-# 设置记忆重要性
-ccb-mem importance <id> 0.8
-
-# 应用时间衰减
-ccb-mem decay --all
-
-# 标记遗忘
-ccb-mem forget <id>
-
-# 查看 v2 统计
-ccb-mem stats-v2
-
-# System 2 合并 CLI
-ccb-consolidate nightly        # 完整合并流程
-ccb-consolidate decay          # 对所有记忆应用衰减
-ccb-consolidate merge          # 合并相似记忆
-ccb-consolidate abstract       # 生成抽象摘要
-ccb-consolidate forget         # 清理过期记忆
-ccb-consolidate stats          # 查看合并统计
-```
-
-### 配置
-
-**`~/.ccb/heuristic_config.json`：**
-```json
-{
-  "retrieval": {
-    "relevance_weight": 0.4,
-    "importance_weight": 0.3,
-    "recency_weight": 0.3,
-    "decay_rate": 0.1,
-    "candidate_pool_size": 50,
-    "final_limit": 5
-  },
-  "importance": {
-    "default_score": 0.5,
-    "user_marked_boost": 0.3
-  },
-  "decay": {
-    "lambda": 0.1,
-    "min_score": 0.01,
-    "max_age_days": 90
-  },
-  "system2": {
-    "merge_similarity_threshold": 0.9,
-    "abstract_group_min_size": 5,
-    "forget_score_threshold": 0.01,
-    "forget_age_days": 90
-  }
-}
-```
-
----
-
-## 📦 v0.21 特性（上个版本）
-
-### 记忆透明度与写入 API
-
-**在 v0.20 双系统架构基础上**增加了透明度、写入 API 和 LLM 集成：
-
-| 功能 | 描述 |
-|------|------|
-| **记忆透明度** | 追踪哪些记忆影响了每个请求 |
-| **Observations CRUD** | 手动记忆管理，支持分类和置信度 |
-| **LLM 合并器** | 合并时 AI 驱动的洞察提取 |
-| **配置 API** | 运行时配置记忆注入行为 |
-| **技能反馈** | 评分系统改进技能推荐 |
-| **讨论记忆** | 将多 AI 讨论持久化到记忆系统 |
-
----
-
-## 📦 v0.20 特性（更早版本）
-
-### 双系统记忆架构
-
-**灵感来自人类认知** - 快速自动捕获 + 深度夜间处理：
-
-| 系统 | 速度 | 用途 | 存储位置 |
-|------|------|------|----------|
-| **System 1** | ⚡ 即时 | `/clear` 或 `/compact` 时自动归档 | `~/.ccb/context_archive/*.md` |
-| **System 2** | 🌙 夜间 | 整合洞察为长期记忆 | `~/.ccb/memories/*.md` |
-
-### 新功能
-
-- 🧠 **Context Saver** - 自动将会话上下文保存为 Markdown
-- 📚 **Memory Consolidator** - 夜间处理生成结构化长期记忆
-- 🔧 **ccb-mem CLI** - 新的统一记忆管理工具
-- 🔒 **安全修复** - 静态文件服务中的路径遍历防护
-- 🐛 **竞态条件修复** - 请求队列中的超时处理
-- 🤖 **Claude Provider** - 作为第 9 个 Provider 选项添加
-
-### 命令
-
-```bash
-# 保存当前会话
-ccb-mem save
-
-# 整合最近的会话（24 小时内）
-ccb-mem consolidate --hours 24
-
-# 搜索记忆归档
-ccb-mem search "React hooks"
-
-# 列出最近的归档
-ccb-mem list
-
-# 注入记忆到新对话
-ccb-mem inject 2026-02-05
-```
-
----
-
-## 💡 为什么选择 CCB Gateway
-
-<table>
-<tr>
-<td width="50%">
-
-### 问题
-
-❌ 多个 AI CLI 接口不统一
-❌ 手动选择 Provider 繁琐
-❌ 对话之间没有记忆
-❌ 上下文丢失，AI 不知道可用工具
-❌ 无法观察操作过程
-❌ AI 之间无法协作
-❌ 失败请求浪费时间
-
-</td>
-<td width="50%">
-
-### 解决方案
-
-✅ **统一 Gateway API** - 一个接口调用所有
-✅ **智能路由** - 自动选择最佳 AI
-✅ **双系统记忆** - 快速 + 深度处理
-✅ **预加载工具** - 53 个 Skills 嵌入
-✅ **实时仪表盘** - 完全可观测
-✅ **多 AI 讨论** - 协作式 AI
-✅ **重试与降级** - 内置弹性
-
-</td>
-</tr>
-</table>
-
----
-
-## ✨ 功能特性
-
-### 🧠 双系统记忆 (v0.22)
-
-**仿人类记忆架构** - 快速自动捕获与深度夜间处理相结合，现已支持**启发式检索**和**数据库存储**。
-
-<details>
-<summary><b>数据库存储（v0.22 新增）</b></summary>
-
-**所有记忆数据现在存储在 SQLite 数据库中**，不再使用 Markdown 文件：
-
-```
-~/.ccb/ccb_memory.db
-├── session_archives     # System 1 输出（原 context_archive/*.md）
-├── consolidated_memories # System 2 输出（原 memories/*.md）
-├── memory_importance    # 启发式评分
-├── memory_access_log    # 访问追踪
-└── consolidation_log    # System 2 审计日志
-```
-
-**优势：**
-- ⚡ SQL 索引加速查询
-- 🔍 全文搜索支持
-- 🔄 更好的数据完整性
-- 📊 结构化分析
-
-</details>
-
-<details>
-<summary><b>启发式检索（v0.22 新增）</b></summary>
-
-**基于 Stanford Generative Agents 的三维评分**：
-
-```
-final_score = α × 相关性 + β × 重要性 + γ × 时效性
-```
-
-- **相关性 (α=0.4)**：FTS5 BM25 关键词匹配分数
-- **重要性 (β=0.3)**：用户评分或 LLM 评估的重要性 (0.0-1.0)
-- **时效性 (γ=0.3)**：艾宾浩斯遗忘曲线：`exp(-0.1 × 访问后小时数)`
-
-**检索示例：**
-```bash
-# 启发式评分搜索
-ccb-mem search-scored "认证" --limit 5
-
-# 输出显示所有维度：
-# ID: 123 | Score: 0.82 | R: 0.95 | I: 0.80 | T: 0.65
-# ID: 456 | Score: 0.71 | R: 0.80 | I: 0.70 | T: 0.60
+GET  /api/cc-switch/status
+POST /api/cc-switch/reload
+POST /api/cc-switch/parallel-test
+GET  /api/cc-switch/failover-queue
 ```
 
 </details>
-
-<details>
-<summary><b>System 1: Context Saver（点击展开）</b></summary>
-
-**即时自动归档** - 当你运行 `/clear` 或 `/compact` 时触发：
-
-```
-会话开始 → 工作 → 触发 /clear
-                     │
-                     ▼
-        ┌────────────────────────┐
-        │   Context Saver        │
-        │   (System 1 - 快速)    │
-        ├────────────────────────┤
-        │ • 解析 session.jsonl   │
-        │ • 提取关键消息         │
-        │ • 汇总工具调用         │
-        │ • 追踪文件变更         │
-        │ • 保存为 Markdown      │
-        └────────────────────────┘
-                     │
-                     ▼
-        ~/.ccb/context_archive/
-        session_abc123_2026-02-05.md
-```
-
-**归档格式：**
-```markdown
-# Session: abc123
-- **项目**: /Users/leo/project
-- **时长**: 45 分钟
-- **模型**: claude-opus-4-5
-
-## 任务摘要
-实现了 JWT 用户认证...
-
-## 关键消息
-- 用户: "添加登录功能"
-- 助手: 创建了认证模块...
-
-## 工具调用
-| 工具 | 次数 |
-|------|------|
-| Edit | 15 |
-| Read | 8 |
-| Bash | 5 |
-
-## 文件变更
-- `src/auth.ts` - 创建
-- `src/middleware.ts` - 修改
-```
-
-</details>
-
-<details>
-<summary><b>System 2: Memory Consolidator（点击展开）</b></summary>
-
-**夜间深度处理** - 自动运行或按需触发：
-
-```
-夜间（凌晨 3 点）或手动触发
-              │
-              ▼
-┌──────────────────────────────────────┐
-│      Memory Consolidator             │
-│      (System 2 - 深度)               │
-├──────────────────────────────────────┤
-│ 1. 收集最近的归档                    │
-│ 2. 按项目/主题聚类                   │
-│ 3. 提取模式和学习                    │
-│ 4. 生成结构化记忆                    │
-│ 5. 保存到长期存储                    │
-└──────────────────────────────────────┘
-              │
-              ▼
-        ~/.ccb/memories/
-        2026-02-05_consolidated.md
-```
-
-**整合记忆格式：**
-```markdown
-# 记忆: 2026-02-05
-
-## 工作项目
-### /Users/leo/ccb-gateway
-- 会话数: 3
-- 时长: 2 小时 15 分
-- 重点: 记忆系统实现
-
-### /Users/leo/web-app
-- 会话数: 2
-- 时长: 1 小时 30 分
-- 重点: React 组件重构
-
-## 关键学习
-1. SQLite FTS5 需要内容同步触发器
-2. 异步超时处理中的竞态条件
-3. 路径遍历防护模式
-
-## 常用工具
-| 工具 | 次数 | 项目数 |
-|------|------|--------|
-| Edit | 45 | 2 |
-| Read | 32 | 2 |
-| Bash | 18 | 1 |
-
-## 技术决策
-- 选择 Markdown 而非 JSON 以提高可读性
-- 双系统架构提高记忆效率
-```
-
-</details>
-
-<details>
-<summary><b>记忆注入</b></summary>
-
-**自动注入相关记忆**到新对话：
-
-```bash
-# 使用昨天的记忆启动新会话
-claude --context $(ccb-mem inject 2026-02-04)
-
-# 或手动通过 @
-@~/.ccb/memories/2026-02-04_consolidated.md
-```
-
-Gateway 中间件也可以自动注入：
-```json
-{
-  "memory": {
-    "enabled": true,
-    "auto_inject_recent": true,
-    "inject_days": 3
-  }
-}
-```
-
-</details>
-
-**使用方式：**
-```bash
-# 自动 - 钩子在 /clear 时触发
-# 会话自动保存到 ~/.ccb/context_archive/
-
-# 手动保存
-ccb-mem save
-
-# 整合最近 24 小时
-ccb-mem consolidate --hours 24
-
-# 搜索所有记忆
-ccb-mem search "认证"
-
-# 列出最近归档
-ccb-mem list
-```
-
----
-
-### ⚡ 智能路由与降级
-
-**基于速度分级的 Provider 链**，失败时自动降级：
-
-```yaml
-快速层（3-15秒）：   Kimi → Qwen → DeepSeek
-中速层（15-45秒）：  iFlow → Qoder → OpenCode → Claude
-慢速层（45-90秒）：  Codex → Gemini
-```
-
-**功能特性：**
-- 🎯 基于任务关键词的智能 Provider 推荐
-- 🔄 指数退避的自动重试
-- 📉 弹性降级链
-- ⚖️ 跨 Provider 负载均衡
-
----
 
 ### 🔍 技能发现
 
-**自动发现和推荐相关 Claude Code Skills** - 集成 [Vercel Skills](https://github.com/vercel-labs/skills)。
+<details>
+<summary><b>自动发现和推荐相关 Claude Code Skills</b></summary>
 
+集成 [Vercel Skills](https://github.com/vercel-labs/skills)，自动发现本地和远程技能。
+
+**工作流程：**
 ```
 用户请求 → 提取关键词 → 搜索技能（本地 + 远程）
-                               ↓
-              ┌────────────────┴────────────────┐
-              │                                  │
-         scan-skills.sh              npx skills find [query]
-         （本地技能）                  （Vercel 仓库）
-              │                                  │
-              └────────────────┬────────────────┘
-                               ↓
-                   注入推荐到上下文
+                           ↓
+            注入推荐到上下文
 ```
 
-**使用方式：**
+**使用示例：**
 ```bash
-# Gateway 自动发现技能
+# Gateway 自动发现
 ccb-cli kimi "帮我创建 PDF"
 # [MemoryMiddleware] 💡 发现 1 个相关 Skill: /pdf
 
@@ -819,71 +275,14 @@ ccb-skills recommend "创建电子表格"
 ccb-skills stats
 ```
 
----
-
-### 🎯 ccb-unified 技能 - Subagent 集成
-
-**统一 CCB + Claude Code Subagent 平台** - 全面的分布式 AI 协作技能，结合 CCB Gateway 和 Claude Code 的 Subagent 系统。
-
-**仓库：** [ccb-unified](~/.claude/skills/ccb-unified/)
-
-```bash
-# 安装技能
-cd ~/.claude/skills
-# 技能已在本地可用：~/.claude/skills/ccb-unified
-
-# 可用子技能（共 9 个）：
-# async    - 异步调用避免阻塞
-# parallel - 多 AI 并行对比
-# research - 深度研究（Explore Subagent + CCB）
-# workflow - 工作流自动化（Bash Subagent + CCB）
-# memory   - 记忆系统操作
-# benchmark - 性能基准测试
-# discussion - 多 AI 协作讨论
-# stem     - STEM 学术建模（8-AI）
-# macro    - A 股宏观研究（8-AI）
-```
-
-**核心特性：**
-- 🤖 **Subagent 集成** - 结合 CCB 与 Claude Code 的 Task 工具（Explore、Bash、通用代理）
-- ⚡ **异步优先** - 所有调用使用 `ccb-submit`（异步）避免阻塞 Claude 主会话
-- 🔀 **并行执行** - 同时提交多个 Provider 请求
-- 🔍 **深度研究** - Explore Subagent → 多 AI 分析 → Claude 整合
-- 🔄 **工作流自动化** - 预定义工作流（代码审查、测试分析、部署检查、文档生成、安全重构）
-- 🧠 **记忆操作** - 双系统记忆管理与启发式检索
-- 📊 **基准测试** - 跨 9 个 Provider 的性能测试
-- 🗣️ **讨论模式** - 多 AI 协作问题解决（快速 3-AI 或完整 7-AI 模式）
-- 🔬 **STEM 研究** - 8 模型架构用于学术研究笔记（约 10-15 分钟）
-- 💰 **宏观研究** - 8-AI 团队执行 200 次网络搜索进行 A 股市场分析
-
-**使用示例：**
-```bash
-# 通过 Claude 的 CLAUDE.md 触发器使用
-用户："ccb unified async"  # 触发 async 子技能
-用户："distributed ai research"  # 触发 research 子技能
-用户："multi ai collaboration"  # 触发 parallel 或 discussion 子技能
-
-# 子技能根据任务上下文自动调用
-```
-
-**与 CCB Gateway 集成：**
-- 所有调用通过 Gateway API 路由（http://localhost:8765）
-- 统一监控和日志
-- 智能路由和缓存
-- 重试和降级机制
-
-**替换/整合：**
-- 原 `ccb` 技能 → 核心功能
-- `ask` 技能 → 直接调用
-- `all-plan` 技能 → Discussion 子技能
-- `stem-modeling` 技能 → STEM 子技能
-- `macro-research-ccb` 技能 → Macro 子技能
-
----
+</details>
 
 ### 🤝 多 AI 讨论
 
-**协作式问题解决** - 多个 AI 讨论并达成共识：
+<details>
+<summary><b>协作式问题解决</b></summary>
+
+多个 AI 讨论并达成共识：
 
 ```bash
 ccb-submit discuss \
@@ -899,234 +298,87 @@ ccb-submit discuss \
 - **first_success** - 第一个有效响应
 - **best_quality** - 最高质量（评分）
 
----
-
-### 🔄 CC Switch 集成
-
-**Provider 管理 & 并行测试** - 与 [CC Switch](https://github.com/your-repo/cc-switch) 集成，提供高级 Provider 管理和测试功能。
-
-**CC Switch 提供：**
-- 🔀 **故障转移队列** - 基于优先级的自动 Provider 切换
-- 📊 **Provider 状态** - 实时监控 Provider 健康状况
-- ⚡ **并行测试** - 同时测试多个 Provider
-- 🎯 **智能路由** - 基于优先级的 Provider 选择
-
-**安装：**
-
-```bash
-# CC Switch 已集成到 CCB Gateway
-# 数据库位置：~/.cc-switch/cc-switch.db
-```
-
-**命令：**
-
-```bash
-# 获取 Provider 状态和故障转移队列
-ccb-cc-switch status
-
-# 从数据库重新加载 Provider
-ccb-cc-switch reload
-
-# 仅获取故障转移队列
-ccb-cc-switch queue
-
-# 并行测试所有活跃 Provider
-ccb-cc-switch test "用一句话解释递归"
-
-# 测试指定 Provider
-ccb-cc-switch test "解释递归" \
-  -p "反重力" \
-  -p "AiGoCode-优质逆向" \
-  -p "Claude Official"
-
-# 使用自定义超时测试
-ccb-cc-switch test "复杂问题..." -t 120
-```
-
-**API 端点：**
-
-```
-GET  /api/cc-switch/status            # Provider 状态和故障转移队列
-POST /api/cc-switch/reload            # 从数据库重新加载 Provider
-POST /api/cc-switch/parallel-test     # 运行并行 Provider 测试
-GET  /api/cc-switch/failover-queue    # 仅获取故障转移队列
-```
-
-**API 使用示例：**
-
-```bash
-# 获取 Provider 状态
-curl http://localhost:8765/api/cc-switch/status | jq .
-
-# 并行测试
-curl -X POST http://localhost:8765/api/cc-switch/parallel-test \
-  -H "Content-Type: application/json" \
-  -d '{
-    "message": "用一句话解释递归",
-    "providers": ["反重力", "AiGoCode-优质逆向"],
-    "timeout_s": 60
-  }' | jq .
-```
-
-**响应格式：**
-
-```json
-{
-  "request_id": "cc-parallel-1738906789000",
-  "message": "用一句话解释递归",
-  "providers": ["反重力", "AiGoCode-优质逆向"],
-  "results": {
-    "反重力": {
-      "success": true,
-      "response": "递归是函数调用自身的编程技术...",
-      "latency_ms": 1234.56,
-      "tokens_used": 128
-    },
-    "AiGoCode-优质逆向": {
-      "success": true,
-      "response": "递归就是函数自己调用自己...",
-      "latency_ms": 2345.67,
-      "tokens_used": 95
-    }
-  },
-  "success_count": 2,
-  "failure_count": 0,
-  "fastest_provider": "反重力",
-  "fastest_latency_ms": 1234.56,
-  "total_latency_ms": 2345.67
-}
-```
-
-**主要优势：**
-- ⚡ **快速 Provider 发现** - 识别最快的 Provider
-- 🔍 **质量对比** - 跨 Provider 比较响应
-- 🛡️ **可靠性测试** - 验证 Provider 可用性
-- 📊 **性能指标** - 跟踪延迟和 Token 使用
-
----
+</details>
 
 ### 📊 实时监控
 
-**基于 WebSocket 的仪表盘**，实时更新：http://localhost:8765/web
+<details>
+<summary><b>基于 WebSocket 的仪表盘</b></summary>
 
-<table>
-<tr>
-<td width="33%">
+访问：**http://localhost:8765/web**
 
-**指标**
-- 请求数量
-- 成功率
-- 平均延迟
-- Provider 状态
+**功能标签：**
+1. **Dashboard** - 概览和指标
+2. **Monitor** - 实时请求监控
+3. **Memory** - 6 个子标签（Sessions、Observations、Injections 等）
+4. **Skills** - Skills 发现和反馈
+5. **Discussions** - 多 AI 协作
+6. **Requests** - 请求历史和跟踪
+7. **Settings** - 系统配置 + API 密钥
 
-</td>
-<td width="33%">
+**实时数据：**
+- 请求数量、成功率、平均延迟
+- Provider 状态和健康检查
+- 待处理/处理中/已完成队列
+- WebSocket 推送的实时日志
 
-**队列**
-- 待处理请求
-- 处理中
-- 已完成
-- 失败
+</details>
 
-</td>
-<td width="33%">
+### ⚡ 智能路由与降级
 
-**日志**
-- 实时事件
-- 错误追踪
-- 性能数据
-- WebSocket 推送
+<details>
+<summary><b>基于速度分级的自动降级</b></summary>
 
-</td>
-</tr>
-</table>
+```yaml
+快速层（3-15秒）：   Kimi → Qwen → DeepSeek
+中速层（15-45秒）：  iFlow → Qoder → OpenCode → Claude
+慢速层（45-90秒）：  Codex → Gemini
+```
 
----
+**功能特性：**
+- 🎯 基于任务关键词的智能 Provider 推荐
+- 🔄 指数退避的自动重试
+- 📉 弹性降级链
+- ⚖️ 跨 Provider 负载均衡
 
-### 🚀 生产级功能
-
-<table>
-<tr>
-<td width="50%">
-
-**性能**
-- ⚡ 响应缓存（可配置 TTL）
-- 🔄 指数退避重试
-- 📊 每个 Provider 的速率限制
-- 🎯 并行执行
-
-</td>
-<td width="50%">
-
-**可靠性**
-- 🛡️ 自动降级链
-- 💾 持久化请求队列
-- 📝 完整日志
-- 🔍 基于 ID 的请求追踪
-
-</td>
-</tr>
-<tr>
-<td width="50%">
-
-**安全性**
-- 🔐 API Key 认证
-- 🚦 速率限制
-- 🔒 路径遍历防护
-- 📋 审计日志
-
-</td>
-<td width="50%">
-
-**可观测性**
-- 📊 Prometheus 指标
-- 📈 实时仪表盘
-- 🔔 WebSocket 事件
-- 📋 详细请求日志
-
-</td>
-</tr>
-</table>
+</details>
 
 ---
 
 ## 🏗️ 系统架构
 
-### 系统概览
+### 架构概览
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                      CCB Gateway (v0.22)                         │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                   │
-│  ┌────────────────────────────────────────────────────────┐    │
-│  │            双系统记忆 (v0.22)                           │    │
-│  ├────────────────────────────────────────────────────────┤    │
-│  │                                                          │    │
-│  │  System 1 (快速):          System 2 (深度):             │    │
-│  │  • ContextSaver            • MemoryConsolidator         │    │
-│  │  • /clear 时自动触发       • 夜间处理                   │    │
-│  │  • Markdown 归档           • 长期记忆                   │    │
-│  │                                                          │    │
-│  └────────────────────────────────────────────────────────┘    │
-│                          │                                       │
-│  ┌────────────────────────▼─────────────────────────────┐      │
-│  │            Gateway Server 核心                        │      │
-│  ├───────────────────────────────────────────────────────┤      │
-│  │  • 请求队列（异步）                                   │      │
-│  │  • 重试执行器                                         │      │
-│  │  • 缓存管理器                                         │      │
-│  │  • 速率限制器                                         │      │
-│  │  • 指标收集器                                         │      │
-│  └───────────────────────────────────────────────────────┘      │
-│                          │                                       │
-│  ┌───────────┬───────────┼───────────┬───────────┐            │
-│  ▼           ▼           ▼           ▼           ▼            │
-│ ┌─────┐   ┌─────┐   ┌─────────┐  ┌─────┐   ┌───────┐        │
-│ │Kimi │   │Qwen │   │DeepSeek │  │Codex│   │Claude │   ...  │
-│ └─────┘   └─────┘   └─────────┘  └─────┘   └───────┘        │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────┐
+│                   CCB Gateway (v0.24.1)                 │
+├─────────────────────────────────────────────────────────┤
+│                                                           │
+│  ┌──────────────────────────────────────────────┐      │
+│  │         双系统记忆 + LLM 关键词提取          │      │
+│  ├──────────────────────────────────────────────┤      │
+│  │  System 1: ContextSaver (快速自动归档)       │      │
+│  │  System 2: MemoryConsolidator (夜间整合)     │      │
+│  │  Heuristic Retrieval (αR + βI + γT)          │      │
+│  │  LLM Keyword Extraction (Ollama + qwen2.5)   │      │
+│  └──────────────────────────────────────────────┘      │
+│                          │                               │
+│  ┌───────────────────────▼──────────────────────┐      │
+│  │          Gateway Server 核心                  │      │
+│  ├───────────────────────────────────────────────┤      │
+│  │  • 请求队列（异步）                           │      │
+│  │  • 重试执行器                                 │      │
+│  │  • 缓存管理器 (Redis-like TTL)                │      │
+│  │  • 速率限制器                                 │      │
+│  │  • 指标收集器 (Prometheus)                    │      │
+│  │  • CC Switch 集成                             │      │
+│  └───────────────────────────────────────────────┘      │
+│                          │                               │
+│  ┌─────┬─────┬──────┬────┼────┬───────┬───────┬─────┐ │
+│  ▼     ▼     ▼      ▼    ▼    ▼       ▼       ▼     ▼ │
+│ Anti  Kimi Qwen Deep Codex Gemini iFlow Claude Others  │
+│ grav.                 Seek                              │
+└─────────────────────────────────────────────────────────┘
 ```
 
 ### 记忆系统流程
@@ -1138,65 +390,127 @@ curl -X POST http://localhost:8765/api/cc-switch/parallel-test \
     │   ├─→ 由 /clear 或 /compact 触发
     │   ├─→ 解析 session.jsonl
     │   ├─→ 提取关键消息和工具调用
-    │   └─→ 保存到 ~/.ccb/context_archive/
+    │   └─→ 保存到 ~/.ccb/ccb_memory.db
     │
     └─→ [System 2: Memory Consolidator]
         ├─→ 夜间（凌晨 3 点）或手动运行
         ├─→ 收集最近的归档
         ├─→ 按项目/主题聚类
         ├─→ 提取模式和学习
-        └─→ 保存到 ~/.ccb/memories/
+        └─→ 保存到数据库（consolidated_memories）
 ```
 
 ---
 
-## 🚀 快速开始
+## 📚 使用文档
 
-### 前置条件
+### ccb-cli - 统一命令行工具
 
-- Python 3.9+
-- Node.js 16+（用于 MCP servers）
-- Git
-
-### 安装
+**最快的 AI 调用方式：**
 
 ```bash
-# 1. 克隆仓库
-git clone https://github.com/LeoLin990405/ai-router-ccb.git
-cd ai-router-ccb
+# 基本用法
+ccb-cli <provider> [model] "<message>"
 
-# 2. 安装 Python 依赖
-pip install -r requirements.txt
+# 示例
+ccb-cli kimi "如何优化 SQL 查询？"
+ccb-cli codex o3 "证明停机问题不可判定"
+ccb-cli gemini 3f "设计响应式导航栏"
+ccb-cli antigravity "分析这段代码"
 
-# 3. 安装 Node.js 依赖（用于 MCP）
-npm install
-
-# 4. 配置 AI Providers
-# 编辑 ~/.claude/ 中的配置文件或使用环境变量
+# 使用 Agent 角色
+ccb-cli codex o3 -a reviewer "审查这个 PR"
+ccb-cli kimi -a sisyphus "修复这个 bug: ..."
 ```
 
-### 启动 Gateway Server
+**模型快捷方式：**
+
+| Provider | 快捷方式 | 说明 |
+|----------|----------|------|
+| `codex` | `o3`, `o4-mini`, `gpt-4o`, `o1-pro` | o3=深度推理, o4-mini=快速 |
+| `gemini` | `3f`, `3p`, `2.5f`, `2.5p` | 3f=Gemini3快速, 3p=Gemini3专业 |
+| `kimi` | `thinking`, `normal` | thinking=思考链 |
+| `deepseek` | `reasoner`, `chat` | reasoner=推理, chat=快速 |
+| `antigravity` | - | 本地 Claude 4.5 代理 |
+
+### ccb-mem - 记忆管理
 
 ```bash
-# 使用默认配置启动
-python3 -m lib.gateway.gateway_server --port 8765
+# 保存当前会话
+ccb-mem save
 
-# 输出：
-# [SystemContext] Preloading system information...
-# [SystemContext] Loaded 53 skills
-# [SystemContext] Loaded 9 providers
-# [SystemContext] Loaded 4 MCP servers
-# [MemoryMiddleware] Initialized (enabled=True)
-# ✓ Server running at http://localhost:8765
+# 整合最近的会话
+ccb-mem consolidate --hours 24
+
+# 启发式评分搜索
+ccb-mem search-scored "认证" --limit 5
+
+# 列出最近归档
+ccb-mem list
+
+# 设置记忆重要性
+ccb-mem importance <id> 0.8
+
+# 查看统计
+ccb-mem stats-v2
 ```
 
-### 第一个请求
+### ccb-consolidate - System 2 管理
 
 ```bash
-# 使用 ccb-cli（自动记忆！）
-ccb-cli kimi "解释 React Hooks"
+ccb-consolidate nightly    # 完整合并流程
+ccb-consolidate decay      # 应用时间衰减
+ccb-consolidate merge      # 合并相似记忆
+ccb-consolidate abstract   # 生成抽象摘要
+ccb-consolidate forget     # 清理过期记忆
+ccb-consolidate stats      # 查看合并统计
+```
 
-# 使用 curl
+---
+
+## 📖 API 参考
+
+### 核心端点
+
+| 方法 | 端点 | 描述 |
+|------|------|------|
+| GET | `/health` | 健康检查 |
+| GET | `/providers` | 列出所有 10 个 Provider |
+| POST | `/api/ask` | 同步请求（等待响应） |
+| POST | `/api/submit` | 异步请求（立即返回 ID） |
+| GET | `/api/query/{id}` | 查询请求状态 |
+| GET | `/api/pending` | 列出待处理请求 |
+| POST | `/api/cancel/{id}` | 取消请求 |
+
+### 记忆系统 API
+
+| 方法 | 端点 | 描述 |
+|------|------|------|
+| GET | `/api/memory/sessions` | 列出记忆会话 |
+| GET | `/api/memory/search` | 全文搜索 |
+| GET | `/api/memory/stats` | 记忆统计 |
+| POST | `/api/memory/observations` | 创建手动记忆 |
+| GET | `/api/memory/injections` | 获取注入记忆 |
+
+### CC Switch API
+
+| 方法 | 端点 | 描述 |
+|------|------|------|
+| GET | `/api/cc-switch/status` | Provider 状态 |
+| POST | `/api/cc-switch/reload` | 重新加载配置 |
+| POST | `/api/cc-switch/parallel-test` | 并行测试 |
+| GET | `/api/cc-switch/failover-queue` | 故障转移队列 |
+
+### WebSocket
+
+```
+WS /ws  # 实时事件流
+```
+
+### 请求示例
+
+**同步请求：**
+```bash
 curl -X POST http://localhost:8765/api/ask \
   -H "Content-Type: application/json" \
   -d '{
@@ -1207,300 +521,103 @@ curl -X POST http://localhost:8765/api/ask \
   }'
 ```
 
----
-
-## 📚 使用文档
-
-### ccb-cli - 直接 CLI
-
-**调用任何 AI Provider 的最快方式：**
-
+**异步请求：**
 ```bash
-# 基本用法
-ccb-cli <provider> [model] "<message>"
+# 提交
+curl -X POST http://localhost:8765/api/submit \
+  -H "Content-Type: application/json" \
+  -d '{
+    "provider": "deepseek",
+    "message": "分析递归斐波那契的时间复杂度"
+  }'
+# 返回：{"request_id": "abc123", "status": "pending"}
 
-# 示例
-ccb-cli kimi "如何优化 SQL 查询？"
-ccb-cli codex o3 "证明停机问题不可判定"
-ccb-cli gemini 3f "设计响应式导航栏"
-ccb-cli claude "审查这段代码"
-
-# 使用 Agent 角色
-ccb-cli codex o3 -a reviewer "审查这个 PR"
-ccb-cli kimi -a sisyphus "修复这个 bug: ..."
+# 查询
+curl http://localhost:8765/api/query/abc123
 ```
-
-**模型快捷方式：**
-| Provider | 快捷方式 | 示例 |
-|----------|----------|------|
-| codex | o3, o4-mini, gpt-4o, o1-pro | `ccb-cli codex o3 "..."` |
-| gemini | 3f, 3p, 2.5f, 2.5p | `ccb-cli gemini 3f "..."` |
-| kimi | thinking, normal | `ccb-cli kimi thinking "..."` |
-| deepseek | reasoner, chat | `ccb-cli deepseek reasoner "..."` |
-| claude | - | `ccb-cli claude "..."` |
-
-### ccb-mem - 记忆管理
-
-```bash
-# 保存当前会话
-ccb-mem save
-
-# 保存指定会话
-ccb-mem save /path/to/session.jsonl
-
-# 整合最近的会话
-ccb-mem consolidate --hours 24
-
-# 搜索记忆
-ccb-mem search "认证"
-
-# 列出最近归档
-ccb-mem list
-
-# 获取指定日期的注入路径
-ccb-mem inject 2026-02-05
-```
-
----
-
-## 🧠 记忆系统 (v0.22)
-
-### 双系统架构
-
-记忆系统灵感来自人类认知：
-
-| 系统 | 类比 | 触发 | 输出 |
-|------|------|------|------|
-| **System 1** | 短期记忆 | `/clear`, `/compact` | Markdown 归档 |
-| **System 2** | 长期记忆 | 夜间定时任务 | 整合记忆 |
-
-### 启发式检索（新增）
-
-v0.22 引入了**基于 Stanford Generative Agents 的检索**：
-
-```
-final_score = α × 相关性 + β × 重要性 + γ × 时效性
-```
-
-| 参数 | 默认值 | 描述 |
-|------|--------|------|
-| α (相关性) | 0.4 | FTS5 BM25 分数权重 |
-| β (重要性) | 0.3 | 用户/LLM 重要性权重 |
-| γ (时效性) | 0.3 | 时间衰减权重 |
-| λ (衰减率) | 0.1 | 艾宾浩斯曲线参数 |
-
-### 文件位置
-
-```
-~/.ccb/
-├── ccb_memory.db             # SQLite 数据库（所有记忆数据）
-│   ├── session_archives      # System 1: 会话上下文
-│   ├── consolidated_memories # System 2: 每日摘要
-│   ├── memory_importance     # 启发式: 重要性评分
-│   ├── memory_access_log     # 启发式: 访问追踪
-│   └── consolidation_log     # System 2: 审计日志
-├── heuristic_config.json     # 检索权重配置
-└── streams/                  # 异步流式输出
-```
-
-### 配置
-
-**`~/.ccb/gateway_config.json`：**
-```json
-{
-  "memory": {
-    "enabled": true,
-    "auto_inject": true,
-    "auto_record": true,
-    "inject_system_context": true,
-    "max_injected_memories": 5
-  },
-  "dual_system": {
-    "system1_enabled": true,
-    "system2_enabled": true,
-    "consolidate_hour": 3,
-    "retention_days": 30
-  }
-}
-```
-
----
-
-## 🖥️ Web UI
-
-**实时监控仪表盘：http://localhost:8765/web**
-
-### 功能
-
-- 📊 **实时指标** - 请求数、成功率、延迟
-- 🧠 **记忆管理** - 基于会话的对话历史，支持全文搜索
-- 🛠️ **技能发现** - 为你的任务查找和推荐相关技能
-- 📋 **请求队列** - 待处理、处理中、已完成
-- 🔴 **实时日志** - 通过 WebSocket 实时事件流
-- 🤖 **Provider 状态** - 所有 9 个 Provider 的健康检查
-- 📈 **图表** - 性能趋势和分析
-
-### 截图
-
-<details>
-<summary><b>仪表盘概览</b></summary>
-
-<img src="screenshots/webui-dashboard.png" alt="仪表盘" width="700">
-
-实时指标、Provider 状态和系统健康监控。
-
-</details>
-
-<details>
-<summary><b>记忆标签 - 会话管理</b></summary>
-
-<img src="screenshots/webui-memory.png" alt="记忆管理" width="700">
-
-基于会话的对话历史，支持 FTS5 全文搜索。
-
-</details>
-
-<details>
-<summary><b>技能标签 - 发现与推荐</b></summary>
-
-<img src="screenshots/webui-skills.png" alt="技能发现" width="700">
-
-由 Vercel Skills CLI 驱动的智能技能发现。
-
-</details>
-
----
-
-## 📖 API 参考
-
-### 端点
-
-| 方法 | 端点 | 描述 |
-|------|------|------|
-| GET | `/health` | 健康检查 |
-| GET | `/providers` | 列出所有 9 个 Provider |
-| POST | `/api/ask` | 同步请求 |
-| POST | `/api/submit` | 异步请求 |
-| GET | `/api/query/{id}` | 查询请求状态 |
-| GET | `/api/pending` | 列出待处理请求 |
-| POST | `/api/cancel/{id}` | 取消请求 |
-| GET | `/api/memory/sessions` | 列出记忆会话 |
-| GET | `/api/memory/search` | 全文搜索 |
-| GET | `/api/memory/stats` | 记忆统计 |
-| GET | `/api/skills/recommendations` | 获取技能推荐 |
-| GET | `/api/skills/list` | 列出所有技能 |
-| WS | `/ws` | WebSocket 连接 |
-
-### 请求参数
-
-**POST /api/ask & /api/submit：**
-```json
-{
-  "provider": "kimi",           // 必需：AI Provider（9 个选项）
-  "message": "你的问题",         // 必需：用户消息
-  "model": "thinking",          // 可选：特定模型
-  "wait": true,                 // 可选：等待完成
-  "timeout": 120,               // 可选：超时秒数
-  "metadata": {}                // 可选：自定义元数据
-}
-```
-
----
-
-## 📚 文档资源
-
-### 核心文档
-
-- **[Gemini CLI 集成指南](docs/GEMINI_CLI_INTEGRATION_GUIDE.md)** - 双路径设置（v0.23.1）
-- **[Gemini 认证配置](docs/GEMINI_AUTH_SETUP.md)** - OAuth 和 API Key 配置（v0.23.1）
-- **[记忆系统架构](lib/memory/INTEGRATION_DESIGN.md)** - 完整设计
-- **[数据库结构](lib/memory/DATABASE_STRUCTURE.md)** - Schema 和查询
-- **[云端同步指南](lib/memory/SYNC_QUICKSTART.md)** - Google Drive 设置
-- **[V1 vs V2 对比](lib/memory/V1_VS_V2.md)** - 记忆系统演进
-
-### 测试报告（2026-02-06）
-
-- **[最终测试报告](docs/CCB_FINAL_TEST_REPORT_2026-02-06.md)** - 全模块集成测试（8/9 Providers 通过）
-- **[问题追踪](docs/CCB_TEST_ISSUES_2026-02-06.md)** - 6 个问题修复详情（100% 修复率）
-- **[重测验证报告](docs/CCB_RETEST_REPORT_2026-02-06.md)** - 修复验证结果
-
-**测试结果摘要：**
-- ✅ 8/9 Providers 通过（89% 成功率）：Kimi, Qwen, DeepSeek, Gemini, iFlow, OpenCode, Qoder, Codex
-- ✅ 6/6 本地问题修复（100% 修复率）：UUID 截断、DeepSeek API、速率限制死锁、统计数据、iFlow、Codex o4-mini
-- ✅ 96% 模块测试覆盖：Gateway、State Store、Queue、Cache、Rate Limiter、Router、Memory v2
-- ⏱️ 平均响应时间：7-71 秒（按 Provider 分级）
-
-### 其他资源
-
-- **[API 文档](docs/API.md)** - 完整 API 参考
-- **[配置指南](docs/CONFIG.md)** - 所有配置选项
-- **[部署指南](docs/DEPLOYMENT.md)** - 生产部署
 
 ---
 
 ## 🗺️ 开发路线
 
-### v0.23.1（当前）- Gemini CLI 集成 ✅
+### 最近发布
 
-- [x] **双路径集成** - 原生 CLI + Gateway 自动化模式
-- [x] **灵活认证** - OAuth（原生）和 API Key（Gateway）支持
-- [x] **智能切换** - 快速脚本在认证模式间切换
-- [x] **完善文档** - 完整的集成和认证设置指南
-- [x] **无破坏性变更** - 保留原生 CLI 完整功能
+<details>
+<summary><b>v0.24.1 (2026-02-07) - Antigravity 集成修复</b></summary>
 
-### v0.23（上个版本）- LLM 驱动的记忆 ✅
+- ✅ 智能 API Key 检测（环境变量 + 直接配置）
+- ✅ HTTP Backend 增强
+- ✅ Gateway 启动包装器
+- ✅ 向后兼容性保持
+- ✅ 完整测试验证
 
-- [x] **LLM 关键词提取** - Ollama + qwen2.5:7b 语义理解
-- [x] **中文支持** - 准确的 CJK 语言关键词提取
-- [x] **健壮降级** - Ollama 不可用时自动降级到正则
-- [x] **FTS5 优化** - 三元组分词器优化中文全文搜索
-- [x] **记忆集成** - LLM 关键词 + 启发式检索 = 95%+ 准确率
-- [x] **性能优化** - 1-2秒本地推理，最小延迟开销
+📖 [系统测试报告](docs/CCB_SYSTEM_TEST_2026-02-07.md)
 
-### v0.22（更早版本）- 启发式记忆 ✅
+</details>
 
-- [x] **启发式检索** - 基于 Stanford Generative Agents 的 αR + βI + γT 评分
-- [x] **重要性追踪** - 用户评分和 LLM 评估的重要性分数
-- [x] **访问日志** - 追踪记忆访问用于时效性计算
-- [x] **艾宾浩斯衰减** - 基于时间的遗忘曲线实现
-- [x] **System 2 增强** - 合并、抽象、遗忘操作
-- [x] **ccb-consolidate CLI** - 新的合并管理工具
-- [x] **可配置权重** - `~/.ccb/heuristic_config.json`
+<details>
+<summary><b>v0.24 (2026-02-06) - Antigravity Tools 集成</b></summary>
 
-### v0.21（上个版本）- 记忆增强 ✅
+- ✅ 本地 Claude 4.5 Sonnet 代理
+- ✅ 3-8 秒超快速度
+- ✅ 无限 API 访问
+- ✅ Provider 管理改进
+- ✅ CC Switch 数据库适配器修复
 
-- [x] **记忆透明度** - 追踪每个请求注入的记忆
-- [x] **Observations CRUD** - 手动记忆管理 API
-- [x] **LLM 合并器** - AI 驱动的洞察提取
-- [x] **记忆配置 API** - 运行时配置
-- [x] **技能反馈循环** - 基于评分的推荐
-- [x] **讨论记忆** - 持久化多 AI 讨论
-- [x] **CLI 增强** - trace, injections, export 命令
+📖 [Antigravity Tools 指南](docs/ANTIGRAVITY_TOOLS_GUIDE.md)
 
-### v0.20（更早版本）- 双系统记忆 ✅
+</details>
 
-- [x] **Context Saver** - System 1 即时归档
-- [x] **Memory Consolidator** - System 2 夜间处理
-- [x] **ccb-mem CLI** - 统一记忆管理
-- [x] **安全加固** - 路径遍历防护
-- [x] **Claude Provider** - 作为第 9 个 Provider 添加
+<details>
+<summary><b>v0.23.1 (2026-02-05) - CC Switch 集成</b></summary>
 
-### v0.23（2026 年 Q2）- 语义增强
+- ✅ 故障转移队列
+- ✅ 并行测试
+- ✅ Provider 监控
+- ✅ Web UI 优化（11 → 7 标签页）
+- ✅ Gemini CLI 双路径集成
 
+📖 [CC Switch 集成指南](docs/CC_SWITCH_INTEGRATION.md)
+
+</details>
+
+<details>
+<summary><b>v0.23 (2026-01) - LLM 驱动的记忆</b></summary>
+
+- ✅ Ollama + qwen2.5:7b 关键词提取
+- ✅ 语义理解（中英文）
+- ✅ 1-2 秒本地推理
+- ✅ 健壮降级机制
+- ✅ 95%+ 准确率
+
+</details>
+
+<details>
+<summary><b>v0.22 (2025-12) - 启发式检索</b></summary>
+
+- ✅ Stanford Generative Agents 评分算法
+- ✅ αR + βI + γT 多维检索
+- ✅ 艾宾浩斯遗忘曲线
+- ✅ SQLite 数据库存储
+- ✅ System 2 增强操作
+
+</details>
+
+### 未来计划
+
+**v0.25 (2026 Q2) - 语义增强**
 - [ ] Qdrant 向量数据库集成
 - [ ] 语义相似度搜索
 - [ ] 多语言嵌入
 - [ ] 记忆聚类
 
-### v0.24（2026 年 Q3）- Agent 自主性
-
+**v0.26 (2026 Q3) - Agent 自主性**
 - [ ] Agent 记忆函数调用（Letta 模式）
 - [ ] 结构化记忆块（core_memory）
 - [ ] 自我更新 Agents
 - [ ] 记忆版本控制
 
-### v0.25（2026 年 Q4）- 团队协作
-
+**v0.27 (2026 Q4) - 团队协作**
 - [ ] 多用户记忆隔离
 - [ ] 共享记忆池
 - [ ] 权限系统
@@ -1508,11 +625,37 @@ final_score = α × 相关性 + β × 重要性 + γ × 时效性
 
 ---
 
+## 📚 文档资源
+
+### 核心指南
+
+- **[Antigravity Tools 指南](docs/ANTIGRAVITY_TOOLS_GUIDE.md)** - v0.24 本地代理设置
+- **[CC Switch 集成](docs/CC_SWITCH_INTEGRATION.md)** - v0.23.1 Provider 管理
+- **[Gemini CLI 集成](docs/GEMINI_CLI_INTEGRATION_GUIDE.md)** - v0.23.1 双路径配置
+- **[Gemini 认证配置](docs/GEMINI_AUTH_SETUP.md)** - OAuth 和 API Key
+- **[记忆系统架构](lib/memory/INTEGRATION_DESIGN.md)** - 完整设计文档
+- **[数据库结构](lib/memory/DATABASE_STRUCTURE.md)** - Schema 和查询
+
+### 测试报告（2026-02-07）
+
+- **[系统测试报告](docs/CCB_SYSTEM_TEST_2026-02-07.md)** - Antigravity 集成验证
+- **[最终测试报告](docs/CCB_FINAL_TEST_REPORT_2026-02-06.md)** - 全模块集成测试
+- **[问题追踪](docs/CCB_TEST_ISSUES_2026-02-06.md)** - 6 个问题修复详情
+- **[重测验证](docs/CCB_RETEST_REPORT_2026-02-06.md)** - 修复验证结果
+
+**测试结果摘要：**
+- ✅ 8/9 Providers 通过（89% 成功率）
+- ✅ 6/6 本地问题修复（100% 修复率）
+- ✅ 96% 模块测试覆盖
+- ⏱️ 平均响应时间：3-71 秒（按 Provider 分级）
+
+---
+
 ## 🤝 贡献指南
 
-我们欢迎贡献！详情请查看 [CONTRIBUTING.md](CONTRIBUTING.md)。
+我们欢迎各种形式的贡献！请先阅读 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
-### 贡献者快速开始
+### 快速开始
 
 ```bash
 # 1. Fork 并克隆
@@ -1532,17 +675,25 @@ git push origin feature/your-feature
 # 5. 创建 Pull Request
 ```
 
+### 开发规范
+
+- **代码风格：** 遵循 PEP 8
+- **测试覆盖：** 新功能需要单元测试
+- **文档更新：** 更新相关 README 和文档
+- **Commit 规范：** 使用 [Conventional Commits](https://www.conventionalcommits.org/)
+
 ---
 
 ## 📜 开源许可
 
-本项目采用 MIT 许可证 - 详情请查看 [LICENSE](LICENSE) 文件。
+本项目采用 **MIT 许可证** - 详情请查看 [LICENSE](LICENSE) 文件。
 
 ---
 
 ## 🙏 致谢
 
-**灵感来源：**
+### 灵感来源
+
 - [Stanford Generative Agents](https://arxiv.org/pdf/2304.03442) - 启发式检索公式
 - [Awesome-AI-Memory](https://github.com/IAAR-Shanghai/Awesome-AI-Memory) - 记忆系统综述
 - [Mem0](https://github.com/mem0ai/mem0) - 语义记忆架构
@@ -1550,17 +701,20 @@ git push origin feature/your-feature
 - [LangChain](https://github.com/langchain-ai/langchain) - 记忆模式
 - [claude-mem](https://github.com/thedotmack/claude-mem) - 生命周期钩子
 
-**构建技术：**
+### 构建技术
+
 - [FastAPI](https://fastapi.tiangolo.com) - 现代 Web 框架
 - [SQLite](https://www.sqlite.org) - 可靠数据库
+- [Ollama](https://ollama.com) - 本地 LLM 推理
 - [Claude Code](https://www.anthropic.com/claude) - AI 编排者
 
 ---
 
 ## 📞 技术支持
 
-- 🐛 问题：[GitHub Issues](https://github.com/LeoLin990405/ai-router-ccb/issues)
-- 📖 文档：[Documentation](docs/)
+- 🐛 **问题反馈：** [GitHub Issues](https://github.com/LeoLin990405/ai-router-ccb/issues)
+- 📖 **文档中心：** [Documentation](docs/)
+- 💬 **讨论区：** [GitHub Discussions](https://github.com/LeoLin990405/ai-router-ccb/discussions)
 
 ---
 
@@ -1568,6 +722,6 @@ git push origin feature/your-feature
 
 **由 CCB 团队用 ❤️ 构建**
 
-**[⬆ 回到顶部](#-ccb-gateway)**
+[⬆ 回到顶部](#-ccb-gateway)
 
 </div>
