@@ -89,7 +89,76 @@
 
 ## 🆕 What's New in v0.23.1
 
-### 🔌 Gemini CLI Dual-Path Integration ⭐
+### 🔄 CC Switch Integration ⭐
+
+**Advanced provider management and parallel testing** - Integrated with CC Switch for intelligent failover and multi-provider testing.
+
+**Key Features:**
+- 🔀 **Failover Queue** - Priority-based automatic provider switching
+- ⚡ **Parallel Testing** - Test multiple providers simultaneously
+- 📊 **Provider Monitoring** - Real-time health status and metrics
+- 🎯 **Performance Comparison** - Compare latency and response quality
+
+**CLI Commands:**
+```bash
+# Provider status and failover queue
+ccb-cc-switch status
+
+# Reload providers from database
+ccb-cc-switch reload
+
+# Parallel test all active providers
+ccb-cc-switch test "用一句话解释递归"
+
+# Test specific providers
+ccb-cc-switch test "Explain recursion" \
+  -p "反重力" \
+  -p "AiGoCode-优质逆向" \
+  -t 60
+```
+
+**Gateway API Endpoints:**
+```
+GET  /api/cc-switch/status            # Provider status
+POST /api/cc-switch/reload            # Reload config
+POST /api/cc-switch/parallel-test     # Run parallel test
+GET  /api/cc-switch/failover-queue    # Get queue
+```
+
+**Benefits:**
+- ⚡ **Fast Provider Discovery** - Identify fastest providers in seconds
+- 🔍 **Quality Comparison** - Compare responses across providers
+- 🛡️ **Reliability Testing** - Verify provider availability before use
+- 📊 **Performance Metrics** - Track latency, tokens, and success rates
+
+**Documentation:** [CC Switch Integration Guide](docs/CC_SWITCH_INTEGRATION.md)
+
+---
+
+### 🎨 Web UI Optimization
+
+**Streamlined interface** - Reduced tabs and cleaned up redundant files:
+
+**Changes:**
+- 📉 **Tab Reduction** - 11 → 7 tabs (removed Test, Costs, Compare)
+- 🔄 **Settings Unification** - Merged API Keys + Config into Settings tab
+- 🗑️ **File Cleanup** - Removed 7 redundant HTML files (~292KB)
+- 📏 **Size Reduction** - 348KB → 331KB (-5%)
+
+**New Tab Structure:**
+1. **Dashboard** - Overview and metrics
+2. **Monitor** - Real-time request monitoring
+3. **Memory** - 6 sub-tabs (Sessions, Observations, Injections, etc.)
+4. **Skills** - Skills discovery and feedback
+5. **Discussions** - Multi-AI collaboration
+6. **Requests** - Request history and tracking
+7. **Settings** - System config + API keys (2 sub-tabs)
+
+**Documentation:** [Web UI Optimization Report](lib/gateway/web/OPTIMIZATION_REPORT.md)
+
+---
+
+### 🔌 Gemini CLI Dual-Path Integration
 
 **Flexible integration strategy** - Choose between native CLI or Gateway-based automation:
 

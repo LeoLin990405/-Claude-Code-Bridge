@@ -89,7 +89,76 @@
 
 ## 🆕 v0.23.1 新特性
 
-### 🔌 Gemini CLI 双路径集成 ⭐
+### 🔄 CC Switch 集成 ⭐
+
+**高级 Provider 管理和并行测试** - 集成 CC Switch 实现智能故障转移和多 Provider 测试。
+
+**核心功能：**
+- 🔀 **故障转移队列** - 基于优先级的自动 Provider 切换
+- ⚡ **并行测试** - 同时测试多个 Provider
+- 📊 **Provider 监控** - 实时健康状态和指标
+- 🎯 **性能对比** - 比较延迟和响应质量
+
+**CLI 命令：**
+```bash
+# Provider 状态和故障转移队列
+ccb-cc-switch status
+
+# 从数据库重新加载 Provider
+ccb-cc-switch reload
+
+# 并行测试所有活跃 Provider
+ccb-cc-switch test "用一句话解释递归"
+
+# 测试指定 Provider
+ccb-cc-switch test "解释递归" \
+  -p "反重力" \
+  -p "AiGoCode-优质逆向" \
+  -t 60
+```
+
+**Gateway API 端点：**
+```
+GET  /api/cc-switch/status            # Provider 状态
+POST /api/cc-switch/reload            # 重新加载配置
+POST /api/cc-switch/parallel-test     # 运行并行测试
+GET  /api/cc-switch/failover-queue    # 获取队列
+```
+
+**主要优势：**
+- ⚡ **快速 Provider 发现** - 秒级识别最快的 Provider
+- 🔍 **质量对比** - 跨 Provider 比较响应
+- 🛡️ **可靠性测试** - 使用前验证 Provider 可用性
+- 📊 **性能指标** - 跟踪延迟、Token 和成功率
+
+**相关文档：** [CC Switch 集成指南](docs/CC_SWITCH_INTEGRATION.md)
+
+---
+
+### 🎨 Web UI 优化
+
+**精简界面** - 减少标签页并清理冗余文件：
+
+**变更内容：**
+- 📉 **标签页精简** - 11 → 7 个标签页（移除 Test、Costs、Compare）
+- 🔄 **设置统一** - 合并 API Keys + Config 到 Settings 标签
+- 🗑️ **文件清理** - 删除 7 个冗余 HTML 文件（~292KB）
+- 📏 **大小减少** - 348KB → 331KB（-5%）
+
+**新标签页结构：**
+1. **Dashboard** - 概览和指标
+2. **Monitor** - 实时请求监控
+3. **Memory** - 6 个子标签（Sessions、Observations、Injections 等）
+4. **Skills** - Skills 发现和反馈
+5. **Discussions** - 多 AI 协作
+6. **Requests** - 请求历史和跟踪
+7. **Settings** - 系统配置 + API 密钥（2 个子标签）
+
+**相关文档：** [Web UI 优化报告](lib/gateway/web/OPTIMIZATION_REPORT.md)
+
+---
+
+### 🔌 Gemini CLI 双路径集成
 
 **灵活的集成策略** - 根据使用场景选择原生 CLI 或 Gateway 自动化模式：
 
