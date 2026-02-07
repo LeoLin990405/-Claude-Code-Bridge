@@ -241,6 +241,12 @@ if HAS_FASTAPI:
         task_description: Optional[str] = Field(None, description="Task description")
         comment: Optional[str] = Field(None, description="Optional comment")
 
+    class CCParallelTestRequest(BaseModel):
+        """Request body for CC Switch parallel test."""
+        message: str = Field(..., description="Test message to send to providers")
+        providers: Optional[List[str]] = Field(None, description="List of provider names (default: all active)")
+        timeout_s: float = Field(60.0, description="Timeout in seconds", ge=1.0, le=300.0)
+
 
 class WebSocketManager:
     """Manages WebSocket connections for real-time updates."""
@@ -3669,13 +3675,6 @@ def create_api(
 
     # ==================== CC Switch Integration Endpoints ====================
 
-    # Pydantic models for CC Switch endpoints
-    class CCParallelTestRequest(BaseModel):
-        """Request body for CC Switch parallel test."""
-        message: str = Field(..., description="Test message to send to providers")
-        providers: Optional[List[str]] = Field(None, description="List of provider names (default: all active)")
-        timeout_s: float = Field(60.0, description="Timeout in seconds", ge=1.0, le=300.0)
-
     @app.get("/api/cc-switch/status")
     async def get_cc_switch_status() -> Dict[str, Any]:
         """
@@ -3715,7 +3714,7 @@ def create_api(
             )
 
     @app.post("/api/cc-switch/parallel-test")
-    async def cc_switch_parallel_test(request: CCParallelTestRequest) -> Dict[str, Any]:
+    async def cc_switch_parallel_test(test_request: CCParallelTestRequest) -> Dict[str, Any]:
         """
         Test multiple CC Switch providers in parallel.
 
@@ -3732,9 +3731,9 @@ def create_api(
 
             # Run parallel test
             result = await cc_switch.parallel_test(
-                message=request.message,
-                providers=request.providers,
-                timeout_s=request.timeout_s,
+                message=test_request.message,
+                providers=test_request.providers,
+                timeout_s=test_request.timeout_s,
             )
 
             return result.to_dict()
