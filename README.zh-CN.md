@@ -8,9 +8,9 @@
 [![License](https://img.shields.io/github/license/LeoLin990405/ai-router-ccb?color=blue)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.9+-3776AB?logo=python&logoColor=white)](https://www.python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
-[![Version](https://img.shields.io/badge/version-0.23.1--alpha-brightgreen)](https://github.com/LeoLin990405/ai-router-ccb/releases)
+[![Version](https://img.shields.io/badge/version-0.24.1-brightgreen)](https://github.com/LeoLin990405/ai-router-ccb/releases)
 
-**Claude 通过统一的 Gateway API 编排 9 个 AI Provider，LLM 驱动的记忆系统和实时监控**
+**Claude 通过统一的 Gateway API 编排 10 个 AI Provider（含 Antigravity 本地代理），LLM 驱动的记忆系统和实时监控**
 
 [功能特性](#-功能特性) • [快速开始](#-快速开始) • [使用文档](#-使用文档) • [系统架构](#-系统架构) • [API 参考](#-api-参考)
 
@@ -25,6 +25,8 @@
 ## 📖 目录
 
 - [概述](#-概述)
+- [v0.24.1 新特性](#-v0241-新特性)
+- [v0.24 新特性](#-v024-新特性)
 - [v0.23.1 新特性](#-v0231-新特性)
 - [v0.23 新特性](#-v023-新特性)
 - [为什么选择 CCB Gateway](#-为什么选择-ccb-gateway)
@@ -46,15 +48,17 @@
 
 ## 🌟 概述
 
-**CCB Gateway** 是生产级的多 AI 编排平台，**Claude 作为智能编排者**，通过统一的 Gateway API 将任务路由到 9 个专业 AI Provider，提供 LLM 驱动的记忆系统、缓存、重试和实时监控功能。
+**CCB Gateway** 是生产级的多 AI 编排平台，**Claude 作为智能编排者**，通过统一的 Gateway API 将任务路由到 10 个专业 AI Provider（含 Antigravity Tools 本地代理），提供 LLM 驱动的记忆系统、缓存、重试和实时监控功能。
 
 **独特优势：**
 - 🧠 **LLM 驱动的记忆** - 通过 Ollama + qwen2.5:7b 实现语义关键词提取
 - 🎯 **启发式检索** - αR + βI + γT 评分（相关性 + 重要性 + 时效性）
 - 🔄 **双系统记忆** - System 1（即时归档）+ System 2（夜间整合）
-- 📚 **预加载上下文** - 53 个 Skills + 9 个 Providers + 4 个 MCP Servers 嵌入每个请求
+- 📚 **预加载上下文** - 55 个 Skills + 10 个 Providers + 4 个 MCP Servers 嵌入每个请求
 - 🔍 **技能发现** - 通过 Vercel Skills CLI 自动发现和推荐相关技能
 - ⚡ **智能路由** - 基于速度分级的自动降级和智能 Provider 选择
+- 🔀 **CC Switch 集成** - Provider 管理、故障转移队列和并行测试
+- 🏠 **Antigravity Tools** - 本地 Claude 4.5 代理，无限 API 访问
 - 📊 **实时监控** - 基于 WebSocket 的仪表盘和实时指标
 - 🔄 **多 AI 讨论** - 多个 AI 协作解决问题
 
@@ -73,17 +77,123 @@
               │                  │                   │
               └──────────────────┼───────────────────┘
                                  │
-          ┌──────────┬───────────┼───────────┬───────────┬─────────┐
-          ▼          ▼           ▼           ▼           ▼         ▼
-     ┌────────┐ ┌────────┐ ┌─────────┐ ┌────────┐ ┌────────┐ ┌────────┐
-     │ Kimi   │ │ Qwen   │ │DeepSeek │ │ Codex  │ │Gemini  │ │ iFlow  │
-     │ 🚀 7s  │ │ 🚀 12s │ │ ⚡ 16s  │ │ 🐢 48s │ │ 🐢 71s │ │ ⚡ 25s │
-     └────────┘ └────────┘ └─────────┘ └────────┘ └────────┘ └────────┘
-                           ┌─────────┐ ┌─────────┐ ┌─────────┐
-                           │ Qoder   │ │OpenCode │ │ Claude  │
-                           │ ⚡ 30s  │ │ ⚡ 42s  │ │ ⚡ 20s  │
-                           └─────────┘ └─────────┘ └─────────┘
+          ┌──────────┬───────────┼───────────┬───────────┬─────────┬──────────┐
+          ▼          ▼           ▼           ▼           ▼         ▼          ▼
+     ┌────────┐ ┌────────┐ ┌─────────┐ ┌────────┐ ┌────────┐ ┌────────┐ ┌──────────┐
+     │ Kimi   │ │ Qwen   │ │DeepSeek │ │ Codex  │ │Gemini  │ │ iFlow  │ │Antigrav. │
+     │ 🚀 7s  │ │ 🚀 12s │ │ ⚡ 16s  │ │ 🐢 48s │ │ 🐢 71s │ │ ⚡ 25s │ │ ⚡ 4s    │
+     └────────┘ └────────┘ └─────────┘ └────────┘ └────────┘ └────────┘ └──────────┘
+                           ┌─────────┐ ┌─────────┐
+                           │ Qoder   │ │OpenCode │
+                           │ ⚡ 30s  │ │ ⚡ 42s  │
+                           └─────────┘ └─────────┘
 ```
+
+---
+
+## 🆕 v0.24.1 新特性
+
+### 🔧 Antigravity 集成修复 ⭐
+
+**生产就绪的 Antigravity Tools 支持** - 修复环境变量传递问题并改进 API Key 处理机制。
+
+**核心修复：**
+- ✅ **智能 API Key 检测** - 同时支持环境变量和直接 API key 配置
+- ✅ **HTTP Backend 增强** - 自动检测 `sk-` 前缀值作为直接密钥
+- ✅ **Gateway 启动包装器** - 通过 wrapper 脚本正确加载环境变量
+- ✅ **向后兼容** - 现有的基于环境变量的配置仍然有效
+
+**问题解决：**
+```bash
+# 问题：ANTIGRAVITY_API_KEY 无法通过 nohup 传递到 Gateway 子进程
+# 解决：gateway.yaml 支持直接 API key + 智能检测
+
+# 之前（失败）
+api_key_env: "ANTIGRAVITY_API_KEY"  # 环境变量未加载 ❌
+
+# 之后（成功）
+api_key_env: "sk-89f574858..."      # 本地服务直接密钥 ✅
+```
+
+**技术细节：**
+- 修改 `http_backend.py` 的 `_get_api_key()` 方法检测密钥前缀
+- 创建 `ccb-gateway-start.sh` 包装器确保环境正确加载
+- 更新 `ccb-cli` 使用包装器脚本启动 Gateway
+- 所有测试通过：API 直连、ccb-cli、CC Switch、Web UI
+
+**测试验证：**
+```bash
+✅ Antigravity 直连 API：3-8秒响应时间
+✅ ccb-cli antigravity：成功
+✅ CC Switch 状态：6 个 providers，3 个在故障转移队列
+✅ Gateway /api/providers：Antigravity 可见
+```
+
+**完整文档：** [系统测试报告](docs/CCB_SYSTEM_TEST_2026-02-07.md)
+
+---
+
+## 🆕 v0.24 新特性
+
+### 🏠 Antigravity Tools 集成 ⭐⭐⭐
+
+**本地 Claude 4.5 Sonnet 代理** - 通过自托管 Antigravity Tools 应用实现无限 API 访问。
+
+**核心功能：**
+- 🚀 **超快速度** - 3-8 秒响应时间（本地代理）
+- 🔓 **无限访问** - 无速率限制或 token 配额
+- 🎯 **Claude 4.5 Sonnet** - 最新模型，带思考能力
+- 🔌 **双 API 支持** - Claude API + OpenAI API 兼容
+- 🛡️ **离线可用** - 无需互联网即可工作（本地处理）
+
+**快速开始：**
+```bash
+# 通过 Gateway 使用 Antigravity
+ccb-cli antigravity "你的问题"
+ccb-cli antigravity -a sisyphus "修复这个 bug"
+
+# 直接测试 Antigravity
+curl -X POST http://127.0.0.1:8045/v1/messages \
+  -H "x-api-key: YOUR_KEY" \
+  -d '{"model":"claude-sonnet-4-5-20250929","messages":[...]}'
+```
+
+**架构：**
+```
+CC Switch 故障转移队列：
+  #1 Claude Official (官方 API)
+  #2 AiGoCode (第三方代理)
+  #3 Antigravity Tools (本地代理) ← 新增！
+```
+
+**完整文档：** [Antigravity Tools 指南](docs/ANTIGRAVITY_TOOLS_GUIDE.md)
+
+---
+
+### 🔧 Provider 管理改进
+
+**增强的 CLI 工具** - 新增命令实现无缝 provider 切换和 CC Switch 同步。
+
+**新增命令：**
+```bash
+# 切换 Claude 通道
+ccb-switch-claude [official|aigocode|antigravity]
+
+# 同步 CC Switch 选择到环境变量
+ccb-sync-cc-switch
+
+# CC Switch 状态和测试
+ccb-cc-switch status
+ccb-cc-switch test "问题" -p "反重力" -p "AiGoCode"
+```
+
+**已修复问题：**
+- ✅ CC Switch 数据库适配器现在正确解析 `settings_config` JSON
+- ✅ 移除冗余的 claude provider（与 Claude Code 冲突）
+- ✅ 修复故障转移队列排序（sort_index 升序）
+- ✅ 解决环境变量冲突（不再有 token 扣费问题）
+
+**完整文档：** [CC Switch 集成](docs/CCB_FINAL_REPORT.md)
 
 ---
 

@@ -8,7 +8,7 @@
 [![License](https://img.shields.io/github/license/LeoLin990405/ai-router-ccb?color=blue)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.9+-3776AB?logo=python&logoColor=white)](https://www.python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
-[![Version](https://img.shields.io/badge/version-0.24.0--alpha-brightgreen)](https://github.com/LeoLin990405/ai-router-ccb/releases)
+[![Version](https://img.shields.io/badge/version-0.24.1-brightgreen)](https://github.com/LeoLin990405/ai-router-ccb/releases)
 
 **Claude orchestrates 10 AI providers through unified Gateway API with LLM-powered memory and real-time monitoring**
 
@@ -87,6 +87,48 @@
                            │ ⚡ 30s  │ │ ⚡ 42s  │
                            └─────────┘ └─────────┘
 ```
+
+---
+
+## 🆕 What's New in v0.24.1
+
+### 🔧 Antigravity Integration Fixes ⭐
+
+**Production-ready Antigravity Tools support** - Fixed environment variable propagation and improved API key handling.
+
+**Key Fixes:**
+- ✅ **Smart API Key Detection** - Supports both environment variables and direct API keys
+- ✅ **HTTP Backend Enhancement** - Auto-detects `sk-` prefixed values as direct keys
+- ✅ **Gateway Startup Wrapper** - Proper environment variable loading via wrapper script
+- ✅ **Backward Compatible** - Existing env-based configs still work
+
+**What's Fixed:**
+```bash
+# Problem: ANTIGRAVITY_API_KEY couldn't pass to Gateway subprocess via nohup
+# Solution: Direct API key support in gateway.yaml + smart detection
+
+# Before (failed)
+api_key_env: "ANTIGRAVITY_API_KEY"  # Env var not loaded ❌
+
+# After (works)
+api_key_env: "sk-89f574858..."      # Direct key for localhost ✅
+```
+
+**Technical Details:**
+- Modified `http_backend.py` `_get_api_key()` to detect key prefixes
+- Created `ccb-gateway-start.sh` wrapper for proper env loading
+- Updated `ccb-cli` to use wrapper script for Gateway startup
+- All tests passing: API direct, ccb-cli, CC Switch, Web UI
+
+**Tested & Verified:**
+```bash
+✅ Antigravity direct API: 3-8s response time
+✅ ccb-cli antigravity: Success
+✅ CC Switch status: 6 providers, 3 in failover
+✅ Gateway /api/providers: Antigravity visible
+```
+
+**Documentation:** [System Test Report](docs/CCB_SYSTEM_TEST_2026-02-07.md)
 
 ---
 
