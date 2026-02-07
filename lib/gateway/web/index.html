@@ -4795,8 +4795,13 @@
                         const startTime = performance.now();
 
                         // Determine timeout based on provider speed tier
-                        const slowProviders = ['codex', 'gemini', 'claude', 'deepseek', 'iflow'];
-                        const timeout = slowProviders.includes(provider.name) ? 180 : 60;
+                        // Fast: kimi, qwen, antigravity (7-12s, timeout 60s)
+                        // Medium: deepseek, iflow, opencode, qoder (16-42s, timeout 120s)
+                        // Slow: codex, gemini (48-71s, timeout 180s)
+                        const slowProviders = ['codex', 'gemini'];
+                        const mediumProviders = ['deepseek', 'iflow', 'opencode', 'qoder'];
+                        const timeout = slowProviders.includes(provider.name) ? 180 :
+                                       mediumProviders.includes(provider.name) ? 120 : 60;
 
                         try {
                             // Use synchronous wait mode for more reliable results
@@ -5158,10 +5163,11 @@
                     return `${(ms / 1000).toFixed(2)}s`;
                 };
 
-                // Provider speed tiers (A3: Added qoder)
+                // Provider speed tiers (Updated with antigravity)
                 const providerSpeedTiers = {
                     kimi: { tier: 'fast', icon: '🚀', label: 'Fast', color: 'emerald' },
                     qwen: { tier: 'fast', icon: '🚀', label: 'Fast', color: 'emerald' },
+                    antigravity: { tier: 'fast', icon: '🏠', label: 'Local', color: 'cyan' },
                     deepseek: { tier: 'medium', icon: '⚡', label: 'Medium', color: 'amber' },
                     iflow: { tier: 'medium', icon: '⚡', label: 'Medium', color: 'amber' },
                     opencode: { tier: 'medium', icon: '⚡', label: 'Medium', color: 'amber' },
@@ -5175,9 +5181,10 @@
                 const getProviderTierLabel = (name) => getProviderTier(name).label;
                 const getProviderTierClass = (name) => {
                     const tier = getProviderTier(name);
-                    // A3: Provider-specific colors (qoder gets purple)
+                    // Provider-specific colors (antigravity gets cyan, qoder gets purple)
                     const colorMap = {
                         emerald: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+                        cyan: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
                         amber: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
                         rose: 'bg-rose-500/20 text-rose-400 border-rose-500/30',
                         purple: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
