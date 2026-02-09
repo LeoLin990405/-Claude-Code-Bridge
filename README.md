@@ -2,345 +2,434 @@
 
 # 🐝 Hivemind
 
-**Multi-AI Orchestration Platform**
+### Multi-AI Orchestration Platform
 
-Transform Claude into an intelligent orchestrator managing 10 AI providers with LLM-powered memory, smart routing, and real-time monitoring.
+Unify 10 AI providers behind a single gateway with intelligent routing, shared memory, cross-agent knowledge, and 138 API endpoints.
 
-[![Version](https://img.shields.io/badge/version-0.26.0-brightgreen)](https://github.com/LeoLin990405/ai-router-ccb/releases)
-[![Python](https://img.shields.io/badge/Python-3.9+-3776AB?logo=python&logoColor=white)](https://www.python.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
-[![License](https://img.shields.io/badge/License-MIT-blue)](LICENSE)
-[![Stars](https://img.shields.io/github/stars/LeoLin990405/ai-router-ccb?style=social)](https://github.com/LeoLin990405/ai-router-ccb)
+[![Version](https://img.shields.io/badge/version-1.1.0-blue?style=flat-square)](https://github.com/LeoLin990405/Hivemind/releases)
+[![Python](https://img.shields.io/badge/Python-3.9+-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-2.1-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![Tests](https://img.shields.io/badge/tests-195_passed-4cc61e?style=flat-square)]()
+[![Endpoints](https://img.shields.io/badge/API-138_endpoints-orange?style=flat-square)]()
+[![License](https://img.shields.io/badge/License-AGPL--3.0-purple?style=flat-square)](LICENSE)
 
-[Quick Start](#-quick-start) • [Features](#-features) • [Architecture](#-architecture) • [API Reference](#-api-reference)
+**[English](README.md) | [简体中文](README.zh-CN.md)**
 
-**[🇺🇸 English](README.md) · [🇨🇳 简体中文](README.zh-CN.md)**
-
----
-
-<img src="screenshots/webui-demo.gif" alt="Hivemind Demo" width="800">
+[Quick Start](#quick-start) &bull; [Architecture](#architecture) &bull; [API Reference](#api-reference) &bull; [CLI Tools](#cli-tools) &bull; [Roadmap](#roadmap)
 
 </div>
 
 ---
 
-## 🎯 What is Hivemind?
+## What is Hivemind?
 
-**Hivemind** is a production-grade multi-AI orchestration platform that unifies 10 AI providers under a single Gateway API. Like a hive mind, multiple AI "bees" work together - each with unique strengths - to solve complex problems collaboratively.
+Hivemind turns Claude Code into a **multi-AI orchestration hub**. Instead of talking to one AI at a time, you dispatch tasks to whichever provider is best suited — Kimi for Chinese, Codex for code review, Gemini for frontend, DeepSeek for reasoning — all through one unified API with automatic fallback, caching, and memory injection.
 
-### Supported Providers (10)
+```
+You ──▶ Claude Code ──▶ Hivemind Gateway ──┬──▶ Kimi      (Chinese, fast)
+                                            ├──▶ Qwen      (code, fast)
+                                            ├──▶ DeepSeek  (reasoning)
+                                            ├──▶ Codex     (code review)
+                                            ├──▶ Gemini    (frontend, multimodal)
+                                            ├──▶ iFlow     (workflow)
+                                            ├──▶ OpenCode  (multi-model)
+                                            ├──▶ Qoder     (coding)
+                                            ├──▶ Droid     (Android)
+                                            └──▶ Antigravity (local proxy)
+```
 
-| Provider | Speed | Specialty | Response Time |
-|----------|:-----:|-----------|---------------|
-| **Antigravity** | 🚀 | Local Claude 4.5 proxy, unlimited | 3-8s |
-| **Kimi** | 🚀 | Chinese, long context (128k) | 7s |
-| **Qwen** | 🚀 | Code generation, multilingual | 12s |
-| **DeepSeek** | ⚡ | Deep reasoning, algorithms | 16s |
-| **iFlow** | ⚡ | Workflow automation | 25s |
-| **Codex** | 🐢 | Code review, complex refactoring | 48s |
-| **Gemini** | 🐢 | Frontend, multimodal | 71s |
-| **Claude** | ⚡ | General tasks | 30s |
-| **Qoder** | ⚡ | Programming tasks | 30s |
-| **OpenCode** | ⚡ | Multi-model switching | 42s |
+### Key Numbers
 
-### Key Features
-
-- 🧠 **LLM-Powered Memory** - Ollama smart routing (local + cloud) for semantic keyword extraction
-- ⚡ **Intelligent Routing** - Speed-tiered fallback chains with automatic retry
-- 🏠 **Local Proxy Support** - Antigravity Tools for unlimited Claude 4.5 access
-- 📚 **Knowledge Hub** - Unified knowledge base with NotebookLM (254+ notebooks) + Obsidian (local notes) + SQLite cache
-- 📊 **Real-time Dashboard** - WebSocket-based monitoring at `http://localhost:8765/web`
-- 🔄 **Multi-AI Discussion** - Collaborative problem-solving across providers
-- 🎯 **Skills Discovery** - Auto-recommend relevant Claude Code skills
-
-### Why Hivemind?
-
-| Without Hivemind | With Hivemind |
-|-----------------|---------------|
-| ❌ Multiple CLI interfaces | ✅ One unified Gateway API |
-| ❌ Manual provider selection | ✅ Auto-routing based on task type |
-| ❌ No memory between sessions | ✅ Dual-system memory (fast + deep) |
-| ❌ Context lost every time | ✅ 55 skills + 10 providers embedded |
-| ❌ No visibility into operations | ✅ Real-time dashboard with WebSocket |
-| ❌ Wasted time on failed requests | ✅ Automatic retry and fallback |
+| Metric | Value |
+|--------|-------|
+| AI Providers | **10** (9 remote + 1 local) |
+| API Endpoints | **138** |
+| CLI Tools | **65** |
+| Skills Integrations | **68** |
+| Test Cases | **195** passing |
+| Lines of Code | **52,000+** |
 
 ---
 
-## ⚡ Quick Start
+## Features
+
+### Intelligent Routing
+
+The smart router automatically picks the best provider for each task based on keyword rules, performance scores, and health status.
+
+```bash
+# The router decides: React → Gemini, Algorithm → Codex, Chinese → Kimi
+ccb-submit auto "Create a React login form"      # → gemini 3f
+ccb-submit auto "Analyze quicksort complexity"    # → codex o3
+ccb-submit auto "用中文解释闭包"                    # → kimi
+```
+
+12 built-in routing rules with configurable weights. Supports custom rules via API.
+
+### Cross-Agent Shared Knowledge
+
+Agents publish findings to a shared knowledge pool. Any agent can query across **Memory V2 + NotebookLM + Obsidian + Shared Pool** in one call.
+
+```bash
+# Publish knowledge
+curl -X POST localhost:8765/api/shared-knowledge/publish \
+  -d '{"agent_id":"claude","category":"code_pattern","title":"FastAPI middleware","content":"..."}'
+
+# Unified cross-source query
+curl "localhost:8765/api/shared-knowledge/query?q=React+hooks&sources=memory,shared,notebooklm"
+```
+
+Confidence scoring with vote/citation/time-decay factors. FTS5 trigram search for Chinese text.
+
+### Unified Tool Discovery
+
+A single index covering local skills, MCP tools, MCP servers, and remote skills — with bilingual Chinese-English keyword matching.
+
+```bash
+curl "localhost:8765/api/tools/search?q=pdf"       # → pdf skill (score 4.5)
+curl "localhost:8765/api/tools/search?q=表格"       # → xlsx skill (score 2.5)
+curl "localhost:8765/api/tools/search?q=github+pr"  # → MCP create_pull_request
+```
+
+### Memory System
+
+Dual-architecture memory inspired by cognitive science:
+
+- **System 1** — Fast heuristic retrieval with `αR + βI + γT` scoring (relevance, importance, recency)
+- **System 2** — Nightly consolidation with LLM-powered summarization
+- **Optional vector search** — sentence-transformers embeddings with Qdrant/ChromaDB backends
+- **Ebbinghaus decay** — `T = exp(-0.1 × hours)` for natural forgetting
+
+### More
+
+| Feature | Description |
+|---------|-------------|
+| **Async Pipeline** | Submit → poll → fetch. Non-blocking, parallel multi-AI dispatch |
+| **Fallback Chains** | `kimi → qwen → deepseek`. Auto-retry with exponential backoff |
+| **Response Cache** | 34%+ hit rate. Per-provider TTL. Save tokens and time |
+| **Health Monitoring** | Real-time provider status. Auto-disable unhealthy providers |
+| **Multi-AI Discussion** | Structured debates between providers with round-based turns |
+| **Cost Tracking** | Per-provider token/cost analytics via Prometheus metrics |
+| **Real-time Dashboard** | Web UI at `localhost:8765/web` with live stats |
+| **CC Switch** | Hot-swap Claude API endpoints without restart |
+| **Knowledge Hub** | 254+ NotebookLM notebooks + Obsidian vault integration |
+| **Backpressure** | Load-level monitoring. Reject requests when overloaded |
+
+---
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                          Hivemind Gateway                           │
+│                                                                     │
+│  ┌───────────┐ ┌───────────┐ ┌───────────┐ ┌───────────┐          │
+│  │  Smart    │ │  Response │ │  Rate     │ │  Health   │          │
+│  │  Router   │ │  Cache    │ │  Limiter  │ │  Checker  │          │
+│  └─────┬─────┘ └─────┬─────┘ └─────┬─────┘ └─────┬─────┘          │
+│        └──────────────┼─────────────┼─────────────┘                │
+│                 ┌─────▼─────────────▼─────┐                        │
+│                 │     Request Queue        │                        │
+│                 └───────────┬──────────────┘                        │
+│                             │                                       │
+│  ┌──────────────────────────▼──────────────────────────┐           │
+│  │              Backend Executors                       │           │
+│  │   CLI Backend  │  HTTP Backend  │  Pipe Backend     │           │
+│  └─────────────────────────────────────────────────────┘           │
+│                                                                     │
+│  ┌───────────────────┐  ┌────────────────────┐                     │
+│  │  Memory V2        │  │  Shared Knowledge  │                     │
+│  │  (System 1 + 2)   │  │  (Cross-Agent)     │                     │
+│  │  67 sessions      │  │  FTS5 + Votes      │                     │
+│  │  2,582 messages   │  │  + Unified Query    │                     │
+│  └───────────────────┘  └────────────────────┘                     │
+│                                                                     │
+│  ┌───────────────────┐  ┌────────────────────┐                     │
+│  │  Knowledge Hub    │  │  Tool Router       │                     │
+│  │  254 Notebooks    │  │  68 Skills Indexed │                     │
+│  │  Obsidian Vault   │  │  Bilingual Search  │                     │
+│  └───────────────────┘  └────────────────────┘                     │
+└──────────────────────────────┬──────────────────────────────────────┘
+                               │
+        ┌──────────┬───────────┼───────────┬──────────┐
+        ▼          ▼           ▼           ▼          ▼
+   ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐
+   │ Kimi 🚀│ │Qwen  🚀│ │Deep  ⚡│ │Codex 🐢│ │Gemini🐢│
+   └────────┘ └────────┘ └────────┘ └────────┘ └────────┘
+   ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐
+   │iFlow ⚡│ │OCode ⚡│ │Qoder ⚡│ │Droid ⚡│ │Grav  ⚡│
+   └────────┘ └────────┘ └────────┘ └────────┘ └────────┘
+```
+
+### Provider Speed Tiers
+
+| Tier | Providers | Response Time | Best For |
+|------|-----------|---------------|----------|
+| 🚀 Fast | Kimi, Qwen | 3–15s | Chinese, code generation, quick answers |
+| ⚡ Medium | DeepSeek, iFlow, OpenCode, Qoder, Droid | 15–60s | Reasoning, workflows, multi-model |
+| 🐢 Slow | Codex, Gemini | 60–180s | Code review, frontend, multimodal |
+| 📍 Local | Antigravity | Varies | Local proxy, custom endpoints |
+
+### Database Layout
+
+| Database | Tables | Purpose |
+|----------|--------|---------|
+| `ccb_memory.db` | 13 + 2 FTS5 | Sessions, messages, observations, skills tracking |
+| `gateway.db` | 12 + 1 FTS5 | Requests, responses, discussions, costs, shared knowledge |
+| `knowledge_index.db` | 2 | NotebookLM index, query cache |
+
+---
+
+## Quick Start
 
 ### Prerequisites
 
 - Python 3.9+
-- Node.js 16+ (for MCP servers)
-- Git
+- At least one AI provider configured (Kimi or Qwen recommended for fastest setup)
 
-### Installation
+### Install
 
 ```bash
-# Clone repository
-git clone https://github.com/LeoLin990405/ai-router-ccb.git
-cd ai-router-ccb
-
-# Install dependencies
-pip install -r requirements.txt
-npm install
-
-# Configure providers (edit ~/.ccb_config/gateway.yaml or use env vars)
+git clone https://github.com/LeoLin990405/Hivemind.git
+cd Hivemind
+pip install fastapi uvicorn aiohttp
 ```
 
-### Start Gateway
+### Start the Gateway
 
 ```bash
 python3 -m lib.gateway.gateway_server --port 8765
-
-# Output:
-# [SystemContext] Loaded 55 skills, 10 providers, 4 MCP servers
-# [MemoryMiddleware] Initialized (enabled=True)
-# ✓ Server running at http://localhost:8765
 ```
 
-### First Request
+### Verify
 
 ```bash
-# Using ccb-cli (recommended)
-ccb-cli kimi "Explain React hooks in 3 sentences"
+# Health check
+curl localhost:8765/api/health
+# → {"status":"ok"}
 
-# Using curl
-curl -X POST http://localhost:8765/api/ask \
-  -H "Content-Type: application/json" \
-  -d '{"provider":"kimi","message":"Explain React hooks","wait":true}'
+# List providers
+curl localhost:8765/api/providers
+# → 10 providers with priorities
+
+# Smart route a task
+curl -X POST "localhost:8765/api/route?message=write+a+Python+script"
+# → {"provider":"qwen","confidence":0.45,"rule_description":"Python and scripting"}
 ```
 
-### Access Web UI
-
-Open [http://localhost:8765/web](http://localhost:8765/web) for the real-time monitoring dashboard.
-
----
-
-## ✨ Features
-
-### 🧠 LLM-Powered Memory with Smart Routing
-
-**Ollama smart routing** for keyword extraction with local/cloud dual-mode:
-
-```
-User Query → Local qwen2.5:7b (6s timeout)
-                 ↓ success → return keywords
-                 ↓ timeout/fail
-             Cloud deepseek-v3.1:671b (10s timeout)
-                 ↓ success → return keywords
-                 ↓ fail
-             Regex fallback (instant)
-```
-
-**Features:**
-- 🏠 **Local-first**: qwen2.5:7b for fast inference (~0.5s hot, ~5s cold)
-- ☁️ **Cloud backup**: deepseek-v3.1:671b-cloud (671B params) for complex queries
-- 🔄 **Auto-fallback**: Regex extraction when Ollama unavailable
-- 📊 **Heuristic retrieval**: Stanford Generative Agents-inspired scoring
-
-### ⚡ Intelligent Routing
-
-**Speed-tiered provider chains** with automatic fallback:
-
-```
-🚀 Fast (3-15s):   Kimi → Qwen → DeepSeek
-⚡ Medium (15-45s): iFlow → Qoder → OpenCode → Claude
-🐢 Slow (45-90s):  Codex → Gemini
-```
-
-### 🏠 Antigravity Tools Integration
-
-**Local Claude 4.5 Sonnet proxy** for unlimited API access:
+### Send your first request
 
 ```bash
-ccb-cli antigravity "Your question"
-ccb-cli antigravity -a sisyphus "Fix this bug"
-```
+# Async (recommended)
+ccb-submit kimi "What is a closure in JavaScript?"
+# → Returns request_id instantly
 
-### 🤝 Multi-AI Discussion
+# Check result
+ccb-query get <request_id>
 
-**Collaborative problem-solving** across providers:
-
-```bash
-ccb-submit discuss \
-  --providers kimi,codex,gemini \
-  --rounds 3 \
-  --strategy "consensus" \
-  "Design a scalable microservices architecture"
-```
-
-### 📊 Real-time Monitoring
-
-**WebSocket-based dashboard** at [http://localhost:8765/web](http://localhost:8765/web)
-
----
-
-## 🏗️ Architecture
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                     Hivemind (v0.25.0)                       │
-├─────────────────────────────────────────────────────────────┤
-│                                                               │
-│  ┌──────────────────────────────────────────────────────┐   │
-│  │     LLM-Powered Memory + Ollama Smart Routing        │   │
-│  │  • Local: qwen2.5:7b (6s) → Cloud: ds-v3.1 (10s)    │   │
-│  │  • Heuristic retrieval (αR + βI + γT)                │   │
-│  │  • Dual-system (System 1 + System 2)                 │   │
-│  └──────────────────────────────────────────────────────┘   │
-│                          │                                   │
-│  ┌──────────────────────▼───────────────────────────────┐   │
-│  │            Gateway Server Core                        │   │
-│  │  • Request Queue (async) • Retry Executor            │   │
-│  │  • Cache Manager         • Rate Limiter              │   │
-│  │  • Health Checker        • Skills Discovery          │   │
-│  └───────────────────────────────────────────────────────┘   │
-│                          │                                   │
-│  ┌──────┬────────┬───────┼───────┬────────┬─────────────┐   │
-│  ▼      ▼        ▼       ▼       ▼        ▼             ▼   │
-│ Kimi  Qwen  DeepSeek  Codex  Gemini  Antigravity  ... (10) │
-│ 🚀7s  🚀12s   ⚡16s    🐢48s   🐢71s     ⚡4s               │
-└─────────────────────────────────────────────────────────────┘
+# Sync (fast providers only)
+ccb-cli kimi "1+1=?"
 ```
 
 ---
 
-## 📖 Documentation
+## API Reference
 
-### Core Guides
+**Base URL:** `http://localhost:8765`
 
-- **[Antigravity Tools Guide](docs/ANTIGRAVITY_TOOLS_GUIDE.md)** - Local Claude 4.5 proxy
-- **[Memory Architecture](lib/memory/ARCHITECTURE.md)** - Ollama smart routing design
-- **[CC Switch Integration](docs/CC_SWITCH_INTEGRATION.md)** - Provider management
-- **[Database Structure](lib/memory/DATABASE_STRUCTURE.md)** - Schema and queries
-
-### Test Reports
-
-- **[Integration Test Report](docs/CCB_TEST_REPORT_2026-02-07_Phase7-13.md)** - Full system test
-- **[Issue Tracking](docs/CCB_TEST_ISSUES_2026-02-07.md)** - All issues fixed
-
----
-
-## 📋 API Reference
-
-### Core Endpoints
+### Core
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/health` | Health check |
-| GET | `/providers` | List all 10 providers |
-| POST | `/api/ask` | Synchronous request |
-| POST | `/api/submit` | Asynchronous request |
-| GET | `/api/query/{id}` | Query request status |
-| WS | `/ws` | WebSocket connection |
+| POST | `/api/ask` | Send request to a provider |
+| POST | `/api/ask/stream` | SSE streaming response |
+| POST | `/api/route` | Get routing recommendation |
+| GET | `/api/route/rules` | List routing rules |
+| GET | `/api/router/config` | Router configuration |
+| GET | `/api/router/scores` | Provider performance scores |
+| GET | `/api/providers` | List all providers |
+| GET | `/api/status` | Gateway status |
+| GET | `/api/health` | Health check |
 
-### Memory Endpoints
+### Shared Knowledge (v1.1)
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/memory/sessions` | List memory sessions |
-| GET | `/api/memory/search` | Full-text search |
+| POST | `/api/shared-knowledge/publish` | Publish knowledge entry |
+| GET | `/api/shared-knowledge/query?q=` | Unified cross-source query |
+| POST | `/api/shared-knowledge/vote` | Vote on entry (agree/disagree/cite) |
+| GET | `/api/shared-knowledge/feed` | Browse entries |
+| GET | `/api/shared-knowledge/stats` | Knowledge statistics |
+| DELETE | `/api/shared-knowledge/{id}` | Delete entry |
+
+### Tool Router (v1.1)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/tools/search?q=` | Search tools (bilingual) |
+| GET | `/api/tools/index` | Index statistics |
+| POST | `/api/tools/rebuild` | Rebuild index |
+| GET | `/api/tools` | List all tools |
+
+### Memory
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/memory/search?query=` | Search conversations |
+| GET | `/api/memory/sessions` | List sessions |
 | GET | `/api/memory/stats` | Memory statistics |
+| POST | `/api/memory/add` | Add observation |
+| GET | `/api/memory/observations` | List observations |
 
-### Knowledge Hub Endpoints
+### More Endpoints
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/knowledge/query` | Query knowledge (auto-routes NotebookLM/Obsidian) |
-| POST | `/knowledge/sync` | Sync NotebookLM notebooks to local index |
-| GET | `/knowledge/stats` | Knowledge hub statistics |
-| GET | `/knowledge/notebooks` | List indexed notebooks |
-| GET | `/knowledge/search?q=` | Search notebooks by keyword |
-| POST | `/knowledge/create` | Create new NotebookLM notebook |
-| POST | `/knowledge/add-source` | Add source (file/URL) to notebook |
-| GET | `/knowledge/auth` | Check NotebookLM auth status |
+| Category | Count | Prefix |
+|----------|-------|--------|
+| Batch Operations | 5 | `/api/batch/*` |
+| Discussions | 12 | `/api/discussion/*` |
+| Admin | 9 | `/api/admin/*` |
+| Cache | 4 | `/api/cache/*` |
+| Costs | 5 | `/api/costs/*` |
+| Health Checker | 5 | `/api/health-checker/*` |
+| Export | 3 | `/api/export/*` |
+| Knowledge Hub | 8 | `/knowledge/*` |
+| Streaming | 5 | `/api/stream/*` |
+| CC Switch | 4 | `/api/cc-switch/*` |
+| Runtime | 8 | Various |
+| Metrics | 1 | `/metrics` (Prometheus) |
+| Web UI | 2 | `/web` |
 
----
-
-## 🗺️ Roadmap
-
-### ✅ v0.25.0 (Current)
-
-- Ollama smart routing (local + cloud dual-mode)
-- Full integration testing (all 7 providers verified)
-- iFlow CLI fix, Provider configuration improvements
-- Architecture documentation update
-
-### ✅ v0.26.0 (Current)
-
-- Knowledge Hub: NotebookLM (254+ notebooks) + Obsidian unified knowledge base
-- `ccb-knowledge` CLI with query/sync/search/create/add subcommands
-- Gateway API endpoints at `/knowledge/*` (8 endpoints)
-- Auto-routing queries to best matching notebook
-- SQLite index + query cache for offline access
-
-### 🚀 Upcoming
-
-**v0.27** - Semantic Enhancement
-- [ ] Qdrant vector database integration
-- [ ] Semantic similarity search
-
-**v0.28** - Agent Autonomy
-- [ ] Agent memory function calls (Letta mode)
-- [ ] Self-updating agents
+**Full OpenAPI docs:** `http://localhost:8765/docs`
 
 ---
 
-## 👥 Contributors
+## CLI Tools
 
-<table>
-<tr>
-<td align="center">
-<b>Leo Lin</b><br>
-<sub>Project Lead & Developer</sub>
-</td>
-</tr>
-</table>
+### Primary Commands
 
-### 🤖 AI Collaborators
+```bash
+ccb-submit <provider> "message"    # Async submit (recommended)
+ccb-query get <id>                 # Fetch completed result
+ccb-query status <id>              # Check request status
+ccb-cli <provider> "message"       # Sync call (fast providers)
+ccb-poll <id1> <id2> ...           # Poll multiple requests
+```
 
-This project was built collaboratively with AI assistants:
+### Provider Shortcuts
+
+Each provider has `ask` / `pend` / `ping` shortcuts:
+
+| Provider | Ask | Pend | Ping |
+|----------|-----|------|------|
+| Kimi | `kask` | `kpend` | `kping` |
+| Qwen | `qask` | `qpend` | `qping` |
+| DeepSeek | `dask` | `dpend` | `dping` |
+| Gemini | `gask` | `gpend` | `gping` |
+| Codex | `cask` | `cpend` | `cping` |
+| OpenCode | `oask` | `opend` | `oping` |
+| iFlow | `iask` | `ipend` | `iping` |
+
+### Management
+
+```bash
+ccb-gateway                    # Start/manage gateway
+ccb-monitor                    # Real-time monitoring
+ccb-stats                      # Usage statistics
+ccb-cache                      # Cache management
+ccb-cc-switch                  # Switch Claude endpoints
+ccb-mem                        # Memory operations
+ccb-knowledge                  # Knowledge hub CLI
+```
+
+### Model Shortcuts
+
+```bash
+ccb-cli codex o3 "..."         # Codex with o3 (deep reasoning)
+ccb-cli codex o4-mini "..."    # Codex with o4-mini (fast)
+ccb-cli codex gpt-4o "..."     # Codex with GPT-4o (multimodal)
+ccb-cli gemini 3f "..."        # Gemini 3 Flash
+ccb-cli gemini 3p "..."        # Gemini 3 Pro
+ccb-cli deepseek reasoner "."  # DeepSeek R1
+ccb-cli kimi thinking "..."    # Kimi with chain-of-thought
+```
+
+---
+
+## Project Structure
+
+```
+Hivemind/
+├── bin/                        # 65 CLI tools
+├── lib/
+│   ├── common/                 # Shared utilities (logging, errors, auth)
+│   ├── gateway/
+│   │   ├── app.py              # FastAPI app factory
+│   │   ├── router.py           # Smart routing engine
+│   │   ├── routes/             # 19 route modules (138 endpoints)
+│   │   ├── middleware/         # Memory injection middleware
+│   │   ├── backends/           # CLI, HTTP, pipe executors
+│   │   └── ...
+│   ├── memory/                 # Memory V2 (System 1 + 2)
+│   ├── knowledge/              # NotebookLM + Obsidian + Shared Knowledge
+│   ├── providers/              # 10 provider adapters + BaseCommReader
+│   └── skills/                 # Skills discovery + Tool index
+├── tests/                      # 195 test cases
+├── docs/                       # Architecture & roadmap docs
+├── mcp/                        # MCP server integrations
+└── screenshots/                # Demo assets
+```
+
+---
+
+## Roadmap
+
+| Version | Status | Highlights |
+|---------|--------|------------|
+| v0.26 | ✅ Done | Knowledge Hub, 10 providers, Web UI |
+| v1.0 | ✅ Done | Modular refactoring, 19 route modules, BaseCommReader |
+| **v1.1** | **✅ Current** | **Shared knowledge, tool router, unified query** |
+| v1.2 | Planned | Vector semantic search, jieba segmentation, WebUI v2 |
+| v1.3 | Planned | Agent autonomy, self-improving routing, cross-session learning |
+
+---
+
+## Contributing
+
+Hivemind is built collaboratively by humans and AI. Contributions are welcome.
+
+1. Fork the repo
+2. Create a feature branch (`git checkout -b feat/my-feature`)
+3. Run tests (`python3 -m pytest tests/ -x -q`)
+4. Commit and push
+5. Open a Pull Request
+
+---
+
+## AI Collaborators
+
+This project was built with contributions from multiple AI systems:
 
 | AI | Role | Contributions |
 |----|------|---------------|
-| **Claude** (Anthropic) | Lead AI Architect | Core architecture, code review, documentation |
-| **Kimi** (Moonshot) | Chinese Language Expert | Chinese docs, localization, fast prototyping |
-| **DeepSeek** | Reasoning Specialist | Algorithm design, complex debugging |
-| **Gemini** (Google) | Frontend Expert | Web UI, multimodal features |
-| **Codex** (OpenAI) | Code Specialist | Deep code analysis, refactoring |
-| **Qwen** (Alibaba) | Multilingual Coder | Code generation, SQL optimization |
-| **iFlow** | Workflow Expert | Automation, integration testing |
-| **OpenCode** | Multi-model Bridge | Cross-provider coordination |
-
-> *"Like bees in a hive, each AI brings unique strengths to create something greater than the sum of its parts."*
+| **Claude** | Architect & Orchestrator | Core design, memory system, testing, documentation |
+| **Codex** | Code Engineer | v1.0 refactoring, v1.1 implementation, module splitting |
+| **Kimi** | Chinese Specialist | Chinese NLP, Ollama integration, i18n |
+| **DeepSeek** | Reasoning Engine | Algorithm design, scoring formulas |
+| **Gemini** | Frontend & Analysis | Web UI, multimodal analysis |
+| **Qwen** | Code Generator | Provider adapters, CLI tools |
 
 ---
 
-## 📜 License
+## License
 
-This project is licensed under the **MIT License** - see [LICENSE](LICENSE) for details.
-
----
-
-## 🙏 Acknowledgments
-
-**Inspired by:**
-- [Stanford Generative Agents](https://arxiv.org/pdf/2304.03442) - Heuristic retrieval
-- [Mem0](https://github.com/mem0ai/mem0) - Semantic memory architecture
-- [Letta (MemGPT)](https://github.com/cpacker/MemGPT) - Structured memory blocks
-
-**Built with:**
-- [FastAPI](https://fastapi.tiangolo.com) - Modern web framework
-- [SQLite](https://www.sqlite.org) - Reliable database
-- [Ollama](https://ollama.com) - Local LLM inference
+[AGPL-3.0](LICENSE) — Free to use, modify, and distribute. Network use requires source disclosure.
 
 ---
 
 <div align="center">
 
-**🐝 Built by humans and AIs, working together as one Hivemind**
+**[Documentation](docs/)** &bull; **[API Docs](http://localhost:8765/docs)** &bull; **[Web Dashboard](http://localhost:8765/web)** &bull; **[Issues](https://github.com/LeoLin990405/Hivemind/issues)**
 
-[⬆ Back to Top](#-hivemind)
+Built with multiple AI minds working as one.
 
 </div>
