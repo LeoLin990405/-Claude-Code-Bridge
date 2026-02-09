@@ -1,0 +1,277 @@
+#!/usr/bin/env python3
+"""ccb-knowledge - Knowledge Hub CLI."""
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+import urllib.error
+import urllib.parse
+import urllib.request
+from typing import Any, Dict, Optional
+
+
+GATEWAY_URL = "http://localhost:8765"
+
+
+def request_json(url: str, method: str = "GET", payload: Optional[Dict[str, Any]] = None, timeout: int = 120) -> Any:
+    data = None
+    headers = {}
+    if payload is not None:
+        data = json.dumps(payload).encode("utf-8")
+        headers["Content-Type"] = "application/json"
+
+    req = urllib.request.Request(url, data=data, headers=headers, method=method)
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        return json.loads(resp.read().decode("utf-8"))
+
+
+def cmd_query(args: argparse.Namespace) -> int:
+    payload: Dict[str, Any] = {
+        "question": args.question,
+        "source": args.source,
+        "use_cache": not args.no_cache,
+    }
+    if args.notebook_id:
+        payload["notebook_id"] = args.notebook_id
+
+    try:
+        result = request_json(f"{args.url}/knowledge/query", method="POST", payload=payload)
+    except urllib.error.URLError as exc:
+        print(f"Error: cannot connect to gateway at {args.url}: {exc}", file=sys.stderr)
+        return 1
+
+    answer = result.get("answer")
+    if answer:
+        print(answer)
+        if result.get("cached"):
+            print("\n[cached]", file=sys.stderr)
+    elif result.get("error"):
+        print(f"Error: {result['error']}", file=sys.stderr)
+        return 1
+    else:
+        print("No answer found")
+
+    if args.verbose:
+        print("\n---", file=sys.stderr)
+        meta = {k: v for k, v in result.items() if k != "answer"}
+        print(json.dumps(meta, ensure_ascii=False, indent=2), file=sys.stderr)
+    return 0
+
+
+def cmd_sync(args: argparse.Namespace) -> int:
+    try:
+        result = request_json(f"{args.url}/knowledge/sync", method="POST")
+    except urllib.error.URLError as exc:
+        print(f"Error: cannot connect to gateway at {args.url}: {exc}", file=sys.stderr)
+        return 1
+
+    if result.get("success"):
+        print(f"Synced {result.get('notebooks_synced', 0)} notebooks")
+    else:
+        print(f"Sync failed: {result.get('message', 'unknown')}", file=sys.stderr)
+    return 0 if result.get("success") else 1
+
+
+def cmd_stats(args: argparse.Namespace) -> int:
+    try:
+        result = request_json(f"{args.url}/knowledge/stats")
+    except urllib.error.URLError as exc:
+        print(f"Error: cannot connect to gateway at {args.url}: {exc}", file=sys.stderr)
+        return 1
+
+    idx = result.get("index", {})
+    nlm = "yes" if result.get("notebooklm_available") else "no"
+    obs = "yes" if result.get("obsidian_available") else "no"
+
+    print(f"Notebooks indexed: {idx.get('notebook_count', 0)}")
+    print(f"Cache entries:     {idx.get('cache_count', 0)}")
+    print(f"Total queries:     {idx.get('total_queries', 0)}")
+    print(f"NotebookLM:        {nlm}")
+    print(f"Obsidian:          {obs}")
+    return 0
+
+
+def cmd_list(args: argparse.Namespace) -> int:
+    endpoint = f"{args.url}/knowledge/notebooks"
+    if args.topic:
+        query = urllib.parse.urlencode({"topic": args.topic})
+        endpoint = f"{endpoint}?{query}"
+
+    try:
+        result = request_json(endpoint)
+    except urllib.error.URLError as exc:
+        print(f"Error: cannot connect to gateway at {args.url}: {exc}", file=sys.stderr)
+        return 1
+
+    if not result:
+        print("No notebooks indexed. Run: ccb-knowledge sync")
+        return 0
+
+    for nb in result:
+        qc = nb.get("query_count", 0)
+        print(f"  {nb.get('id', '?')[:12]}  {nb.get('title', 'Untitled'):<50s}  queries={qc}")
+    print(f"\nTotal: {len(result)} notebooks")
+    return 0
+
+
+def cmd_search(args: argparse.Namespace) -> int:
+    query = urllib.parse.urlencode({"q": args.query})
+    try:
+        result = request_json(f"{args.url}/knowledge/search?{query}")
+    except urllib.error.URLError as exc:
+        print(f"Error: cannot connect to gateway at {args.url}: {exc}", file=sys.stderr)
+        return 1
+
+    if isinstance(result, dict) and result.get("error"):
+        print(f"Error: {result['error']}", file=sys.stderr)
+        return 1
+
+    if not result:
+        print("No matching notebooks found")
+        return 0
+
+    for nb in result:
+        print(f"  {nb.get('id', '?')[:12]}  {nb.get('title', 'Untitled')}")
+    print(f"\nFound: {len(result)} notebooks")
+    return 0
+
+
+def cmd_create(args: argparse.Namespace) -> int:
+    try:
+        result = request_json(
+            f"{args.url}/knowledge/create",
+            method="POST",
+            payload={"title": args.title},
+        )
+    except urllib.error.URLError as exc:
+        print(f"Error: cannot connect to gateway at {args.url}: {exc}", file=sys.stderr)
+        return 1
+
+    if result.get("success"):
+        print(f"Created notebook: {result.get('notebook_id', '?')}")
+        print(f"Title: {result.get('title', args.title)}")
+    else:
+        print(f"Error: {result.get('error', 'unknown')}", file=sys.stderr)
+        return 1
+    return 0
+
+
+def cmd_add(args: argparse.Namespace) -> int:
+    try:
+        result = request_json(
+            f"{args.url}/knowledge/add-source",
+            method="POST",
+            payload={
+                "notebook_id": args.notebook_id,
+                "file_or_url": args.source,
+            },
+        )
+    except urllib.error.URLError as exc:
+        print(f"Error: cannot connect to gateway at {args.url}: {exc}", file=sys.stderr)
+        return 1
+
+    if result.get("success"):
+        print(f"Source added: {result.get('title', args.source)}")
+        print(f"Status: {result.get('status', 'processing')}")
+    else:
+        print(f"Error: {result.get('error', 'unknown')}", file=sys.stderr)
+        return 1
+    return 0
+
+
+def cmd_auth(args: argparse.Namespace) -> int:
+    try:
+        result = request_json(f"{args.url}/knowledge/auth")
+    except urllib.error.URLError as exc:
+        print(f"Error: cannot connect to gateway at {args.url}: {exc}", file=sys.stderr)
+        return 1
+
+    if result.get("authenticated"):
+        print("NotebookLM: authenticated")
+    else:
+        print("NotebookLM: not authenticated")
+        print("Run: notebooklm login")
+    return 0 if result.get("authenticated") else 1
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="ccb-knowledge",
+        description="Knowledge Hub CLI - unified access to NotebookLM + Obsidian",
+    )
+    parser.add_argument(
+        "--url",
+        default=GATEWAY_URL,
+        help="Gateway base URL (default: %(default)s)",
+    )
+
+    sub = parser.add_subparsers(dest="command")
+
+    # query
+    p = sub.add_parser("query", aliases=["ask", "q"], help="Query knowledge hub")
+    p.add_argument("question", help="Question to ask")
+    p.add_argument("-s", "--source", default="auto", choices=["auto", "notebooklm", "obsidian"])
+    p.add_argument("-n", "--notebook-id", help="NotebookLM notebook ID")
+    p.add_argument("--no-cache", action="store_true", help="Bypass cache")
+    p.add_argument("-v", "--verbose", action="store_true", help="Show metadata")
+
+    # sync
+    sub.add_parser("sync", help="Sync NotebookLM notebooks to index")
+
+    # stats
+    sub.add_parser("stats", help="Show knowledge hub stats")
+
+    # list
+    p = sub.add_parser("list", aliases=["ls"], help="List indexed notebooks")
+    p.add_argument("--topic", help="Filter by topic")
+
+    # search
+    p = sub.add_parser("search", help="Search notebooks by keyword")
+    p.add_argument("query", help="Search keywords")
+
+    # create
+    p = sub.add_parser("create", help="Create a new NotebookLM notebook")
+    p.add_argument("title", help="Notebook title")
+
+    # add
+    p = sub.add_parser("add", help="Add source to a notebook")
+    p.add_argument("notebook_id", help="Notebook ID")
+    p.add_argument("source", help="File path or URL to add")
+
+    # auth
+    sub.add_parser("auth", help="Check NotebookLM auth status")
+
+    return parser
+
+
+def main() -> int:
+    parser = build_parser()
+    args = parser.parse_args()
+
+    if not args.command:
+        parser.print_help()
+        return 1
+
+    handlers = {
+        "query": cmd_query,
+        "ask": cmd_query,
+        "q": cmd_query,
+        "sync": cmd_sync,
+        "stats": cmd_stats,
+        "list": cmd_list,
+        "ls": cmd_list,
+        "search": cmd_search,
+        "create": cmd_create,
+        "add": cmd_add,
+        "auth": cmd_auth,
+    }
+    handler = handlers.get(args.command)
+    if not handler:
+        parser.print_help()
+        return 1
+    return handler(args)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

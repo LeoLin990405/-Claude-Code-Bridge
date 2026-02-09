@@ -6,7 +6,7 @@
 
 Transform Claude into an intelligent orchestrator managing 10 AI providers with LLM-powered memory, smart routing, and real-time monitoring.
 
-[![Version](https://img.shields.io/badge/version-0.25.0-brightgreen)](https://github.com/LeoLin990405/ai-router-ccb/releases)
+[![Version](https://img.shields.io/badge/version-0.26.0-brightgreen)](https://github.com/LeoLin990405/ai-router-ccb/releases)
 [![Python](https://img.shields.io/badge/Python-3.9+-3776AB?logo=python&logoColor=white)](https://www.python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![License](https://img.shields.io/badge/License-MIT-blue)](LICENSE)
@@ -48,6 +48,7 @@ Transform Claude into an intelligent orchestrator managing 10 AI providers with 
 - 🧠 **LLM-Powered Memory** - Ollama smart routing (local + cloud) for semantic keyword extraction
 - ⚡ **Intelligent Routing** - Speed-tiered fallback chains with automatic retry
 - 🏠 **Local Proxy Support** - Antigravity Tools for unlimited Claude 4.5 access
+- 📚 **Knowledge Hub** - Unified knowledge base with NotebookLM (254+ notebooks) + Obsidian (local notes) + SQLite cache
 - 📊 **Real-time Dashboard** - WebSocket-based monitoring at `http://localhost:8765/web`
 - 🔄 **Multi-AI Discussion** - Collaborative problem-solving across providers
 - 🎯 **Skills Discovery** - Auto-recommend relevant Claude Code skills
@@ -242,6 +243,19 @@ ccb-submit discuss \
 | GET | `/api/memory/search` | Full-text search |
 | GET | `/api/memory/stats` | Memory statistics |
 
+### Knowledge Hub Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/knowledge/query` | Query knowledge (auto-routes NotebookLM/Obsidian) |
+| POST | `/knowledge/sync` | Sync NotebookLM notebooks to local index |
+| GET | `/knowledge/stats` | Knowledge hub statistics |
+| GET | `/knowledge/notebooks` | List indexed notebooks |
+| GET | `/knowledge/search?q=` | Search notebooks by keyword |
+| POST | `/knowledge/create` | Create new NotebookLM notebook |
+| POST | `/knowledge/add-source` | Add source (file/URL) to notebook |
+| GET | `/knowledge/auth` | Check NotebookLM auth status |
+
 ---
 
 ## 🗺️ Roadmap
@@ -253,13 +267,21 @@ ccb-submit discuss \
 - iFlow CLI fix, Provider configuration improvements
 - Architecture documentation update
 
+### ✅ v0.26.0 (Current)
+
+- Knowledge Hub: NotebookLM (254+ notebooks) + Obsidian unified knowledge base
+- `ccb-knowledge` CLI with query/sync/search/create/add subcommands
+- Gateway API endpoints at `/knowledge/*` (8 endpoints)
+- Auto-routing queries to best matching notebook
+- SQLite index + query cache for offline access
+
 ### 🚀 Upcoming
 
-**v0.26** - Semantic Enhancement
+**v0.27** - Semantic Enhancement
 - [ ] Qdrant vector database integration
 - [ ] Semantic similarity search
 
-**v0.27** - Agent Autonomy
+**v0.28** - Agent Autonomy
 - [ ] Agent memory function calls (Letta mode)
 - [ ] Self-updating agents
 

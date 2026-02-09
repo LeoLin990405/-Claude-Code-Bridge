@@ -45,6 +45,7 @@ from .gateway_config import GatewayConfig
 from .discussion import DiscussionExporter, ObsidianExporter
 from .retry import detect_auth_failure, ProviderReliabilityScore, ReliabilityTracker
 from .router import SmartRouter, auto_route, RoutingDecision
+from .knowledge_api import get_knowledge_api_router
 from .error_handlers import (
     raise_memory_unavailable,
     raise_memory_module_unavailable,
@@ -367,6 +368,10 @@ def create_api(
 
     ws_manager = WebSocketManager()
     start_time = time.time()
+
+    knowledge_router = get_knowledge_api_router()
+    if knowledge_router is not None:
+        app.include_router(knowledge_router)
 
     # ==================== Middleware Setup ====================
 

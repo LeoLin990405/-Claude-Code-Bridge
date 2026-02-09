@@ -1,0 +1,24 @@
+knowledge:
+  db_path: ~/.local/share/codex-dual/data/knowledge_index.db
+
+  obsidian:
+    vault_path: ~/Desktop/新笔记
+    excluded_folders:
+      - .obsidian
+      - .trash
+      - templates
+
+  notebooklm:
+    bin_path: /Users/leo/.local/bin/notebooklm
+    timeout: 60
+    max_retries: 2
+
+  cache:
+    enabled: true
+    ttl: 86400
+    max_entries: 1000
+
+  routing:
+    default_source: auto
+    local_first: true
+    confidence_threshold: 0.7

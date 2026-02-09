@@ -6,7 +6,7 @@
 
 让 Claude 成为智能编排者，统一管理 10 个 AI Provider，配备 LLM 驱动的记忆系统、智能路由和实时监控。
 
-[![Version](https://img.shields.io/badge/version-0.25.0-brightgreen)](https://github.com/LeoLin990405/ai-router-ccb/releases)
+[![Version](https://img.shields.io/badge/version-0.26.0-brightgreen)](https://github.com/LeoLin990405/ai-router-ccb/releases)
 [![Python](https://img.shields.io/badge/Python-3.9+-3776AB?logo=python&logoColor=white)](https://www.python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![License](https://img.shields.io/badge/License-MIT-blue)](LICENSE)
@@ -48,6 +48,7 @@
 - 🧠 **LLM 驱动的记忆** - Ollama 智能路由（本地 + 云端）实现语义关键词提取
 - ⚡ **智能路由** - 基于速度分级的降级链，自动重试
 - 🏠 **本地代理支持** - Antigravity Tools 无限访问 Claude 4.5
+- 📚 **统一知识库** - NotebookLM（254+ 笔记本）+ Obsidian（本地笔记）+ SQLite 缓存
 - 📊 **实时仪表盘** - 基于 WebSocket 的监控 `http://localhost:8765/web`
 - 🔄 **多 AI 讨论** - 跨 Provider 协作式问题解决
 - 🎯 **技能发现** - 自动推荐相关 Claude Code 技能
@@ -242,24 +243,45 @@ ccb-submit discuss \
 | GET | `/api/memory/search` | 全文搜索 |
 | GET | `/api/memory/stats` | 记忆统计 |
 
+### 知识库端点
+
+| 方法 | 端点 | 描述 |
+|------|------|------|
+| POST | `/knowledge/query` | 查询知识库（自动路由 NotebookLM/Obsidian） |
+| POST | `/knowledge/sync` | 同步 NotebookLM 笔记本到本地索引 |
+| GET | `/knowledge/stats` | 知识库统计 |
+| GET | `/knowledge/notebooks` | 列出已索引的笔记本 |
+| GET | `/knowledge/search?q=` | 按关键词搜索笔记本 |
+| POST | `/knowledge/create` | 创建新 NotebookLM 笔记本 |
+| POST | `/knowledge/add-source` | 添加来源（文件/URL）到笔记本 |
+| GET | `/knowledge/auth` | 检查 NotebookLM 认证状态 |
+
 ---
 
 ## 🗺️ 开发路线
 
-### ✅ v0.25.0（当前）
+### ✅ v0.25.0
 
 - Ollama 智能路由（本地 + 云端双模式）
 - 完整集成测试（7 个 Provider 验证通过）
 - iFlow CLI 修复，Provider 配置改进
 - 架构文档更新
 
+### ✅ v0.26.0（当前）
+
+- 统一知识库：NotebookLM（254+ 笔记本）+ Obsidian 集成
+- `ccb-knowledge` CLI 工具（query/sync/search/create/add 子命令）
+- Gateway API `/knowledge/*` 端点（8 个端点）
+- 自动路由查询到最匹配的笔记本
+- SQLite 索引 + 查询缓存
+
 ### 🚀 未来计划
 
-**v0.26** - 语义增强
+**v0.27** - 语义增强
 - [ ] Qdrant 向量数据库集成
 - [ ] 语义相似度搜索
 
-**v0.27** - Agent 自主性
+**v0.28** - Agent 自主性
 - [ ] Agent 记忆函数调用（Letta 模式）
 - [ ] 自我更新 Agents
 
