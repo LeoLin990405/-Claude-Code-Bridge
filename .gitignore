@@ -37,3 +37,33 @@ __pycache__/
 # OS
 .DS_Store
 Thumbs.db
+
+# === AionUI Electron App ===
+AionUi/node_modules/
+AionUi/out/
+AionUi/dist/
+AionUi/.vite/
+AionUi/.webpack/
+AionUi/coverage/
+AionUi/.nyc_output/
+AionUi/bun.lock
+AionUi/package-lock.json
+
+# AionUI large demo assets
+AionUi/resources/*.gif
+AionUi/resources/*.mp4
+
+# === Runtime/session files ===
+.ccb_config/*-session
+.ccb_config/*.log
+data/
+
+# === Node.js ===
+node_modules/
+
+# === Python test/cache ===
+.coverage
+.pytest_cache/
+.ruff_cache/
+.benchmarks/
+

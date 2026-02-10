@@ -6,7 +6,7 @@
 
 Unify 10 AI providers behind a single gateway with intelligent routing, shared memory, cross-agent knowledge, and 138 API endpoints.
 
-[![Version](https://img.shields.io/badge/version-1.1.0-blue?style=flat-square)](https://github.com/LeoLin990405/Hivemind/releases)
+[![Version](https://img.shields.io/badge/version-1.2.0-blue?style=flat-square)](https://github.com/LeoLin990405/Hivemind/releases)
 [![Python](https://img.shields.io/badge/Python-3.9+-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-2.1-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![Tests](https://img.shields.io/badge/tests-195_passed-4cc61e?style=flat-square)]()
@@ -15,7 +15,7 @@ Unify 10 AI providers behind a single gateway with intelligent routing, shared m
 
 **[English](README.md) | [简体中文](README.zh-CN.md)**
 
-[Quick Start](#quick-start) &bull; [Architecture](#architecture) &bull; [API Reference](#api-reference) &bull; [CLI Tools](#cli-tools) &bull; [Roadmap](#roadmap)
+[Quick Start](#quick-start) &bull; [Architecture](#architecture) &bull; [Desktop Client](#desktop-client-aionui) &bull; [API Reference](#api-reference) &bull; [CLI Tools](#cli-tools) &bull; [Roadmap](#roadmap)
 
 </div>
 
@@ -26,16 +26,17 @@ Unify 10 AI providers behind a single gateway with intelligent routing, shared m
 Hivemind turns Claude Code into a **multi-AI orchestration hub**. Instead of talking to one AI at a time, you dispatch tasks to whichever provider is best suited — Kimi for Chinese, Codex for code review, Gemini for frontend, DeepSeek for reasoning — all through one unified API with automatic fallback, caching, and memory injection.
 
 ```
-You ──▶ Claude Code ──▶ Hivemind Gateway ──┬──▶ Kimi      (Chinese, fast)
-                                            ├──▶ Qwen      (code, fast)
-                                            ├──▶ DeepSeek  (reasoning)
-                                            ├──▶ Codex     (code review)
-                                            ├──▶ Gemini    (frontend, multimodal)
-                                            ├──▶ iFlow     (workflow)
-                                            ├──▶ OpenCode  (multi-model)
-                                            ├──▶ Qoder     (coding)
-                                            ├──▶ Droid     (Android)
-                                            └──▶ Antigravity (local proxy)
+You ──▶ Claude Code ────────────────────────┐
+                                             ├──▶ Hivemind Gateway ──┬──▶ Kimi      (Chinese, fast)
+You ──▶ AionUI (Desktop Client) ────────────┘                        ├──▶ Qwen      (code, fast)
+                                                                      ├──▶ DeepSeek  (reasoning)
+                                                                      ├──▶ Codex     (code review)
+                                                                      ├──▶ Gemini    (frontend, multimodal)
+                                                                      ├──▶ iFlow     (workflow)
+                                                                      ├──▶ OpenCode  (multi-model)
+                                                                      ├──▶ Qoder     (coding)
+                                                                      ├──▶ Droid     (Android)
+                                                                      └──▶ Antigravity (local proxy)
 ```
 
 ### Key Numbers
@@ -179,6 +180,76 @@ Dual-architecture memory inspired by cognitive science:
 | `knowledge_index.db` | 2 | NotebookLM index, query cache |
 
 ---
+
+## Desktop Client (AionUI)
+
+Hivemind integrates [AionUI](https://github.com/Aion-Community/AionUI) as a desktop GUI — built with Electron + React 19, with native Hivemind integration.
+
+### Highlights
+
+- **Multi-provider chat** — Choose any of 10 providers directly in chat
+- **Streaming responses** — Real-time SSE output through the Hivemind Gateway
+- **Provider badges** — Speed tiers (🚀 Fast / ⚡ Medium / 🐢 Slow) with live latency
+- **Gateway settings** — Configure Gateway URL, default provider, and streaming toggle
+- **Full AionUI capabilities** — Multi-agent conversations, image generation, file management
+
+### Quick Start
+
+```bash
+cd AionUi
+npm install
+npm start          # Dev mode with hot reload
+npm run build      # Production build
+```
+
+AionUI defaults to `http://localhost:8765`. Ensure Gateway is running first:
+
+```bash
+python3 -m lib.gateway.gateway_server --port 8765
+```
+
+### Architecture
+
+```
+┌──────────────────────────────────────┐
+│         AionUI (Electron)            │
+│                                      │
+│  ┌────────────┐  ┌───────────────┐   │
+│  │ React UI   │  │ Hivemind      │   │
+│  │ (Renderer) │──│ Agent Plugin  │   │
+│  └────────────┘  └───────┬───────┘   │
+│                          │           │
+│  ┌───────────────────────▼────────┐  │
+│  │  HivemindConnection            │  │
+│  │  HTTP + SSE Streaming Client   │  │
+│  └───────────────────────┬────────┘  │
+└──────────────────────────┼───────────┘
+                           │ HTTP/SSE
+                           ▼
+              ┌─────────────────────┐
+              │  Hivemind Gateway   │
+              │  localhost:8765     │
+              └─────────────────────┘
+```
+
+### Hivemind Integration Files
+
+| Component | File | Purpose |
+|-----------|------|---------|
+| Types | `src/agent/hivemind/types.ts` | Provider options, speed tiers, config types |
+| Connection | `src/agent/hivemind/HivemindConnection.ts` | Gateway HTTP + SSE client |
+| Adapter | `src/agent/hivemind/HivemindAdapter.ts` | Gateway response → AionUI message format |
+| Agent | `src/agent/hivemind/index.ts` | HivemindAgent main class |
+| Manager | `src/process/task/HivemindAgentManager.ts` | Conversation lifecycle management |
+| Chat UI | `src/renderer/.../HivemindChat.tsx` | Chat container component |
+| Send Box | `src/renderer/.../HivemindSendBox.tsx` | Input + provider selector |
+| Badge | `src/renderer/.../HivemindProviderBadge.tsx` | Provider speed tier badge |
+| Routing | `src/renderer/.../HivemindRoutingInfo.tsx` | Routing status indicator |
+| Settings | `src/renderer/.../HivemindModalContent.tsx` | Gateway configuration panel |
+| Worker | `src/worker/hivemind.ts` | Worker stub |
+
+> **License**: AionUI is licensed under Apache-2.0. See `AionUi/LICENSE` for details.
+
 
 ## Quick Start
 
@@ -359,6 +430,13 @@ ccb-cli kimi thinking "..."    # Kimi with chain-of-thought
 
 ```
 Hivemind/
+├── AionUi/                    # Desktop client (Electron + React 19)
+│   ├── src/
+│   │   ├── agent/hivemind/    # Hivemind Gateway client
+│   │   ├── renderer/          # React UI with Hivemind components
+│   │   └── process/           # Process management
+│   ├── package.json
+│   └── forge.config.ts
 ├── bin/                        # 65 CLI tools
 ├── lib/
 │   ├── common/                 # Shared utilities (logging, errors, auth)
@@ -387,9 +465,9 @@ Hivemind/
 |---------|--------|------------|
 | v0.26 | ✅ Done | Knowledge Hub, 10 providers, Web UI |
 | v1.0 | ✅ Done | Modular refactoring, 19 route modules, BaseCommReader |
-| **v1.1** | **✅ Current** | **Shared knowledge, tool router, unified query** |
-| v1.2 | Planned | Vector semantic search, jieba segmentation, WebUI v2 |
-| v1.3 | Planned | Agent autonomy, self-improving routing, cross-session learning |
+| v1.1 | ✅ Done | Shared knowledge, tool router, unified query |
+| **v1.2** | **✅ Current** | **AionUI desktop client, Hivemind agent integration, DB schema v13** |
+| v1.3 | Planned | Vector semantic search, jieba segmentation |
 
 ---
 
@@ -412,7 +490,7 @@ This project was built with contributions from multiple AI systems:
 | AI | Role | Contributions |
 |----|------|---------------|
 | **Claude** | Architect & Orchestrator | Core design, memory system, testing, documentation |
-| **Codex** | Code Engineer | v1.0 refactoring, v1.1 implementation, module splitting |
+| **Codex** | Code Engineer | v1.0 refactoring, v1.1 implementation, v1.2 AionUI integration |
 | **Kimi** | Chinese Specialist | Chinese NLP, Ollama integration, i18n |
 | **DeepSeek** | Reasoning Engine | Algorithm design, scoring formulas |
 | **Gemini** | Frontend & Analysis | Web UI, multimodal analysis |
