@@ -4,13 +4,13 @@
 
 ### 多 AI 智能编排平台
 
-统一 10 个 AI Provider，通过单一网关实现智能路由、共享记忆、跨 Agent 知识共享，提供 138 个 API 端点。
+统一 10 个 AI Provider，通过单一网关实现智能路由、共享记忆、跨 Agent 知识共享，提供 144 个 API 端点。
 
 [![Version](https://img.shields.io/badge/版本-1.2.0-blue?style=flat-square)](https://github.com/LeoLin990405/Hivemind/releases)
 [![Python](https://img.shields.io/badge/Python-3.9+-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-2.1-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![Tests](https://img.shields.io/badge/测试-195_通过-4cc61e?style=flat-square)]()
-[![Endpoints](https://img.shields.io/badge/API-138_端点-orange?style=flat-square)]()
+[![Endpoints](https://img.shields.io/badge/API-144_端点-orange?style=flat-square)]()
 [![License](https://img.shields.io/badge/许可证-AGPL--3.0-purple?style=flat-square)](LICENSE)
 
 **[English](README.md) | [简体中文](README.zh-CN.md)**
@@ -44,7 +44,7 @@ Hivemind 将 Claude Code 打造为**多 AI 编排中枢**。不再一次只与�
 | 指标 | 数值 |
 |------|------|
 | AI Provider | **10** 个（9 个远程 + 1 个本地） |
-| API 端点 | **138** 个 |
+| API 端点 | **144** 个（包含 6 个监控端点） |
 | CLI 工具 | **65** 个 |
 | 技能集成 | **68** 个 |
 | 测试用例 | **195** 个通过 |
@@ -191,6 +191,11 @@ Hivemind 集成了 [AionUI](https://github.com/Aion-Community/AionUI) 作为桌�
 - **流式响应** — 通过 Hivemind Gateway 实时 SSE 流式输出
 - **Provider 徽章** — 速度分级（🚀 快速 / ⚡ 中速 / 🐢 慢速）+ 实时延迟显示
 - **Gateway 设置** — 配置 Gateway URL、默认 Provider、流式开关
+- **Gateway 监控** — 集成监控仪表盘，取代原始 WebUI（已废弃）
+  - **📊 Dashboard** — 总览统计、Provider 性能表、24 小时分析
+  - **💾 Cache Manager** — 缓存统计 + 一键清除
+  - **📋 Task Queue** — 任务列表 + 状态筛选 + 错误追踪
+  - **⚙️ Rate Limiting** — 按 Provider 的速率限制状态和重置控制（在设置中）
 - **完整 AionUI 功能** — 多 Agent 对话、图片生成、文件管理等
 
 ### 快速启动
@@ -207,6 +212,32 @@ AionUI 默认连接 `http://localhost:8765`。请先确保 Gateway 已启动：
 ```bash
 python3 -m lib.gateway.gateway_server --port 8765
 ```
+
+### 访问监控功能
+
+从左侧边栏打开 **Monitor**（监控）访问集成监控仪表盘：
+
+1. **Dashboard**（`/monitor`）— 系统总览，包括：
+   - 总请求数、成功率、缓存条目数、命中率
+   - Provider 性能表（延迟和成功率）
+   - 24 小时请求统计
+
+2. **Cache Manager**（`/monitor/cache`）— 缓存分析，包括：
+   - 缓存统计（命中、未命中、清除）
+   - 按 Provider 的缓存状态
+   - 一键清除缓存（带确认）
+
+3. **Task Queue**（`/monitor/tasks`）— 任务管理，包括：
+   - 实时任务列表 + 状态筛选
+   - 任务详情：ID、状态、Provider、时间戳、错误
+   - 筛选：全部、待处理、已完成、失败
+
+4. **Rate Limiting**（设置 → Hivemind → Rate Limit）— 速率限制控制：
+   - 按 Provider 的速率限制状态（剩余/总量）
+   - 单个 Provider 的重置按钮
+   - 实时状态更新
+
+> **注意**: 原始独立 WebUI（`lib/web_server.py`，端口 8080）已**废弃**，由 AionUI 的集成监控替代。详见 `deprecated/README.md`。
 
 ### 架构
 
@@ -236,16 +267,26 @@ python3 -m lib.gateway.gateway_server --port 8765
 
 | 组件 | 文件 | 用途 |
 |------|------|------|
+| **核心 Agent** | | |
 | 类型定义 | `src/agent/hivemind/types.ts` | Provider 选项、速度分级、配置类型 |
 | 连接层 | `src/agent/hivemind/HivemindConnection.ts` | Gateway HTTP + SSE 客户端 |
 | 适配器 | `src/agent/hivemind/HivemindAdapter.ts` | Gateway 响应 → AionUI 消息格式转换 |
 | Agent | `src/agent/hivemind/index.ts` | HivemindAgent 主类 |
 | 管理器 | `src/process/task/HivemindAgentManager.ts` | 会话生命周期管理 |
+| **聊天 UI** | | |
 | 聊天 UI | `src/renderer/.../HivemindChat.tsx` | 聊天容器组件 |
 | 输入框 | `src/renderer/.../HivemindSendBox.tsx` | 输入框 + Provider 选择器 |
 | 徽章 | `src/renderer/.../HivemindProviderBadge.tsx` | Provider 速度分级徽章 |
 | 路由信息 | `src/renderer/.../HivemindRoutingInfo.tsx` | 路由状态指示器 |
 | 设置面板 | `src/renderer/.../HivemindModalContent.tsx` | Gateway 配置面板 |
+| **监控 (v1.2)** | | |
+| 服务层 | `src/renderer/services/GatewayMonitorService.ts` | 监控 API 客户端（98 行）|
+| Hook | `src/renderer/hooks/useGatewayStats.ts` | 统计管理 Hook（68 行）|
+| 布局 | `src/renderer/pages/monitor/MonitorLayout.tsx` | 监控布局 + 导航 |
+| Dashboard | `src/renderer/pages/monitor/Dashboard.tsx` | 总览 + Provider 性能 |
+| Cache Manager | `src/renderer/pages/monitor/CacheManager.tsx` | 缓存统计 + 清除 |
+| Task Queue | `src/renderer/pages/monitor/TaskQueue.tsx` | 任务列表 + 筛选 |
+| Rate Limit | `src/renderer/.../RateLimitControl.tsx` | 速率限制控制（113 行）|
 | Worker | `src/worker/hivemind.ts` | Worker 存根 |
 
 > **许可证**: AionUI 采用 Apache-2.0 许可证。详见 `AionUi/LICENSE`。
@@ -322,6 +363,17 @@ ccb-cli kimi "1+1=?"
 | GET | `/api/status` | Gateway 状态 |
 | GET | `/api/health` | 健康检查 |
 
+### 监控 (v1.2)
+
+| 方法 | 端点 | 描述 |
+|------|------|------|
+| GET | `/api/monitor/stats` | 性能统计（24 小时窗口）|
+| GET | `/api/monitor/cache/stats` | 缓存分析（命中、未命中、清除）|
+| POST | `/api/monitor/cache/clear` | 清除缓存（可选 Provider 过滤）|
+| GET | `/api/monitor/tasks` | 任务队列列表 + 状态筛选 |
+| GET | `/api/monitor/ratelimit` | 按 Provider 的速率限制状态 |
+| POST | `/api/monitor/ratelimit/{provider}/reset` | 重置指定 Provider 的速率限制 |
+
 ### 共享知识 (v1.1)
 
 | 方法 | 端点 | 描述 |
@@ -356,6 +408,7 @@ ccb-cli kimi "1+1=?"
 
 | 分类 | 数量 | 前缀 |
 |------|------|------|
+| 监控 (v1.2) | 6 | `/api/monitor/*` |
 | 批量操作 | 5 | `/api/batch/*` |
 | 多 AI 讨论 | 12 | `/api/discussion/*` |
 | 管理后台 | 9 | `/api/admin/*` |
@@ -434,6 +487,9 @@ Hivemind/
 │   ├── src/
 │   │   ├── agent/hivemind/    # Hivemind Gateway 客户端
 │   │   ├── renderer/          # React UI（含 Hivemind 组件）
+│   │   │   ├── pages/monitor/ # 监控页面（Dashboard、Cache、Tasks）
+│   │   │   ├── services/      # GatewayMonitorService
+│   │   │   └── hooks/         # useGatewayStats
 │   │   └── process/           # 进程管理
 │   ├── package.json
 │   └── forge.config.ts
@@ -443,7 +499,8 @@ Hivemind/
 │   ├── gateway/
 │   │   ├── app.py              # FastAPI 应用工厂
 │   │   ├── router.py           # 智能路由引擎
-│   │   ├── routes/             # 19 个路由模块（138 个端点）
+│   │   ├── routes/             # 20 个路由模块（144 个端点）
+│   │   │   └── monitor.py      # 监控 API 端点 (v1.2)
 │   │   ├── middleware/         # 记忆注入中间件
 │   │   ├── backends/           # CLI、HTTP、Pipe 执行器
 │   │   └── ...
@@ -453,6 +510,13 @@ Hivemind/
 │   └── skills/                 # 技能发现 + 工具索引
 ├── tests/                      # 195 个测试用例
 ├── docs/                       # 架构与路线图文档
+│   ├── MIGRATION_TO_AIONUI.md  # WebUI 迁移指南
+│   ├── AIONUI_VS_WEBUI_COMPARISON.md  # 功能对比
+│   └── WEBUI_REPLACEMENT_STATUS.md    # 替换验证状态
+├── deprecated/                 # 已废弃的原始 WebUI
+│   ├── web_server.py.deprecated
+│   ├── web_server_template.py.deprecated
+│   └── README.md               # 废弃说明
 ├── mcp/                        # MCP 服务器集成
 └── screenshots/                # 演示资源
 ```
@@ -466,7 +530,7 @@ Hivemind/
 | v0.26 | ✅ 完成 | 知识中枢、10 个 Provider、Web UI |
 | v1.0 | ✅ 完成 | 模块化重构、19 个路由模块、BaseCommReader |
 | v1.1 | ✅ 完成 | 共享知识、工具路由器、统一查询 |
-| **v1.2** | **✅ 当前** | **AionUI 桌面客户端、Hivemind Agent 集成、数据库 Schema v13** |
+| **v1.2** | **✅ 当前** | **AionUI 桌面客户端、Hivemind Agent 集成、监控仪表盘（取代 WebUI）、6 个监控 API 端点、数据库 Schema v13** |
 | v1.3 | 计划中 | 向量语义搜索、jieba 分词 |
 
 ---
