@@ -1,7 +1,7 @@
-appId: com.aionui.app
+appId: com.hivemind.app
 productName: HiveMind
 executableName: HiveMind
-copyright: Copyright © 2024 AionUi
+copyright: Copyright © 2024-2026 HiveMind
 
 asar:
   smartUnpack: true
@@ -142,15 +142,15 @@ linux:
   icon: resources/app.png
   artifactName: ${productName}-${version}-${os}-${arch}.${ext}
   category: Utility
-  maintainer: aionui
-  vendor: aionui
+  maintainer: hivemind
+  vendor: hivemind
   synopsis: ${description}
   description: ${description}
   desktop:
     entry:
-      Name: AionUi
+      Name: HiveMind
       Comment: ${description}
-      Icon: aionui
+      Icon: hivemind
       Categories: Office;Utility;
 
 npmRebuild: false
@@ -187,6 +187,6 @@ electronDownload:
 
 publish:
   provider: github
-  owner: ${env.GITHUB_REPOSITORY_OWNER:-aionui}
-  repo: ${env.GITHUB_REPOSITORY_NAME:-AionUi}
+  owner: ${env.GITHUB_REPOSITORY_OWNER:-hivemind}
+  repo: ${env.GITHUB_REPOSITORY_NAME:-HiveMind}
   publishAutoUpdate: false
