@@ -142,7 +142,6 @@ export const diffColors = {
 export const colorMapping: Record<string, string> = {
   // AOU colors
   '#EFF0F6': 'var(--color-aou-1)',
-  '#EFF0F6': 'var(--color-aou-1)',
   '#E5E7F0': 'var(--color-aou-2-disabled)',
   '#7583B2': 'var(--color-aou-6-brand)',
 

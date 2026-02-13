@@ -44,6 +44,9 @@ export const mainConfig: Configuration = {
   externals: {
     'better-sqlite3': 'commonjs better-sqlite3',
     'node-pty': 'commonjs node-pty',
+    // Playwright should not be bundled, use system installation
+    'playwright': 'commonjs playwright',
+    'playwright-core': 'commonjs playwright-core',
     // tree-sitter 相关依赖需要作为外部模块，避免 webpack 处理 .wasm 文件
     // tree-sitter dependencies need to be external to avoid webpack processing .wasm files
     'tree-sitter': 'commonjs tree-sitter',
