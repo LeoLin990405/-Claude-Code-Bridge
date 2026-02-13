@@ -1153,6 +1153,13 @@ export class AionUIDatabase {
     this.db.exec('VACUUM');
     console.log('[Database] Vacuum completed');
   }
+
+  /**
+   * Expose low-level database handle for domain modules.
+   */
+  getNativeDatabase(): Database.Database {
+    return this.db;
+  }
 }
 
 // Export singleton instance

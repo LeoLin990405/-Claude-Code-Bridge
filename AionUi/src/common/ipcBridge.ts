@@ -292,6 +292,175 @@ export const notebooklmAutomation = {
   query: bridge.buildProvider<INotebookLMAutomationQueryResult, { question: string; notebookId?: string; interactive?: boolean }>('notebooklm.automation.query'),
 };
 
+export type AgentTaskStatus = 'pending' | 'in_progress' | 'completed' | 'failed' | 'cancelled';
+export type AgentTeamStatus = 'active' | 'paused' | 'completed' | 'archived';
+export type AgentAllocationStrategy = 'round_robin' | 'load_balance' | 'skill_based';
+export type AgentTeammateStatus = 'idle' | 'busy' | 'offline' | 'error';
+export type AgentMessageType = 'task_assigned' | 'task_started' | 'task_completed' | 'task_failed' | 'broadcast' | 'p2p' | 'status_update' | 'error' | 'system';
+export type AgentDependencyType = 'finish_to_start' | 'start_to_start' | 'finish_to_finish';
+
+export interface IAgentTeam {
+  id: string;
+  name: string;
+  description: string | null;
+  status: AgentTeamStatus;
+  max_teammates: number;
+  task_allocation_strategy: AgentAllocationStrategy;
+  created_at: number;
+  updated_at: number;
+  started_at: number | null;
+  completed_at: number | null;
+  total_tasks: number;
+  completed_tasks: number;
+  failed_tasks: number;
+  total_cost_usd: number;
+  metadata: string | null;
+}
+
+export interface IAgentTeammate {
+  id: string;
+  team_id: string;
+  name: string;
+  role: string;
+  provider: string;
+  model: string;
+  status: AgentTeammateStatus;
+  current_task_id: string | null;
+  skills: string[];
+  tasks_completed: number;
+  tasks_failed: number;
+  total_tokens: number;
+  total_cost_usd: number;
+  avg_task_duration_ms: number;
+  created_at: number;
+  updated_at: number;
+  last_active_at: number | null;
+  metadata: string | null;
+}
+
+export interface IAgentTask {
+  id: string;
+  team_id: string;
+  subject: string;
+  description: string;
+  status: AgentTaskStatus;
+  priority: number;
+  assigned_to: string | null;
+  provider: string | null;
+  model: string | null;
+  created_at: number;
+  updated_at: number;
+  started_at: number | null;
+  completed_at: number | null;
+  input_tokens: number;
+  output_tokens: number;
+  cost_usd: number;
+  blocks: string[];
+  blocked_by: string[];
+  result: string | null;
+  error: string | null;
+  metadata: string | null;
+}
+
+export interface IAgentTeamMessage {
+  id: string;
+  team_id: string;
+  type: AgentMessageType;
+  from_teammate_id: string | null;
+  to_teammate_id: string | null;
+  subject: string | null;
+  content: string;
+  task_id: string | null;
+  created_at: number;
+  metadata: string | null;
+}
+
+export interface IAgentTeamStats {
+  total_tasks: number;
+  completed_tasks: number;
+  failed_tasks: number;
+  in_progress_tasks: number;
+  total_cost_usd: number;
+  avg_task_duration_ms: number;
+  teammate_stats: Array<{
+    teammate_id: string;
+    name: string;
+    tasks_completed: number;
+    tasks_failed: number;
+    total_cost_usd: number;
+    avg_task_duration_ms: number;
+  }>;
+}
+
+export interface IAgentCostAnalysis {
+  total_cost_usd: number;
+  by_provider: Record<string, { cost_usd: number; input_tokens: number; output_tokens: number; tasks_count: number }>;
+  by_model: Record<string, { cost_usd: number; input_tokens: number; output_tokens: number; tasks_count: number }>;
+}
+
+export interface IAgentTaskExecutionResult {
+  success: boolean;
+  task_id: string;
+  provider?: string;
+  model?: string;
+  attempts: number;
+  error?: string;
+}
+
+export interface IAgentTeamExecutionResult {
+  team_id: string;
+  scheduled: number;
+  started: number;
+  completed: number;
+  failed: number;
+}
+
+
+export const agentTeams = {
+  createTeam: bridge.buildProvider<IBridgeResponse<IAgentTeam>, { name: string; description?: string; max_teammates?: number; task_allocation_strategy?: AgentAllocationStrategy; metadata?: Record<string, unknown> }>('agent-teams.create-team'),
+  getTeam: bridge.buildProvider<IBridgeResponse<IAgentTeam>, { team_id: string }>('agent-teams.get-team'),
+  listTeams: bridge.buildProvider<IBridgeResponse<IAgentTeam[]>, { status?: AgentTeamStatus; limit?: number; offset?: number }>('agent-teams.list-teams'),
+  updateTeam: bridge.buildProvider<IBridgeResponse<IAgentTeam>, { team_id: string; updates: Partial<IAgentTeam> }>('agent-teams.update-team'),
+  deleteTeam: bridge.buildProvider<IBridgeResponse<{ success: boolean }>, { team_id: string }>('agent-teams.delete-team'),
+  startTeam: bridge.buildProvider<IBridgeResponse<{ success: boolean }>, { team_id: string }>('agent-teams.start-team'),
+  pauseTeam: bridge.buildProvider<IBridgeResponse<{ success: boolean }>, { team_id: string }>('agent-teams.pause-team'),
+  completeTeam: bridge.buildProvider<IBridgeResponse<{ success: boolean }>, { team_id: string }>('agent-teams.complete-team'),
+
+  addTeammate: bridge.buildProvider<IBridgeResponse<IAgentTeammate>, { team_id: string; name: string; role: string; provider: string; model: string; skills?: string[]; metadata?: Record<string, unknown> }>('agent-teams.add-teammate'),
+  getTeammate: bridge.buildProvider<IBridgeResponse<IAgentTeammate>, { teammate_id: string }>('agent-teams.get-teammate'),
+  listTeammates: bridge.buildProvider<IBridgeResponse<IAgentTeammate[]>, { team_id: string; status?: AgentTeammateStatus }>('agent-teams.list-teammates'),
+  updateTeammate: bridge.buildProvider<IBridgeResponse<IAgentTeammate>, { teammate_id: string; updates: Partial<IAgentTeammate> }>('agent-teams.update-teammate'),
+  removeTeammate: bridge.buildProvider<IBridgeResponse<{ success: boolean }>, { teammate_id: string }>('agent-teams.remove-teammate'),
+
+  createTask: bridge.buildProvider<IBridgeResponse<IAgentTask>, { team_id: string; subject: string; description: string; priority?: number; blocks?: string[]; blocked_by?: string[]; metadata?: Record<string, unknown> }>('agent-teams.create-task'),
+  getTask: bridge.buildProvider<IBridgeResponse<IAgentTask>, { task_id: string }>('agent-teams.get-task'),
+  listTasks: bridge.buildProvider<IBridgeResponse<IAgentTask[]>, { team_id: string; status?: AgentTaskStatus; assigned_to?: string; limit?: number; offset?: number }>('agent-teams.list-tasks'),
+  updateTask: bridge.buildProvider<IBridgeResponse<IAgentTask>, { task_id: string; updates: Partial<IAgentTask> }>('agent-teams.update-task'),
+  deleteTask: bridge.buildProvider<IBridgeResponse<{ success: boolean }>, { task_id: string }>('agent-teams.delete-task'),
+  assignTask: bridge.buildProvider<IBridgeResponse<{ success: boolean }>, { task_id: string; teammate_id: string }>('agent-teams.assign-task'),
+  startTask: bridge.buildProvider<IBridgeResponse<{ success: boolean }>, { task_id: string }>('agent-teams.start-task'),
+  completeTask: bridge.buildProvider<IBridgeResponse<{ success: boolean }>, { task_id: string; result: unknown }>('agent-teams.complete-task'),
+  failTask: bridge.buildProvider<IBridgeResponse<{ success: boolean }>, { task_id: string; error: string }>('agent-teams.fail-task'),
+  cancelTask: bridge.buildProvider<IBridgeResponse<{ success: boolean }>, { task_id: string }>('agent-teams.cancel-task'),
+  runTask: bridge.buildProvider<IBridgeResponse<IAgentTaskExecutionResult>, { task_id: string }>('agent-teams.run-task'),
+  runTeam: bridge.buildProvider<IBridgeResponse<IAgentTeamExecutionResult>, { team_id: string }>('agent-teams.run-team'),
+
+  addDependency: bridge.buildProvider<IBridgeResponse<{ success: boolean }>, { task_id: string; depends_on_task_id: string; dependency_type?: AgentDependencyType }>('agent-teams.add-dependency'),
+  removeDependency: bridge.buildProvider<IBridgeResponse<{ success: boolean }>, { task_id: string; depends_on_task_id: string }>('agent-teams.remove-dependency'),
+  getTaskDependencies: bridge.buildProvider<IBridgeResponse<{ blocks: string[]; blocked_by: string[] }>, { task_id: string }>('agent-teams.get-task-dependencies'),
+
+  sendMessage: bridge.buildProvider<IBridgeResponse<IAgentTeamMessage>, { team_id: string; type: AgentMessageType; from_teammate_id?: string; to_teammate_id?: string; subject?: string; content: string; task_id?: string; metadata?: Record<string, unknown> }>('agent-teams.send-message'),
+  getMessages: bridge.buildProvider<IBridgeResponse<IAgentTeamMessage[]>, { team_id: string; type?: AgentMessageType; task_id?: string; limit?: number; offset?: number }>('agent-teams.get-messages'),
+
+  onTeamUpdate: bridge.buildEmitter<{ team_id: string; team: IAgentTeam }>('agent-teams.team-updated'),
+  onTaskUpdate: bridge.buildEmitter<{ team_id: string; task: IAgentTask }>('agent-teams.task-updated'),
+  onTeammateUpdate: bridge.buildEmitter<{ team_id: string; teammate: IAgentTeammate }>('agent-teams.teammate-updated'),
+  onMessageReceived: bridge.buildEmitter<{ team_id: string; message: IAgentTeamMessage }>('agent-teams.message-received'),
+
+  getTeamStats: bridge.buildProvider<IBridgeResponse<IAgentTeamStats>, { team_id: string }>('agent-teams.get-team-stats'),
+  getCostAnalysis: bridge.buildProvider<IBridgeResponse<IAgentCostAnalysis>, { team_id: string }>('agent-teams.get-cost-analysis'),
+};
+
 export const previewHistory = {
   list: bridge.buildProvider<PreviewSnapshotInfo[], { target: PreviewHistoryTarget }>('preview-history.list'),
   save: bridge.buildProvider<PreviewSnapshotInfo, { target: PreviewHistoryTarget; content: string }>('preview-history.save'),
