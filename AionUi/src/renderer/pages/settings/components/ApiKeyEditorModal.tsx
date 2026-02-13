@@ -1,5 +1,13 @@
-import { Button, Input, Modal, Spin, Tooltip } from '@arco-design/web-react';
-import { CheckOne, CloseOne, Delete, Edit, Plus, DeleteFive, CheckSmall, Shield } from '@icon-park/react';
+import { Button } from '@/renderer/components/ui/button';
+import { Input } from '@/renderer/components/ui/input';
+import { LegacyModal } from '@/renderer/components/ui/legacy-modal';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/renderer/components/ui/tooltip';
+import { CheckOne, CloseOne, Delete, Edit, Plus, DeleteFive, CheckSmall, Shield, Loader2 } from '@icon-park/react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -146,7 +154,7 @@ const ApiKeyEditorModal: React.FC<ApiKeyEditorModalProps> = ({ visible, apiKeys,
   const getStatusIcon = (status: KeyStatus) => {
     switch (status) {
       case 'testing':
-        return <Spin size={14} />;
+        return <Loader2 size={14} className="animate-spin" />;
       case 'valid':
         return <CheckOne theme='filled' size={16} className='text-green-500 flex' />;
       case 'invalid':
@@ -157,75 +165,145 @@ const ApiKeyEditorModal: React.FC<ApiKeyEditorModalProps> = ({ visible, apiKeys,
   };
 
   return (
-    <Modal visible={visible} onCancel={onClose} title={t('settings.editApiKey')} footer={null} style={{ maxWidth: '500px', width: '90vw' }} unmountOnExit>
-      <div className='flex flex-col gap-12px'>
-        {/* Key 列表 */}
-        <div className='flex flex-col gap-8px max-h-300px overflow-y-auto'>
-          {keys.map((key) => (
-            <div key={key.id} className='flex items-center gap-8px'>
-              <div className='flex-1'>
-                <Input value={key.value} onChange={(v) => updateKeyValue(key.id, v)} disabled={!key.editing} placeholder={t('settings.apiKeyPlaceholder')} />
-              </div>
-              {/* 操作按钮 - 编辑状态时只显示保存按钮 */}
-              {key.value.trim() && (
-                <div className='flex items-center gap-4px shrink-0'>
-                  {key.editing ? (
-                    // 编辑状态：只显示保存按钮
-                    <Tooltip content={t('common.save')}>
-                      <Button type='text' size='mini' icon={<CheckSmall theme='outline' size={16} className='flex' />} onClick={() => toggleEditing(key.id)} status='success' />
-                    </Tooltip>
-                  ) : (
-                    // 非编辑状态：显示状态图标 + 测试 + 编辑 + 删除
-                    <>
-                      {/* 状态图标 - 在测试按钮左边 */}
-                      {key.status !== 'pending' && <div className='flex items-center'>{getStatusIcon(key.status)}</div>}
-                      <Tooltip content={t('settings.testKey')}>
-                        <Button type='text' size='mini' icon={<Shield theme='outline' size={16} className='flex' />} onClick={() => testKey(key.id)} loading={key.status === 'testing'} />
-                      </Tooltip>
-                      <Tooltip content={t('common.edit')}>
-                        <Button type='text' size='mini' icon={<Edit theme='outline' size={16} className='flex' />} onClick={() => toggleEditing(key.id)} />
-                      </Tooltip>
-                      <Tooltip content={t('common.delete')}>
-                        <Button type='text' size='mini' icon={<Delete theme='outline' size={16} className='flex' />} onClick={() => deleteKey(key.id)} status='danger' />
-                      </Tooltip>
-                    </>
-                  )}
+    <TooltipProvider>
+      <LegacyModal
+        title={t('settings.editApiKey')}
+        visible={visible}
+        onCancel={onClose}
+        onOk={handleSave}
+        width={500}
+      >
+        <div className='flex flex-col gap-12px'>
+          {/* Key 列表 */}
+          <div className='flex flex-col gap-8px max-h-300px overflow-y-auto'>
+            {keys.map((key) => (
+              <div key={key.id} className='flex items-center gap-8px'>
+                <div className='flex-1'>
+                  <Input 
+                    value={key.value} 
+                    onChange={(e) => updateKeyValue(key.id, e.target.value)} 
+                    disabled={!key.editing} 
+                    placeholder={t('settings.apiKeyPlaceholder')} 
+                  />
                 </div>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* 底部操作栏 */}
-        <div className='flex items-center justify-between pt-12px border-t border-line-2'>
-          <span className='text-11px text-t-secondary'>{t('settings.multiKeyTip')}</span>
-          <div className='flex items-center gap-8px'>
-            {hasMultipleKeys && (
-              <>
-                {hasTestedKeys && hasInvalidKeys && (
-                  <Tooltip content={t('settings.deleteInvalidKeys')}>
-                    <Button type='text' size='small' icon={<DeleteFive theme='outline' size={16} className='flex' />} onClick={deleteInvalidKeys} status='danger' />
-                  </Tooltip>
+                {/* 操作按钮 - 编辑状态时只显示保存按钮 */}
+                {key.value.trim() && (
+                  <div className='flex items-center gap-4px shrink-0'>
+                    {key.editing ? (
+                      // 编辑状态：只显示保存按钮
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => toggleEditing(key.id)}
+                            className="text-green-600"
+                          >
+                            <CheckSmall theme='outline' size={16} className='flex' />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>{t('common.save')}</TooltipContent>
+                      </Tooltip>
+                    ) : (
+                      // 非编辑状态：显示状态图标 + 测试 + 编辑 + 删除
+                      <>
+                        {/* 状态图标 - 在测试按钮左边 */}
+                        {key.status !== 'pending' && <div className='flex items-center'>{getStatusIcon(key.status)}</div>}
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => testKey(key.id)}
+                              disabled={key.status === 'testing'}
+                            >
+                              <Shield theme='outline' size={16} className='flex' />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>{t('settings.testKey')}</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => toggleEditing(key.id)}
+                            >
+                              <Edit theme='outline' size={16} className='flex' />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>{t('common.edit')}</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => deleteKey(key.id)}
+                              className="text-destructive"
+                            >
+                              <Delete theme='outline' size={16} className='flex' />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>{t('common.delete')}</TooltipContent>
+                        </Tooltip>
+                      </>
+                    )}
+                  </div>
                 )}
-                <Tooltip content={t('settings.testAllKeys')}>
-                  <Button type='text' size='small' icon={<Shield theme='outline' size={16} className='flex' />} onClick={testAllKeys} />
-                </Tooltip>
-              </>
-            )}
-            <Button className='flex' type='outline' size='small' icon={<Plus theme='outline' size={14} className='' />} onClick={addKey} style={{ minWidth: 70 }}>
-              {t('common.add')}
-            </Button>
+              </div>
+            ))}
+          </div>
+
+          {/* 底部操作栏 */}
+          <div className='flex items-center justify-between pt-12px border-t border-line-2'>
+            <span className='text-11px text-t-secondary'>{t('settings.multiKeyTip')}</span>
+            <div className='flex items-center gap-8px'>
+              {hasMultipleKeys && (
+                <>
+                  {hasTestedKeys && hasInvalidKeys && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={deleteInvalidKeys}
+                          className="text-destructive"
+                        >
+                          <DeleteFive theme='outline' size={16} className='flex' />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>{t('settings.deleteInvalidKeys')}</TooltipContent>
+                    </Tooltip>
+                  )}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={testAllKeys}
+                      >
+                        <Shield theme='outline' size={16} className='flex' />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>{t('settings.testAllKeys')}</TooltipContent>
+                  </Tooltip>
+                </>
+              )}
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={addKey}
+                className="flex items-center gap-1"
+              >
+                <Plus theme='outline' size={14} />
+                {t('common.add')}
+              </Button>
+            </div>
           </div>
         </div>
-
-        {/* 确认按钮 */}
-        <div className='flex justify-end pt-8px'>
-          <Button type='primary' onClick={handleSave}>
-            {t('common.confirm')}
-          </Button>
-        </div>
-      </div>
-    </Modal>
+      </LegacyModal>
+    </TooltipProvider>
   );
 };
 
