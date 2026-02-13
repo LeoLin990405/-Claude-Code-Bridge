@@ -1,0 +1,19 @@
+// UI Components - Phoenix Design System
+// All components are built on top of Radix UI primitives
+
+export { Badge, badgeVariants } from "./badge"
+export { Button, buttonVariants } from "./button"
+export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent } from "./card"
+export { Checkbox } from "./checkbox"
+export { Dialog, DialogPortal, DialogOverlay, DialogClose, DialogTrigger, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from "./dialog"
+export { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuCheckboxItem, DropdownMenuRadioItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuShortcut, DropdownMenuGroup, DropdownMenuPortal, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuRadioGroup } from "./dropdown-menu"
+export { Input } from "./input"
+export { Popover, PopoverTrigger, PopoverContent } from "./popover"
+export { RadioGroup, RadioGroupItem } from "./radio-group"
+export { Select, SelectGroup, SelectValue, SelectTrigger, SelectContent, SelectLabel, SelectItem, SelectSeparator } from "./select"
+export { Separator } from "./separator"
+export { Slider } from "./slider"
+export { Switch } from "./switch"
+export { Table, TableHeader, TableBody, TableFooter, TableHead, TableRow, TableCell, TableCaption } from "./table"
+export { Tabs, TabsList, TabsTrigger, TabsContent } from "./tabs"
+export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "./tooltip"
