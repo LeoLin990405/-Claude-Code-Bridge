@@ -1122,6 +1122,44 @@
     "thinking": "思考中",
     "quotaSwitched": "{{from}} 配額已用盡，已切換到 {{to}}"
   },
+  "memory": {
+    "title": "記憶中心",
+    "subtitle": "管理對話歷史和上下文記憶",
+    "tabs": {
+      "sessions": "會話",
+      "search": "搜尋",
+      "context": "上下文"
+    },
+    "sessions": {
+      "all": "所有會話",
+      "today": "今天",
+      "yesterday": "昨天",
+      "lastWeek": "最近 7 天",
+      "older": "更早",
+      "empty": "暫無會話",
+      "delete": "刪除會話",
+      "export": "匯出會話",
+      "confirmDelete": "確定要刪除此會話嗎？",
+      "exportSuccess": "成功匯出到 Obsidian",
+      "exportFailed": "匯出到 Obsidian 失敗"
+    },
+    "search": {
+      "placeholder": "在記憶中搜尋...",
+      "filters": "篩選條件",
+      "date": "日期範圍",
+      "type": "訊息類型",
+      "noResults": "未找到結果"
+    },
+    "context": {
+      "title": "上下文管理",
+      "active": "活躍上下文",
+      "tokens": "Token 用量",
+      "messages": "訊息數",
+      "clear": "清除上下文",
+      "noActive": "無活躍會話"
+    }
+  },
+
   "monitor": {
     "title": "Monitor",
     "nav": {

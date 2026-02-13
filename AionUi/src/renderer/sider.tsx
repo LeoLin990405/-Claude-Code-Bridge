@@ -6,7 +6,7 @@ import WorkspaceGroupedHistory from './pages/conversation/WorkspaceGroupedHistor
 import SettingsSider from './pages/settings/SettingsSider';
 import { iconColors } from './theme/colors';
 import { Tooltip } from '@arco-design/web-react';
-import { IconDashboard, IconBook } from '@arco-design/web-react/icon';
+import { IconDashboard, IconBook, IconHistory } from '@arco-design/web-react/icon';
 import { usePreviewContext } from './pages/conversation/preview';
 
 interface SiderProps {
@@ -24,6 +24,7 @@ const Sider: React.FC<SiderProps> = ({ onSessionClick, collapsed = false }) => {
   const isSettings = pathname.startsWith('/settings');
   const isMonitor = pathname.startsWith('/monitor');
   const isKnowledge = pathname.startsWith('/knowledge');
+  const isMemory = pathname.startsWith('/memory');
   const lastNonSettingsPathRef = useRef('/guid');
 
   useEffect(() => {
@@ -79,6 +80,22 @@ const Sider: React.FC<SiderProps> = ({ onSessionClick, collapsed = false }) => {
       onSessionClick();
     }
   };
+
+  const handleMemoryClick = () => {
+    if (isMemory) {
+      Promise.resolve(navigate('/guid')).catch((error) => {
+        console.error('Navigation failed:', error);
+      });
+    } else {
+      Promise.resolve(navigate('/memory')).catch((error) => {
+        console.error('Navigation failed:', error);
+      });
+    }
+
+    if (onSessionClick) {
+      onSessionClick();
+    }
+  };
   return (
     <div className='size-full flex flex-col'>
       {/* Main content area */}
@@ -115,6 +132,15 @@ const Sider: React.FC<SiderProps> = ({ onSessionClick, collapsed = false }) => {
           <div onClick={handleKnowledgeClick} className='flex items-center justify-start gap-10px px-12px py-8px hover:bg-hover rd-0.5rem mb-8px cursor-pointer'>
             <IconBook className='flex text-22px' />
             <span className='collapsed-hidden text-t-primary'>{t('knowledge.title', { defaultValue: 'Knowledge Hub' })}</span>
+          </div>
+        </Tooltip>
+      </div>
+      {/* Footer - Memory Hub button */}
+      <div className='shrink-0'>
+        <Tooltip disabled={!collapsed} content={t('memory.title')} position='right'>
+          <div onClick={handleMemoryClick} className='flex items-center justify-start gap-10px px-12px py-8px hover:bg-hover rd-0.5rem mb-8px cursor-pointer'>
+            <IconHistory className='flex text-22px' />
+            <span className='collapsed-hidden text-t-primary'>{t('memory.title')}</span>
           </div>
         </Tooltip>
       </div>

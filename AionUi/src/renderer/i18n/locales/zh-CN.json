@@ -1385,6 +1385,43 @@
       "fetchError": "获取数据失败"
     }
   },
+  "memory": {
+    "title": "记忆中心",
+    "subtitle": "管理对话历史和上下文记忆",
+    "tabs": {
+      "sessions": "会话",
+      "search": "搜索",
+      "context": "上下文"
+    },
+    "sessions": {
+      "all": "所有会话",
+      "today": "今天",
+      "yesterday": "昨天",
+      "lastWeek": "最近 7 天",
+      "older": "更早",
+      "empty": "暂无会话",
+      "delete": "删除会话",
+      "export": "导出会话",
+      "confirmDelete": "确定要删除此会话吗？",
+      "exportSuccess": "成功导出到 Obsidian",
+      "exportFailed": "导出到 Obsidian 失败"
+    },
+    "search": {
+      "placeholder": "在记忆中搜索...",
+      "filters": "筛选条件",
+      "date": "日期范围",
+      "type": "消息类型",
+      "noResults": "未找到结果"
+    },
+    "context": {
+      "title": "上下文管理",
+      "active": "活跃上下文",
+      "tokens": "Token 用量",
+      "messages": "消息数",
+      "clear": "清除上下文",
+      "noActive": "无活跃会话"
+    }
+  },
   "monitor": {
     "title": "监控",
     "nav": {

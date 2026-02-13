@@ -15,6 +15,7 @@ import { initializeProcess } from './process';
 import { initializeAcpDetector } from './process/bridge';
 import { registerWindowMaximizeListeners } from './process/bridge/windowControlsBridge';
 import WorkerManage from './process/WorkerManage';
+import { dailySyncService } from './process/services/obsidian/DailySyncService';
 import { setupApplicationMenu } from './utils/appMenu';
 import { startWebServer } from './webserver';
 import { SERVER_CONFIG } from './webserver/config/constants';
@@ -355,6 +356,13 @@ app.on('activate', () => {
 app.on('before-quit', async () => {
   // 在应用退出前清理工作进程
   WorkerManage.clear();
+
+  // Shutdown Daily Sync scheduler
+  try {
+    await dailySyncService.shutdown();
+  } catch (error) {
+    console.error('[App] Failed to shutdown DailySyncService:', error);
+  }
 
   // Shutdown Channel subsystem
   try {

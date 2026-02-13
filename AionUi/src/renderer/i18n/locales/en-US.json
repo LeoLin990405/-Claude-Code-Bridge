@@ -1366,6 +1366,43 @@
       "fetchError": "Failed to fetch data"
     }
   },
+  "memory": {
+    "title": "Memory Hub",
+    "subtitle": "Manage your conversation history and context",
+    "tabs": {
+      "sessions": "Sessions",
+      "search": "Search",
+      "context": "Context"
+    },
+    "sessions": {
+      "all": "All Sessions",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "lastWeek": "Last 7 Days",
+      "older": "Older",
+      "empty": "No sessions yet",
+      "delete": "Delete Session",
+      "export": "Export Session",
+      "confirmDelete": "Are you sure you want to delete this session?",
+      "exportSuccess": "Successfully exported to Obsidian",
+      "exportFailed": "Failed to export to Obsidian"
+    },
+    "search": {
+      "placeholder": "Search in your memory...",
+      "filters": "Filters",
+      "date": "Date Range",
+      "type": "Message Type",
+      "noResults": "No results found"
+    },
+    "context": {
+      "title": "Context Management",
+      "active": "Active Context",
+      "tokens": "Tokens Used",
+      "messages": "Messages",
+      "clear": "Clear Context",
+      "noActive": "No active session"
+    }
+  },
   "monitor": {
     "title": "Monitor",
     "nav": {

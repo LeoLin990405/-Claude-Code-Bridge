@@ -1189,6 +1189,44 @@
     "thinking": "Thinking",
     "quotaSwitched": "{{from}} 할당량 초과로 {{to}}로 전환했습니다"
   },
+  "memory": {
+    "title": "메모리 허브",
+    "subtitle": "대화 기록 및 컨텍스트 관리",
+    "tabs": {
+      "sessions": "세션",
+      "search": "검색",
+      "context": "컨텍스트"
+    },
+    "sessions": {
+      "all": "모든 세션",
+      "today": "오늘",
+      "yesterday": "어제",
+      "lastWeek": "최근 7일",
+      "older": "이전",
+      "empty": "세션이 없습니다",
+      "delete": "세션 삭제",
+      "export": "세션 내보내기",
+      "confirmDelete": "이 세션을 삭제하시겠습니까?",
+      "exportSuccess": "Obsidian으로 성공적으로 내보냈습니다",
+      "exportFailed": "Obsidian으로 내보내기에 실패했습니다"
+    },
+    "search": {
+      "placeholder": "메모리에서 검색...",
+      "filters": "필터",
+      "date": "날짜 범위",
+      "type": "메시지 유형",
+      "noResults": "결과를 찾을 수 없습니다"
+    },
+    "context": {
+      "title": "컨텍스트 관리",
+      "active": "활성 컨텍스트",
+      "tokens": "토큰 사용량",
+      "messages": "메시지 수",
+      "clear": "컨텍스트 지우기",
+      "noActive": "활성 세션 없음"
+    }
+  },
+
   "monitor": {
     "title": "Monitor",
     "nav": {

@@ -1134,6 +1134,44 @@
     "thinking": "Thinking",
     "quotaSwitched": "{{from}} のクォータ超過のため {{to}} に切り替えました"
   },
+  "memory": {
+    "title": "メモリーハブ",
+    "subtitle": "会話履歴とコンテキストを管理",
+    "tabs": {
+      "sessions": "セッション",
+      "search": "検索",
+      "context": "コンテキスト"
+    },
+    "sessions": {
+      "all": "全セッション",
+      "today": "今日",
+      "yesterday": "昨日",
+      "lastWeek": "過去7日",
+      "older": "それ以前",
+      "empty": "セッションがありません",
+      "delete": "セッションを削除",
+      "export": "セッションをエクスポート",
+      "confirmDelete": "このセッションを削除してもよろしいですか？",
+      "exportSuccess": "Obsidian へのエクスポートに成功しました",
+      "exportFailed": "Obsidian へのエクスポートに失敗しました"
+    },
+    "search": {
+      "placeholder": "メモリーを検索...",
+      "filters": "フィルター",
+      "date": "日付範囲",
+      "type": "メッセージタイプ",
+      "noResults": "結果が見つかりませんでした"
+    },
+    "context": {
+      "title": "コンテキスト管理",
+      "active": "アクティブコンテキスト",
+      "tokens": "使用トークン数",
+      "messages": "メッセージ数",
+      "clear": "コンテキストをクリア",
+      "noActive": "アクティブなセッションがありません"
+    }
+  },
+
   "monitor": {
     "title": "Monitor",
     "nav": {

@@ -1167,6 +1167,44 @@
     "thinking": "Thinking",
     "quotaSwitched": "{{from}} kotası aşıldı, {{to}}'ya geçildi"
   },
+  "memory": {
+    "title": "Hafıza Merkezi",
+    "subtitle": "Sohbet geçmişi ve bağlamınızı yönetin",
+    "tabs": {
+      "sessions": "Oturumlar",
+      "search": "Ara",
+      "context": "Bağlam"
+    },
+    "sessions": {
+      "all": "Tüm Oturumlar",
+      "today": "Bugün",
+      "yesterday": "Dün",
+      "lastWeek": "Son 7 Gün",
+      "older": "Daha Eski",
+      "empty": "Henüz oturum yok",
+      "delete": "Oturumu Sil",
+      "export": "Oturumu Dışa Aktar",
+      "confirmDelete": "Bu oturumu silmek istediğinizden emin misiniz?",
+      "exportSuccess": "Obsidian'a başarıyla aktarıldı",
+      "exportFailed": "Obsidian'a aktarma başarısız oldu"
+    },
+    "search": {
+      "placeholder": "Hafızanızda arayın...",
+      "filters": "Filtreler",
+      "date": "Tarih Aralığı",
+      "type": "Mesaj Türü",
+      "noResults": "Sonuç bulunamadı"
+    },
+    "context": {
+      "title": "Bağlam Yönetimi",
+      "active": "Aktif Bağlam",
+      "tokens": "Kullanılan Token",
+      "messages": "Mesajlar",
+      "clear": "Bağlamı Temizle",
+      "noActive": "Aktif oturum yok"
+    }
+  },
+
   "monitor": {
     "title": "Monitor",
     "nav": {

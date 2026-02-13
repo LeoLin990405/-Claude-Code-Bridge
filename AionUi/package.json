@@ -1,7 +1,7 @@
 {
   "name": "HiveMind",
   "productName": "HiveMind",
-  "version": "1.8.5",
+  "version": "1.9.0",
   "description": "HiveMind Gateway 桌面客户端 - 统一的多 AI 聊天界面和监控仪表盘",
   "main": ".webpack/main",
   "scripts": {
@@ -144,6 +144,7 @@
     "mammoth": "^1.11.0",
     "officeparser": "^5.2.2",
     "openai": "^5.12.2",
+    "playwright": "^1.58.2",
     "pptx2json": "^0.0.10",
     "process": "^0.11.10",
     "qrcode-terminal": "^0.12.0",
