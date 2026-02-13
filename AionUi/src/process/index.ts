@@ -15,10 +15,18 @@ if (app.isPackaged) {
 import initStorage from './initStorage';
 import './initBridge';
 import './i18n'; // Initialize i18n for main process
+import { dailySyncService } from './services/obsidian/DailySyncService';
 import { getChannelManager } from '@/channels';
 
 export const initializeProcess = async () => {
   await initStorage();
+
+  // Initialize Daily Sync scheduler for Obsidian
+  try {
+    await dailySyncService.init();
+  } catch (error) {
+    console.error('[Process] Failed to initialize DailySyncService:', error);
+  }
 
   // Initialize Channel subsystem
   try {

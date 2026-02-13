@@ -142,21 +142,14 @@ export const diffColors = {
 export const colorMapping: Record<string, string> = {
   // AOU colors
   '#EFF0F6': 'var(--color-aou-1)',
-  '#eff0f6': 'var(--color-aou-1)',
+  '#EFF0F6': 'var(--color-aou-1)',
   '#E5E7F0': 'var(--color-aou-2-disabled)',
-  '#e5e7f0': 'var(--color-aou-2-disabled)',
   '#7583B2': 'var(--color-aou-6-brand)',
-  '#7583b2': 'var(--color-aou-6-brand)',
-  '#0EA5E9': 'var(--color-aou-6-brand)', // Sky Blue
-  '#0ea5e9': 'var(--color-aou-6-brand)', // Sky Blue
 
   // Background colors
   '#FFFFFF': 'var(--color-bg-0)',
-  '#ffffff': 'var(--color-bg-0)',
   '#F7F8FA': 'var(--color-bg-1)',
-  '#f7f8fa': 'var(--color-bg-1)',
   '#F2F3F5': 'var(--color-bg-2)',
-  '#f2f3f5': 'var(--color-bg-2)',
   '#E5E6EB': 'var(--color-bg-3)',
   '#86909C': 'var(--color-bg-6)',
   '#1D2129': 'var(--color-bg-9)',
