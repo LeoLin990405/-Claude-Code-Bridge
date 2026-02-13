@@ -18,7 +18,7 @@ import { useDirectorySelection } from './hooks/useDirectorySelection';
 import { useMultiAgentDetection } from './hooks/useMultiAgentDetection';
 import { processCustomCss } from './utils/customCssProcessor';
 import UpdateModal from '@/renderer/components/UpdateModal';
-import logoSvg from '@/assets/logos/logo.svg';
+import logoSvg from '@/renderer/assets/logos/logo.svg';
 
 const useDebug = () => {
   const [count, setCount] = useState(0);
