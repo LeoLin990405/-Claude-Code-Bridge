@@ -26,7 +26,7 @@ const SessionsList: React.FC = () => {
     loadSessions();
   }, [loadSessions]);
 
-  const handleExport = async (sessionId: string, event: React.MouseEvent) => {
+  const handleExport = async (sessionId: string, event: React.MouseEvent | Event) => {
     event.stopPropagation();
     try {
       await exportToObsidian(sessionId);

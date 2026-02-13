@@ -133,8 +133,8 @@ export const MemoryProvider: React.FC<{ children: ReactNode }> = ({ children }) 
           pageSize: 1000,
         });
 
-        // Generate Markdown content
-        const markdown = generateConversationMarkdown(session, messages);
+        // Generate Markdown content (cast TMessage[] to Message[] with created_at)
+        const markdown = generateConversationMarkdown(session, messages as unknown as Message[]);
 
         // Create safe filename (remove special characters)
         const safeTitle = session.name.replace(/[^a-zA-Z0-9\u4e00-\u9fa5-_ ]/g, '_');
