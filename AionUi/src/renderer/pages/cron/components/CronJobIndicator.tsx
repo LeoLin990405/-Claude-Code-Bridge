@@ -5,10 +5,10 @@
  */
 
 import { iconColors } from '@/renderer/theme/colors';
-import { Tooltip } from '@arco-design/web-react';
-import { AlarmClock, Attention, PauseOne } from '@icon-park/react';
+import { AlarmClock, AlertCircle, PauseCircle } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/renderer/components/ui/tooltip';
 
 export type CronJobStatus = 'none' | 'active' | 'paused' | 'error' | 'unread' | 'unconfigured';
 
@@ -30,12 +30,13 @@ const CronJobIndicator: React.FC<CronJobIndicatorProps> = ({ status, size = 14, 
   }
 
   const getIcon = () => {
+    const iconSize = size;
     switch (status) {
       case 'unread':
         // Show alarm clock with red dot overlay for unread executions
         return (
           <span className='relative inline-flex'>
-            <AlarmClock theme='outline' size={size} className='flex items-center' />
+            <AlarmClock size={iconSize} className='flex items-center' />
             <span
               className='absolute rounded-full bg-red-500'
               style={{
@@ -48,13 +49,13 @@ const CronJobIndicator: React.FC<CronJobIndicatorProps> = ({ status, size = 14, 
           </span>
         );
       case 'active':
-        return <AlarmClock theme='outline' size={size} className='flex items-center' />;
+        return <AlarmClock size={iconSize} className='flex items-center' />;
       case 'paused':
-        return <PauseOne theme='outline' size={size} className='flex items-center' />;
+        return <PauseCircle size={iconSize} className='flex items-center' />;
       case 'error':
-        return <Attention theme='outline' size={size} className='flex items-center' />;
+        return <AlertCircle size={iconSize} className='flex items-center text-red-500' />;
       case 'unconfigured':
-        return <AlarmClock theme='outline' size={size} className='flex items-center' />;
+        return <AlarmClock size={iconSize} className='flex items-center text-muted-foreground' />;
       default:
         return null;
     }
@@ -78,9 +79,16 @@ const CronJobIndicator: React.FC<CronJobIndicatorProps> = ({ status, size = 14, 
   };
 
   return (
-    <Tooltip content={getTooltip()} mini>
-      <span className={`inline-flex items-center justify-center ${className}`}>{getIcon()}</span>
-    </Tooltip>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className={`inline-flex items-center justify-center ${className}`}>{getIcon()}</span>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>{getTooltip()}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 };
 

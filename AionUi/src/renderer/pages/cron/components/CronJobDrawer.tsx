@@ -5,14 +5,30 @@
  */
 
 import type { ICronJob } from '@/common/ipcBridge';
-import { Drawer, Form, Input, Switch, Message, Button, Popconfirm } from '@arco-design/web-react';
-import { AlarmClock, DeleteOne } from '@icon-park/react';
+import { Message } from '@arco-design/web-react';
+import { AlarmClock, Trash2 } from 'lucide-react';
 import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
-
-const FormItem = Form.Item;
-const TextArea = Input.TextArea;
+import { Button } from '@/renderer/components/ui/button';
+import { Input } from '@/renderer/components/ui/input';
+import { Label } from '@/renderer/components/ui/label';
+import { Switch } from '@/renderer/components/ui/switch';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetFooter,
+} from '@/renderer/components/ui/sheet';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/renderer/components/ui/dialog';
 
 interface CronJobDrawerProps {
   visible: boolean;
@@ -24,9 +40,13 @@ interface CronJobDrawerProps {
 
 const CronJobDrawer: React.FC<CronJobDrawerProps> = ({ visible, job, onClose, onSave, onDelete }) => {
   const { t } = useTranslation();
-  const [form] = Form.useForm();
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  
+  // Form state
+  const [enabled, setEnabled] = useState(job.enabled);
+  const [command, setCommand] = useState(job.target.payload.text);
 
   // Parse initial values from job
   const initialValues = useMemo(() => {
@@ -42,23 +62,26 @@ const CronJobDrawer: React.FC<CronJobDrawerProps> = ({ visible, job, onClose, on
     return dayjs(job.state.nextRunAtMs).format('YYYY-MM-DD HH:mm');
   }, [job.state.nextRunAtMs]);
 
-  // Reset form when job changes
+  // Reset form when job changes or drawer opens
   useEffect(() => {
     if (visible) {
-      form.setFieldsValue(initialValues);
+      setEnabled(initialValues.enabled);
+      setCommand(initialValues.command);
     }
-  }, [visible, initialValues, form]);
+  }, [visible, initialValues]);
 
   const handleSave = async () => {
+    if (!command.trim()) {
+      Message.error(t('cron.drawer.commandRequired'));
+      return;
+    }
+    
     try {
-      const values = await form.validate();
       setSaving(true);
-
       await onSave({
-        message: values.command,
-        enabled: values.enabled,
+        message: command,
+        enabled: enabled,
       });
-
       Message.success(t('cron.drawer.saveSuccess'));
       onClose();
     } catch (err) {
@@ -75,6 +98,7 @@ const CronJobDrawer: React.FC<CronJobDrawerProps> = ({ visible, job, onClose, on
     try {
       await onDelete();
       Message.success(t('cron.deleteSuccess'));
+      setShowDeleteConfirm(false);
       onClose();
     } catch (err) {
       Message.error(String(err));
@@ -84,75 +108,104 @@ const CronJobDrawer: React.FC<CronJobDrawerProps> = ({ visible, job, onClose, on
   };
 
   return (
-    <Drawer
-      width={400}
-      title={
-        <div className='inline-flex items-center gap-8px'>
-          <AlarmClock theme='outline' size={18} strokeWidth={4} fill='currentColor' className='flex items-center' />
-          <span className='leading-none'>{t('cron.drawer.title')}</span>
-        </div>
-      }
-      visible={visible}
-      onCancel={onClose}
-      footer={
-        <div className='flex justify-between'>
-          <Button type='primary' shape='round' loading={saving} onClick={handleSave}>
-            {t('cron.drawer.save')}
-          </Button>
-          <Popconfirm title={t('cron.confirmDelete')} onOk={handleDelete}>
-            <Button status='danger' shape='round' loading={deleting} icon={<DeleteOne theme='outline' size={14} />}>
+    <>
+      <Sheet open={visible} onOpenChange={(open: boolean) => !open && onClose()}>
+        <SheetContent className="w-[400px] sm:w-[400px]">
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-2">
+              <AlarmClock size={18} />
+              {t('cron.drawer.title')}
+            </SheetTitle>
+          </SheetHeader>
+          
+          <div className="mt-6 space-y-4">
+            {/* Name Section */}
+            <div className='bg-muted rounded-lg px-4 py-4'>
+              <div className='flex items-center justify-between'>
+                <span className='text-sm'>{t('cron.drawer.name')}</span>
+                <span className='text-sm font-medium'>{job.name}</span>
+              </div>
+            </div>
+
+            {/* Task Status Section */}
+            <div className='bg-muted rounded-lg px-4 py-4'>
+              <div className='flex items-center justify-between'>
+                <span className='text-sm'>{t('cron.drawer.taskStatus')}</span>
+                <div className='flex items-center gap-2'>
+                  <span className='text-sm text-muted-foreground'>
+                    {enabled ? t('cron.drawer.enabled') : t('cron.drawer.disabled')}
+                  </span>
+                  <Switch checked={enabled} onCheckedChange={setEnabled} />
+                </div>
+              </div>
+            </div>
+
+            {/* Command Section */}
+            <div className='bg-muted rounded-lg px-4 py-4'>
+              <div className="space-y-2">
+                <Label htmlFor="command">{t('cron.drawer.command')}</Label>
+                <textarea
+                  id="command"
+                  value={command}
+                  onChange={(e) => setCommand(e.target.value)}
+                  placeholder={t('cron.drawer.commandPlaceholder')}
+                  className="w-full min-h-[80px] max-h-[200px] px-3 py-2 rounded-md border border-input bg-background text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-y"
+                  rows={3}
+                />
+              </div>
+            </div>
+
+            {/* Schedule Info Section */}
+            <div className='bg-muted rounded-lg px-4 py-4 space-y-3'>
+              <div className='flex items-center justify-between'>
+                <span className='text-sm'>{t('cron.drawer.schedule')}</span>
+                <span className='text-sm font-medium'>{job.schedule.description}</span>
+              </div>
+              {nextRunTime && (
+                <div className='flex items-center justify-between'>
+                  <span className='text-sm'>{t('cron.drawer.nextRun')}</span>
+                  <span className='text-sm font-medium'>{nextRunTime}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <SheetFooter className="mt-6 flex justify-between sm:justify-between">
+            <Button onClick={handleSave} disabled={saving}>
+              {saving ? t('common.saving') : t('cron.drawer.save')}
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={() => setShowDeleteConfirm(true)}
+              disabled={deleting}
+            >
+              <Trash2 size={16} className="mr-2" />
               {t('cron.actions.delete')}
             </Button>
-          </Popconfirm>
-        </div>
-      }
-    >
-      <Form form={form} layout='vertical' initialValues={initialValues} className='space-y-12px'>
-        {/* Name Section */}
-        <div className='bg-2 rd-16px px-16px py-16px'>
-          <div className='flex items-center justify-between'>
-            <span className='text-14px'>{t('cron.drawer.name')}</span>
-            <span className='text-14px font-medium'>{job.name}</span>
-          </div>
-        </div>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
 
-        {/* Task Status Section */}
-        <div className='bg-2 rd-16px px-16px py-16px'>
-          <div className='flex items-center justify-between'>
-            <span className='text-14px'>{t('cron.drawer.taskStatus')}</span>
-            <div className='flex items-center gap-8px'>
-              <Form.Item shouldUpdate noStyle>
-                {(values) => <span className='text-14px text-text-3'>{values.enabled ? t('cron.drawer.enabled') : t('cron.drawer.disabled')}</span>}
-              </Form.Item>
-              <FormItem field='enabled' triggerPropName='checked' noStyle>
-                <Switch />
-              </FormItem>
-            </div>
-          </div>
-        </div>
-
-        {/* Command Section */}
-        <div className='bg-2 rd-16px px-16px py-16px'>
-          <FormItem label={t('cron.drawer.command')} field='command' rules={[{ required: true }]} className='!mb-0'>
-            <TextArea placeholder={t('cron.drawer.commandPlaceholder')} autoSize={{ minRows: 2, maxRows: 10 }} className='!bg-bg-1' />
-          </FormItem>
-        </div>
-
-        {/* Schedule Info Section */}
-        <div className='bg-2 rd-16px px-16px py-16px space-y-12px'>
-          <div className='flex items-center justify-between'>
-            <span className='text-14px'>{t('cron.drawer.schedule')}</span>
-            <span className='text-14px font-medium'>{job.schedule.description}</span>
-          </div>
-          {nextRunTime && (
-            <div className='flex items-center justify-between'>
-              <span className='text-14px'>{t('cron.drawer.nextRun')}</span>
-              <span className='text-14px font-medium'>{nextRunTime}</span>
-            </div>
-          )}
-        </div>
-      </Form>
-    </Drawer>
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('cron.confirmDelete')}</DialogTitle>
+            <DialogDescription>
+              {t('cron.deleteDescription')}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>
+              {t('common.cancel')}
+            </Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
+              {deleting ? t('common.deleting') : t('common.delete')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 

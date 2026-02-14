@@ -346,15 +346,15 @@ parse_and_call() {
             fi
             ;;
         opencode)
-            local model="${args[0]:-opencode/minimax-m2.5-free}"
+            local model="${args[0]:-opencode/minimax-m2.1-free}"
             case "$model" in
-                mm|minimax) model="opencode/minimax-m2.5-free"; message="${args[*]:1}" ;;
+                mm|minimax) model="opencode/minimax-m2.1-free"; message="${args[*]:1}" ;;
                 kimi|k) model="opencode/kimi-k2.5-free"; message="${args[*]:1}" ;;
                 ds|deepseek) model="deepseek/deepseek-reasoner"; message="${args[*]:1}" ;;
                 glm) model="opencode/glm-4.7-free"; message="${args[*]:1}" ;;
                 *)
                     if [[ "$model" != opencode/* && "$model" != deepseek/* ]]; then
-                        model="opencode/minimax-m2.5-free"
+                        model="opencode/minimax-m2.1-free"
                         message="${args[*]}"
                     else
                         message="${args[*]:1}"

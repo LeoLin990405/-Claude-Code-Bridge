@@ -6,10 +6,12 @@
 
 import { iconColors } from '@/renderer/theme/colors';
 import { emitter } from '@/renderer/utils/emitter';
-import { Button, Popover, Tooltip } from '@arco-design/web-react';
-import { AlarmClock } from '@icon-park/react';
+import { AlarmClock } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Button } from '@/renderer/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/renderer/components/ui/popover';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/renderer/components/ui/tooltip';
 import { useCronJobs } from '../hooks/useCronJobs';
 import { getJobStatusFlags } from '../utils/cronUtils';
 import CronJobDrawer from './CronJobDrawer';
@@ -34,30 +36,27 @@ const CronJobManager: React.FC<CronJobManagerProps> = ({ conversationId }) => {
     };
 
     return (
-      <Popover
-        trigger='hover'
-        position='bottom'
-        content={
-          <div className='flex flex-col gap-8px p-4px max-w-240px'>
-            <div className='text-13px text-t-secondary'>{t('cron.status.unconfiguredHint')}</div>
-            <Button type='primary' size='mini' onClick={handleCreateClick}>
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 mr-4"
+          >
+            <span className='inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 bg-muted'>
+              <AlarmClock size={16} className="text-muted-foreground" />
+              <span className='ml-1 w-2 h-2 rounded-full bg-gray-400' />
+            </span>
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-60">
+          <div className='flex flex-col gap-2'>
+            <p className='text-sm text-muted-foreground'>{t('cron.status.unconfiguredHint')}</p>
+            <Button size='sm' onClick={handleCreateClick} className="w-full">
               {t('cron.status.createNow')}
             </Button>
           </div>
-        }
-      >
-        <Button
-          type='text'
-          size='small'
-          className='cron-job-manager-button'
-          style={{ marginRight: 16 }}
-          icon={
-            <span className='inline-flex items-center gap-2px rounded-full px-8px py-2px bg-2'>
-              <AlarmClock theme='outline' size={16} fill={iconColors.disabled} />
-              <span className='ml-4px w-8px h-8px rounded-full bg-[#86909c]' />
-            </span>
-          }
-        />
+        </PopoverContent>
       </Popover>
     );
   }
@@ -86,25 +85,34 @@ const CronJobManager: React.FC<CronJobManagerProps> = ({ conversationId }) => {
     await deleteJob(job.id);
   };
 
+  const getStatusColor = () => {
+    if (hasError) return 'bg-red-500';
+    if (isPaused) return 'bg-orange-500';
+    return 'bg-green-500';
+  };
+
   return (
-    <>
-      <Tooltip content={tooltipContent}>
-        <Button
-          type='text'
-          size='small'
-          className='cron-job-manager-button '
-          style={{ marginRight: 16 }}
-          onClick={() => setDrawerVisible(true)}
-          icon={
-            <span className='inline-flex items-center gap-2px rounded-full px-8px py-2px  bg-2'>
-              <AlarmClock theme='outline' size={16} fill={iconColors.primary} />
-              <span className={`ml-4px w-8px h-8px rounded-full ${hasError ? 'bg-[#f53f3f]' : isPaused ? 'bg-[#ff7d00]' : 'bg-[#00b42a]'}`} />
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 mr-4"
+            onClick={() => setDrawerVisible(true)}
+          >
+            <span className='inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 bg-muted'>
+              <AlarmClock size={16} className="text-primary" />
+              <span className={`ml-1 w-2 h-2 rounded-full ${getStatusColor()}`} />
             </span>
-          }
-        />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>{tooltipContent}</p>
+        </TooltipContent>
       </Tooltip>
       <CronJobDrawer visible={drawerVisible} job={job} onClose={() => setDrawerVisible(false)} onSave={handleSave} onDelete={handleDelete} />
-    </>
+    </TooltipProvider>
   );
 };
 

@@ -6,11 +6,8 @@
 
 import React from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Layout, Menu } from '@arco-design/web-react';
-import { IconDashboard, IconList, IconStorage } from '@arco-design/web-react/icon';
+import { LayoutDashboard, List, Database } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-
-const { Sider, Content } = Layout;
 
 const MonitorLayout: React.FC = () => {
   const { t } = useTranslation();
@@ -21,41 +18,60 @@ const MonitorLayout: React.FC = () => {
     {
       key: '/monitor',
       label: t('monitor.nav.dashboard', { defaultValue: 'Dashboard' }),
-      icon: <IconDashboard />,
+      icon: LayoutDashboard,
     },
     {
       key: '/monitor/cache',
       label: t('monitor.nav.cache', { defaultValue: 'Cache' }),
-      icon: <IconStorage />,
+      icon: Database,
     },
     {
       key: '/monitor/tasks',
       label: t('monitor.nav.tasks', { defaultValue: 'Tasks' }),
-      icon: <IconList />,
+      icon: List,
     },
   ];
 
-  const selectedKey = menuItems.some((item) => item.key === location.pathname) ? location.pathname : '/monitor';
+  const selectedKey = menuItems.some((item) => item.key === location.pathname)
+    ? location.pathname
+    : '/monitor';
 
   return (
-    <Layout className='h-full'>
-      <Sider width={220} className='border-r border-border !bg-1'>
-        <div className='p-16px'>
-          <h2 className='text-16px font-600 mb-12px'>{t('monitor.title', { defaultValue: 'Gateway Monitor' })}</h2>
-          <Menu selectedKeys={[selectedKey]} onClickMenuItem={(key) => navigate(key)} style={{ width: '100%' }}>
-            {menuItems.map((item) => (
-              <Menu.Item key={item.key}>
-                {item.icon}
-                {item.label}
-              </Menu.Item>
-            ))}
-          </Menu>
+    <div className='flex h-full'>
+      {/* Sidebar */}
+      <aside className='w-[220px] border-r border-border bg-background flex-shrink-0'>
+        <div className='p-4'>
+          <h2 className='text-base font-semibold mb-3'>
+            {t('monitor.title', { defaultValue: 'Gateway Monitor' })}
+          </h2>
+          <nav className='space-y-1'>
+            {menuItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = selectedKey === item.key;
+              return (
+                <button
+                  key={item.key}
+                  onClick={() => navigate(item.key)}
+                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors text-left ${
+                    isActive
+                      ? 'bg-accent text-accent-foreground font-medium'
+                      : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
+                  }`}
+                >
+                  <Icon className='h-4 w-4' />
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
+          </nav>
         </div>
-      </Sider>
-      <Content className='p-20px overflow-auto'>
+      </aside>
+
+      {/* Content */}
+      <main className='flex-1 p-5 overflow-auto'>
         <Outlet />
-      </Content>
-    </Layout>
+      </main>
+    </div>
   );
 };
 

@@ -5,11 +5,27 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { Button, Card, Select, Space, Table, Tag } from '@arco-design/web-react';
-import { IconRefresh } from '@arco-design/web-react/icon';
+import { RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { gatewayMonitorService, type Task } from '@/renderer/services/GatewayMonitorService';
-import { DesignTokens } from '@/renderer/design-system';
+import { Button } from '@/renderer/components/ui/button';
+import { Card, CardContent } from '@/renderer/components/ui/card';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/renderer/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/renderer/components/ui/table';
+import { Badge } from '@/renderer/components/ui/badge';
 
 const TaskQueue: React.FC = () => {
   const { t } = useTranslation();
@@ -43,89 +59,97 @@ const TaskQueue: React.FC = () => {
     return tasks.filter((task) => (statusFilter === 'all' ? true : task.status === statusFilter));
   }, [statusFilter, tasks]);
 
-  const columns = [
-    {
-      title: t('monitor.tasks.id', { defaultValue: 'Task ID' }),
-      dataIndex: 'id',
-      key: 'id',
-      width: 220,
-      render: (val: string) => <code className='text-12px'>{val.slice(0, 12)}...</code>,
-    },
-    {
-      title: t('monitor.tasks.status', { defaultValue: 'Status' }),
-      dataIndex: 'status',
-      key: 'status',
-      width: 120,
-      render: (val: string) => {
-        const colorMap = {
-          pending: 'orange',
-          completed: 'green',
-          failed: 'red',
-        } as const;
-        return (
-          <Tag color={colorMap[val as keyof typeof colorMap] || 'gray'} style={{ borderRadius: DesignTokens.radius.full }}>
-            {val}
-          </Tag>
-        );
-      },
-    },
-    {
-      title: t('monitor.tasks.provider', { defaultValue: 'Provider' }),
-      dataIndex: 'provider',
-      key: 'provider',
-      width: 140,
-    },
-    {
-      title: t('monitor.tasks.createdAt', { defaultValue: 'Created At' }),
-      dataIndex: 'created_at',
-      key: 'created_at',
-      width: 200,
-      render: (val: string) => (val ? new Date(val).toLocaleString() : '-'),
-    },
-    {
-      title: t('monitor.tasks.completedAt', { defaultValue: 'Completed At' }),
-      dataIndex: 'completed_at',
-      key: 'completed_at',
-      width: 200,
-      render: (val?: string | null) => (val ? new Date(val).toLocaleString() : '-'),
-    },
-    {
-      title: t('monitor.tasks.error', { defaultValue: 'Error' }),
-      dataIndex: 'error',
-      key: 'error',
-      render: (val?: string | null) => (val ? <span style={{ color: DesignTokens.colors.error }}>{val}</span> : '-'),
-    },
-  ];
+  const getStatusBadgeVariant = (status: string): 'default' | 'secondary' | 'destructive' | 'outline' => {
+    switch (status) {
+      case 'pending':
+        return 'secondary';
+      case 'completed':
+        return 'default';
+      case 'failed':
+        return 'destructive';
+      default:
+        return 'outline';
+    }
+  };
 
   return (
-    <div
-      className='space-y-16px'
-      style={{
-        transition: DesignTokens.transitions.base,
-      }}
-    >
-      <div className='flex items-center justify-between mb-16px'>
-        <h1 className='text-20px font-600'>{t('monitor.tasks.title', { defaultValue: 'Task Queue' })}</h1>
-        <Space>
-          <Select
-            value={statusFilter}
-            onChange={setStatusFilter}
-            options={[
-              { label: t('monitor.tasks.all', { defaultValue: 'All' }), value: 'all' },
-              { label: t('monitor.tasks.pending', { defaultValue: 'Pending' }), value: 'pending' },
-              { label: t('monitor.tasks.completed', { defaultValue: 'Completed' }), value: 'completed' },
-              { label: t('monitor.tasks.failed', { defaultValue: 'Failed' }), value: 'failed' },
-            ]}
-            style={{ width: 140 }}
-          />
-          <Button icon={<IconRefresh />} onClick={() => void refresh()} loading={loading}>
+    <div className="space-y-4 transition-all duration-200 ease-in-out">
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-xl font-semibold">{t('monitor.tasks.title', { defaultValue: 'Task Queue' })}</h1>
+        <div className="flex items-center gap-2">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder={t('monitor.tasks.all', { defaultValue: 'All' })} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t('monitor.tasks.all', { defaultValue: 'All' })}</SelectItem>
+              <SelectItem value="pending">{t('monitor.tasks.pending', { defaultValue: 'Pending' })}</SelectItem>
+              <SelectItem value="completed">{t('monitor.tasks.completed', { defaultValue: 'Completed' })}</SelectItem>
+              <SelectItem value="failed">{t('monitor.tasks.failed', { defaultValue: 'Failed' })}</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button onClick={() => void refresh()} disabled={loading} className="flex items-center gap-2">
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             {t('monitor.tasks.refresh', { defaultValue: 'Refresh' })}
           </Button>
-        </Space>
+        </div>
       </div>
 
       <Card>
-        <Table columns={columns} data={filteredTasks} pagination={{ pageSize: 20 }} loading={loading} rowKey='id' />
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[220px]">{t('monitor.tasks.id', { defaultValue: 'Task ID' })}</TableHead>
+                <TableHead className="w-[120px]">{t('monitor.tasks.status', { defaultValue: 'Status' })}</TableHead>
+                <TableHead className="w-[140px]">{t('monitor.tasks.provider', { defaultValue: 'Provider' })}</TableHead>
+                <TableHead className="w-[200px]">{t('monitor.tasks.createdAt', { defaultValue: 'Created At' })}</TableHead>
+                <TableHead className="w-[200px]">{t('monitor.tasks.completedAt', { defaultValue: 'Completed At' })}</TableHead>
+                <TableHead>{t('monitor.tasks.error', { defaultValue: 'Error' })}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading && filteredTasks.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    {t('common.loading', { defaultValue: 'Loading...' })}
+                  </TableCell>
+                </TableRow>
+              ) : filteredTasks.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    {t('common.noData', { defaultValue: 'No data' })}
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredTasks.map((task) => (
+                  <TableRow key={task.id}>
+                    <TableCell>
+                      <code className="text-xs">{task.id.slice(0, 12)}...</code>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={getStatusBadgeVariant(task.status)}>{task.status}</Badge>
+                    </TableCell>
+                    <TableCell>{task.provider}</TableCell>
+                    <TableCell>
+                      {task.created_at ? new Date(task.created_at).toLocaleString() : '-'}
+                    </TableCell>
+                    <TableCell>
+                      {task.completed_at ? new Date(task.completed_at).toLocaleString() : '-'}
+                    </TableCell>
+                    <TableCell>
+                      {task.error ? (
+                        <span className="text-destructive">{task.error}</span>
+                      ) : (
+                        '-'
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
       </Card>
     </div>
   );
