@@ -1,4 +1,3 @@
-import type { DialogProps } from '@/renderer/components/ui/dialog';
 import React, { useMemo, useState } from 'react';
 
 type TUseModalReturn<Props extends Record<string, any> = {}> = [
@@ -8,20 +7,20 @@ type TUseModalReturn<Props extends Record<string, any> = {}> = [
   },
   React.ReactNode,
 ];
-const ModalHOC = <Props extends Record<string, any> = {}>(
+const ModalHOC = <Props extends Record<string, any> = {}, ModalProps extends Record<string, any> = Record<string, any>>(
   ModalBodyComponent: React.FC<
     Props & {
       modalCtrl: {
         close(): void;
       };
-      modalProps: Partial<DialogProps> & { open?: boolean };
+      modalProps: Partial<ModalProps>;
     }
   >,
-  defaultModalProps?: Partial<DialogProps> & { open?: boolean }
+  defaultModalProps?: Partial<ModalProps>
 ) => {
   const ModalComponent: React.FC<
     Props & {
-      modalProps: Partial<DialogProps> & { open?: boolean };
+      modalProps: Partial<ModalProps>;
       modalCtrl: {
         close(): void;
       };
@@ -65,24 +64,24 @@ const ModalHOC = <Props extends Record<string, any> = {}>(
       };
     }, [setVisible]);
 
-    return [ctrl, <ModalComponent {...props} {...modalProps} modalProps={{ open: visible }} modalCtrl={modalCtrl}></ModalComponent>];
+    return [ctrl, <ModalComponent {...props} {...modalProps} modalProps={{ open: visible } as unknown as Partial<ModalProps>} modalCtrl={modalCtrl}></ModalComponent>];
   };
   ModalComponent.useModal = useModal;
   return ModalComponent;
 };
 
-ModalHOC.Extra = <Props extends Record<string, any> = {}>(defaultModalProps?: Partial<DialogProps> & { open?: boolean }) => {
+ModalHOC.Extra = <Props extends Record<string, any> = {}, ModalProps extends Record<string, any> = Record<string, any>>(defaultModalProps?: Partial<ModalProps>) => {
   return (
     ModalBodyComponent: React.FC<
       Props & {
-        modalProps: Partial<DialogProps> & { open?: boolean };
+        modalProps: Partial<ModalProps>;
         modalCtrl: {
           close(): void;
         };
       }
     >
   ) => {
-    return ModalHOC<Props>(ModalBodyComponent, defaultModalProps);
+    return ModalHOC<Props, ModalProps>(ModalBodyComponent, defaultModalProps);
   };
 };
 

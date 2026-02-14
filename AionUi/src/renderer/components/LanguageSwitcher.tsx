@@ -1,5 +1,5 @@
 import { ConfigStorage } from '@/common/storage';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/renderer/components/ui/select';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 

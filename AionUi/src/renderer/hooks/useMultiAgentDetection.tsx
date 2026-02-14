@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
-export const useMultiAgentDetection = () => {
+export const useMultiAgentDetection = (): { contextHolder: React.ReactNode } => {
   const { t } = useTranslation();
 
   useEffect(() => {
@@ -32,5 +32,5 @@ export const useMultiAgentDetection = () => {
     });
   }, []); // 空依赖数组确保只在组件初始化时执行一次
 
-  return {};
+  return { contextHolder: null };
 };

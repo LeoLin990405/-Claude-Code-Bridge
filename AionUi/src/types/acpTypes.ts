@@ -51,6 +51,8 @@ export type AcpBackendAll =
   | 'opencode' // OpenCode CLI
   | 'copilot' // GitHub Copilot CLI
   | 'qoder' // Qoder CLI
+  | 'deepseek' // DeepSeek CLI
+  | 'droid' // Droid Terminal AI
   | 'openclaw-gateway' // OpenClaw Gateway WebSocket
   | 'custom'; // User-configured custom ACP agent
 
@@ -384,6 +386,24 @@ export const ACP_BACKENDS_ALL: Record<AcpBackendAll, AcpBackendConfig> = {
     enabled: true, // ✅ Qoder CLI，使用 `qodercli --acp` 启动
     supportsStreaming: false,
     acpArgs: ['--acp'], // qoder 使用 --acp flag
+  },
+  deepseek: {
+    id: 'deepseek',
+    name: 'DeepSeek CLI',
+    cliCommand: 'deepseek',
+    authRequired: false,
+    enabled: true, // ✅ DeepSeek CLI
+    supportsStreaming: false,
+    acpArgs: ['--acp'],
+  },
+  droid: {
+    id: 'droid',
+    name: 'Droid',
+    cliCommand: 'droid',
+    authRequired: false,
+    enabled: true, // ✅ Droid Terminal AI
+    supportsStreaming: false,
+    acpArgs: ['--acp'],
   },
   'openclaw-gateway': {
     id: 'openclaw-gateway',
@@ -762,3 +782,57 @@ export interface AcpFileWriteMessage {
  * TypeScript can automatically narrow the type based on the method field.
  */
 export type AcpIncomingMessage = AcpSessionUpdateNotification | AcpPermissionRequestMessage | AcpFileReadMessage | AcpFileWriteMessage;
+
+/**
+ * ============================================================================
+ * HiveMind 模型选择系统类型定义
+ * HiveMind Model Selection System Type Definitions
+ * ============================================================================
+ */
+
+/**
+ * 单个模型的配置信息
+ * Configuration for a single model
+ */
+export interface ModelConfig {
+  /** 模型唯一标识符 (例如: "o3", "gpt-4o") */
+  id: string;
+  /** 模型显示名称 (例如: "o3 - 深度推理") */
+  displayName: string;
+  /** 模型描述 */
+  description?: string;
+  /** 是否为默认模型 */
+  isDefault?: boolean;
+  /** 模型支持的能力标签 (例如: ["reasoning", "code", "image"]) */
+  capabilities?: string[];
+  /** 预估响应时间 (秒) */
+  estimatedResponseTime?: number;
+  /** 是否需要付费 */
+  isPaid?: boolean;
+  /** 模型速度等级: "fast" | "medium" | "slow" */
+  speedTier?: "fast" | "medium" | "slow";
+}
+
+/**
+ * Provider 的所有可用模型
+ * All available models for a provider
+ */
+export interface ProviderModels {
+  /** Provider 名称 (例如: "codex", "gemini") */
+  provider: AcpBackendAll;
+  /** 该 Provider 支持的所有模型 */
+  models: ModelConfig[];
+  /** 默认模型 ID */
+  defaultModelId?: string;
+}
+
+/**
+ * 用户的模型偏好设置
+ * User's model preferences
+ */
+export interface UserModelPreferences {
+  /** Provider -> 选中的模型 ID 的映射 */
+  selectedModels: Record<AcpBackendAll, string>;
+  /** 上次修改时间 */
+  lastUpdated?: string;
+}

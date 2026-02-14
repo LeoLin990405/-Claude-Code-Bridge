@@ -45,6 +45,16 @@ export interface IConfigStorageRefer {
     cacheBypass?: boolean;
     systemPrompt?: string | null;
   };
+  /**
+   * HiveMind 用户模型偏好设置
+   * User's model preferences for each provider
+   */
+  'hivemind.userModelPreferences'?: {
+    /** Provider -> 选中的模型 ID 的映射 / Provider to selected model ID mapping */
+    selectedModels?: Record<string, string>;
+    /** 上次修改时间 / Last updated timestamp */
+    lastUpdated?: string;
+  };
   'acp.config': {
     [backend in AcpBackend]?: {
       authMethodId?: string;
