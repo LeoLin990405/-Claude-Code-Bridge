@@ -7,7 +7,6 @@
 import { ipcBridge } from '@/common';
 import type { IMessageToolGroup } from '@/common/chatLib';
 import { iconColors } from '@/renderer/theme/colors';
-import { Alert, Button, Image, Message, Radio, Tag, Tooltip } from '@arco-design/web-react';
 import { Copy, Download, LoadingOne } from '@icon-park/react';
 import React, { useCallback, useContext, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -22,10 +21,13 @@ import { ToolConfirmationOutcome } from '../types/tool-confirmation';
 import { ImagePreviewContext } from './MessageList';
 import { COLLAPSE_CONFIG, TEXT_CONFIG } from './constants';
 import type { ImageGenerationResult, WriteFileResult } from './types';
-
-// Alert 组件样式常量 Alert component style constant
-// 顶部对齐图标与内容，避免多行文本时图标垂直居中
-const ALERT_CLASSES = '!items-start !rd-8px !px-8px [&_.arco-alert-icon]:flex [&_.arco-alert-icon]:items-start [&_.arco-alert-content-wrapper]:flex [&_.arco-alert-content-wrapper]:items-start [&_.arco-alert-content-wrapper]:w-full [&_.arco-alert-content]:flex-1';
+import { Alert, AlertDescription, AlertTitle } from '@/renderer/components/ui/alert';
+import { Button } from '@/renderer/components/ui/button';
+import { Badge } from '@/renderer/components/ui/badge';
+import { RadioGroup, RadioGroupItem } from '@/renderer/components/ui/radio-group';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/renderer/components/ui/tooltip';
+import { Message } from '@arco-design/web-react';
+import { Terminal, AlertCircle, Info, CheckCircle2 } from 'lucide-react';
 
 // CollapsibleContent 高度常量 CollapsibleContent height constants
 const RESULT_MAX_HEIGHT = COLLAPSE_CONFIG.MAX_HEIGHT;
@@ -152,9 +154,9 @@ const ConfirmationDetails: React.FC<{
         );
       }
       case 'info':
-        return <span className='text-t-primary'>{confirmationDetails.prompt}</span>;
+        return <span className='text-foreground'>{confirmationDetails.prompt}</span>;
       case 'mcp':
-        return <span className='text-t-primary'>{confirmationDetails.toolDisplayName}</span>;
+        return <span className='text-foreground'>{confirmationDetails.toolDisplayName}</span>;
     }
   }, [confirmationDetails]);
 
@@ -169,18 +171,17 @@ const ConfirmationDetails: React.FC<{
       {confirmationDetails.type === 'edit' ? <EditConfirmationDiff diff={confirmationDetails?.fileDiff || ''} fileName={confirmationDetails.fileName} title={isConfirm ? confirmationDetails.title : content.description} /> : node}
       {content.status === 'Confirming' && (
         <>
-          <div className='mt-10px text-t-primary'>{question}</div>
-          <Radio.Group direction='vertical' size='mini' value={selected} onChange={setSelected}>
-            {options.map((item) => {
-              return (
-                <Radio key={item.value} value={item.value}>
-                  {item.label}
-                </Radio>
-              );
-            })}
-          </Radio.Group>
-          <div className='flex justify-start pl-20px'>
-            <Button type='primary' size='mini' disabled={!selected} onClick={() => onConfirm(selected)}>
+          <div className='mt-2.5 text-foreground'>{question}</div>
+          <RadioGroup value={selected || ''} onValueChange={(value) => setSelected(value as ToolConfirmationOutcome)} className="gap-1 mt-2">
+            {options.map((item) => (
+              <div key={item.value} className="flex items-center space-x-2">
+                <RadioGroupItem value={item.value} id={item.value} />
+                <label htmlFor={item.value} className="text-sm cursor-pointer">{item.label}</label>
+              </div>
+            ))}
+          </RadioGroup>
+          <div className='flex justify-start pl-5 mt-3'>
+            <Button size='sm' disabled={!selected} onClick={() => onConfirm(selected!)}>
               {t('messages.confirm')}
             </Button>
           </div>
@@ -312,9 +313,9 @@ const ImageDisplay: React.FC<{
   // 加载状态 Loading state
   if (loading) {
     return (
-      <div className='flex items-center gap-8px my-8px'>
+      <div className='flex items-center gap-2 my-2'>
         <LoadingOne className='loading' theme='outline' size='14' fill={iconColors.primary} />
-        <span className='text-t-secondary text-sm'>{t('common.loading', { defaultValue: 'Loading...' })}</span>
+        <span className='text-muted-foreground text-sm'>{t('common.loading', { defaultValue: 'Loading...' })}</span>
       </div>
     );
   }
@@ -322,7 +323,7 @@ const ImageDisplay: React.FC<{
   // 错误状态 Error state
   if (error || !imageUrl) {
     return (
-      <div className='flex items-center gap-8px my-8px text-t-secondary text-sm'>
+      <div className='flex items-center gap-2 my-2 text-muted-foreground text-sm'>
         <span>{t('messages.imageLoadFailed', { defaultValue: 'Failed to load image' })}</span>
       </div>
     );
@@ -330,36 +331,45 @@ const ImageDisplay: React.FC<{
 
   // 图片元素 Image element
   const imageElement = (
-    <Image
+    <img
       src={imageUrl}
       alt={relativePath || 'Generated image'}
-      width={197}
-      style={{
-        maxHeight: '320px',
-        objectFit: 'contain',
-        borderRadius: '8px',
-        cursor: 'pointer',
-      }}
+      className="rounded-lg cursor-pointer object-contain"
+      style={{ width: '197px', maxHeight: '320px' }}
     />
   );
 
   return (
-    <>
+    <TooltipProvider>
       {messageContext}
-      <div className='flex flex-col gap-8px my-8px' style={{ maxWidth: '197px' }}>
+      <div className='flex flex-col gap-2 my-2' style={{ maxWidth: '197px' }}>
         {/* 图片预览 Image preview - 如果已在 PreviewGroup 中则直接渲染，否则包裹 PreviewGroup */}
-        {inPreviewGroup ? imageElement : <Image.PreviewGroup>{imageElement}</Image.PreviewGroup>}
+        {inPreviewGroup ? imageElement : imageElement}
         {/* 操作按钮 Action buttons */}
-        <div className='flex gap-8px'>
-          <Tooltip content={t('common.copy', { defaultValue: 'Copy' })}>
-            <Button type='secondary' size='small' shape='circle' icon={<Copy theme='outline' size='14' fill={iconColors.primary} />} onClick={handleCopy} />
+        <div className='flex gap-2'>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant='secondary' size='icon' className="h-8 w-8" onClick={handleCopy}>
+                <Copy theme='outline' size='14' fill={iconColors.primary} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{t('common.copy', { defaultValue: 'Copy' })}</p>
+            </TooltipContent>
           </Tooltip>
-          <Tooltip content={t('common.download', { defaultValue: 'Download' })}>
-            <Button type='secondary' size='small' shape='circle' icon={<Download theme='outline' size='14' fill={iconColors.primary} />} onClick={handleDownload} />
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant='secondary' size='icon' className="h-8 w-8" onClick={handleDownload}>
+                <Download theme='outline' size='14' fill={iconColors.primary} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{t('common.download', { defaultValue: 'Download' })}</p>
+            </TooltipContent>
           </Tooltip>
         </div>
       </div>
-    </>
+    </TooltipProvider>
   );
 };
 
@@ -385,11 +395,33 @@ const ToolResultDisplay: React.FC<{
   // Wrap long content with CollapsibleContent
   return (
     <CollapsibleContent maxHeight={RESULT_MAX_HEIGHT} defaultCollapsed={true} useMask={false}>
-      <pre className='text-t-primary whitespace-pre-wrap break-words m-0' style={{ fontSize: `${TEXT_CONFIG.FONT_SIZE}px`, lineHeight: TEXT_CONFIG.LINE_HEIGHT }}>
+      <pre className='text-foreground whitespace-pre-wrap break-words m-0' style={{ fontSize: `${TEXT_CONFIG.FONT_SIZE}px`, lineHeight: TEXT_CONFIG.LINE_HEIGHT }}>
         {display}
       </pre>
     </CollapsibleContent>
   );
+};
+
+const getStatusIcon = (status: string) => {
+  switch (status) {
+    case 'Error':
+      return <AlertCircle className="h-4 w-4" />;
+    case 'Success':
+      return <CheckCircle2 className="h-4 w-4" />;
+    case 'Canceled':
+      return <Info className="h-4 w-4" />;
+    default:
+      return <LoadingOne theme='outline' size='12' fill={iconColors.primary} className='loading' />;
+  }
+};
+
+const getStatusVariant = (status: string): 'default' | 'destructive' => {
+  switch (status) {
+    case 'Error':
+      return 'destructive';
+    default:
+      return 'default';
+  }
 };
 
 const MessageToolGroup: React.FC<IMessageToolGroupProps> = ({ message }) => {
@@ -463,23 +495,25 @@ const MessageToolGroup: React.FC<IMessageToolGroupProps> = ({ message }) => {
         // 将可展开的长内容放在 Alert 下方，保持 Alert 仅展示头部信息
         return (
           <div key={callId}>
-            <Alert
-              className={ALERT_CLASSES}
-              type={status === 'Error' ? 'error' : status === 'Success' ? 'success' : status === 'Canceled' ? 'warning' : 'info'}
-              icon={isLoading && <LoadingOne theme='outline' size='12' fill={iconColors.primary} className='loading lh-[1] flex' />}
-              content={
-                <div>
-                  <Tag className={'mr-4px'}>
+            <Alert variant={getStatusVariant(status)} className="py-2 px-2">
+              <div className="flex items-center gap-2">
+                {isLoading ? (
+                  <LoadingOne theme='outline' size='12' fill={iconColors.primary} className='loading' />
+                ) : (
+                  getStatusIcon(status)
+                )}
+                <AlertDescription className="flex items-center gap-1">
+                  <Badge variant="secondary" className="text-xs">
                     {name}
                     {status === 'Canceled' ? `(${t('messages.canceledExecution')})` : ''}
-                  </Tag>
-                </div>
-              }
-            />
+                  </Badge>
+                </AlertDescription>
+              </div>
+            </Alert>
 
             {(description || resultDisplay) && (
-              <div className='mt-8px'>
-                {description && <div className='text-12px text-t-secondary truncate mb-2'>{description}</div>}
+              <div className='mt-2'>
+                {description && <div className='text-xs text-muted-foreground truncate mb-0.5'>{description}</div>}
                 {resultDisplay && (
                   <div>
                     {/* 在 Alert 外展示完整结果 Display full result outside Alert */}

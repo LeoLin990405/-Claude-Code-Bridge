@@ -388,7 +388,7 @@ class GatewayConfig:
             name="opencode",
             backend_type=BackendType.CLI_EXEC,
             cli_command="opencode",
-            cli_args=["run", "--format", "json", "-m", "opencode/minimax-m2.1-free"],
+            cli_args=["run", "--format", "json", "-m", "opencode/minimax-m2.5-free"],
             timeout_s=120.0,
         )
 

@@ -11,7 +11,6 @@
  */
 
 import * as React from 'react';
-import { useForm, useWatch, Controller, UseFormReturn } from 'react-hook-form';
 import { cn } from '@/lib/utils';
 
 // Form 实例类型
@@ -49,17 +48,17 @@ interface FormProps {
 
 // 创建 Form Hook
 export function useArcoForm(): [FormInstance] {
-  const formMethods = useForm();
-  
+  const valuesRef = React.useRef<Record<string, any>>({});
+
   const formInstance: FormInstance = {
-    getFieldValue: (name: string) => formMethods.getValues(name),
-    setFieldValue: (name: string, value: any) => formMethods.setValue(name, value),
-    resetFields: () => formMethods.reset(),
-    validate: async () => {
-      const isValid = await formMethods.trigger();
-      if (!isValid) throw new Error('Validation failed');
-      return formMethods.getValues();
+    getFieldValue: (name: string) => valuesRef.current[name],
+    setFieldValue: (name: string, value: any) => {
+      valuesRef.current[name] = value;
     },
+    resetFields: () => {
+      valuesRef.current = {};
+    },
+    validate: async () => valuesRef.current,
   };
 
   return [formInstance];
@@ -97,10 +96,10 @@ export const FormItem: React.FC<FormItemProps> = ({
         </label>
       )}
       <div className="form-item-control">
-        {React.cloneElement(children, {
-          ...children.props,
+        {React.cloneElement(children as React.ReactElement<any>, {
+          ...(children.props as Record<string, unknown>),
           className: cn(
-            children.props.className,
+            (children.props as { className?: string }).className,
             isError && 'border-destructive focus-visible:ring-destructive'
           ),
         })}
@@ -117,7 +116,7 @@ export const FormItem: React.FC<FormItemProps> = ({
 export const Form: React.FC<FormProps> & { 
   Item: typeof FormItem; 
   useForm: typeof useArcoForm;
-  useWatch: typeof useWatch;
+  useWatch: (name?: string) => any;
 } = ({ form, layout = 'vertical', className, children, onSubmit }) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -142,8 +141,6 @@ export const Form: React.FC<FormProps> & {
 
 Form.Item = FormItem;
 Form.useForm = useArcoForm;
-Form.useWatch = useWatch;
+Form.useWatch = (_name?: string) => undefined;
 
-// 导出兼容层
-export { Form };
 export default Form;

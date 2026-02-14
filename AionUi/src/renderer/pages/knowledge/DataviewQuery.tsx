@@ -20,6 +20,10 @@ import { RefreshCw } from 'lucide-react';
 
 const GATEWAY_URL = 'http://localhost:8765';
 
+type DataviewRow = Record<string, unknown> & {
+  __rowKey: string;
+};
+
 type DataviewResponse = {
   status: string;
   query: string;
@@ -48,11 +52,11 @@ const DataviewQuery: React.FC = () => {
     return result?.columns || [];
   }, [result]);
 
-  const tableData = useMemo(() => {
+  const tableData = useMemo<DataviewRow[]>(() => {
     return (result?.rows || []).map((row, index) => ({
       ...row,
       __rowKey: `row-${index}`,
-    }));
+    })) as DataviewRow[];
   }, [result]);
 
   const runQuery = async () => {
@@ -150,7 +154,7 @@ const DataviewQuery: React.FC = () => {
                   {tableData.map((row) => (
                     <TableRow key={row.__rowKey as string}>
                       {tableColumns.map((column) => {
-                        const value = row[column];
+                        const value = (row as Record<string, unknown>)[column];
                         let displayValue: string;
                         if (value === null || value === undefined) {
                           displayValue = '-';

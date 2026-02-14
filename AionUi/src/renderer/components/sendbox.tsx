@@ -6,8 +6,9 @@
 
 import { useInputFocusRing } from '@/renderer/hooks/useInputFocusRing';
 import { usePreviewContext } from '@/renderer/pages/conversation/preview';
-import { Button, Input, Message, Tag } from '@arco-design/web-react';
-import { ArrowUp, CloseSmall } from '@icon-park/react';
+import { Button } from '@/renderer/components/ui/button';
+import { Badge } from '@/renderer/components/ui/badge';
+import { X, ArrowUp } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useCompositionInput } from '../hooks/useCompositionInput';
@@ -160,8 +161,6 @@ const SendBox: React.FC<{
     onFilesAdded,
   });
 
-  const [message, context] = Message.useMessage();
-
   // 使用共享的输入法合成处理
   const { compositionHandlers, createKeyDownHandler } = useCompositionInput();
 
@@ -199,7 +198,7 @@ const SendBox: React.FC<{
 
   const sendMessageHandler = () => {
     if (loading || isLoading) {
-      message.warning(t('messages.conversationInProgress'));
+      console.warn(t('messages.conversationInProgress'));
       return;
     }
     if (!input.trim() && domSnippets.length === 0) {
@@ -257,26 +256,26 @@ const SendBox: React.FC<{
       >
         <div style={{ width: '100%' }}>
           {prefix}
-          {context}
           {/* DOM 片段标签 / DOM snippet tags */}
           {domSnippets.length > 0 && (
             <div className='flex flex-wrap gap-6px mb-8px'>
               {domSnippets.map((snippet) => (
-                <Tag key={snippet.id} closable closeIcon={<CloseSmall theme='outline' size='12' />} onClose={() => removeDomSnippet(snippet.id)} className='text-12px bg-fill-2 b-1 b-solid b-border-2 rd-4px'>
+                <Badge key={snippet.id} variant="secondary" className='text-12px bg-fill-2 b-1 b-solid b-border-2 rd-4px gap-1'>
                   {snippet.tag}
-                </Tag>
+                  <X size={12} className="cursor-pointer" onClick={() => removeDomSnippet(snippet.id)} />
+                </Badge>
               ))}
             </div>
           )}
         </div>
         <div className={isSingleLine ? 'flex items-center gap-2 w-full min-w-0 overflow-hidden' : 'w-full overflow-hidden'}>
           {isSingleLine && <div className='flex-shrink-0 sendbox-tools'>{tools}</div>}
-          <Input.TextArea
+          <textarea
             autoFocus
             disabled={disabled}
             value={input}
             placeholder={placeholder}
-            className='pl-0 pr-0 !b-none focus:shadow-none m-0 !bg-transparent !focus:bg-transparent !hover:bg-transparent lh-[20px] !resize-none text-14px'
+            className='pl-0 pr-0 border-none focus:shadow-none m-0 bg-transparent focus:bg-transparent hover:bg-transparent lh-[20px] resize-none text-14px outline-none'
             style={{
               width: isSingleLine ? 'auto' : '100%',
               flex: isSingleLine ? 1 : 'none',
@@ -287,6 +286,7 @@ const SendBox: React.FC<{
               marginBottom: isSingleLine ? 0 : '8px',
               height: isSingleLine ? '20px' : 'auto',
               minHeight: isSingleLine ? '20px' : '80px',
+              maxHeight: isSingleLine ? '20px' : '200px',
               overflowY: isSingleLine ? 'hidden' : 'auto',
               overflowX: 'hidden',
               whiteSpace: isSingleLine ? 'nowrap' : 'pre-wrap',
@@ -294,30 +294,32 @@ const SendBox: React.FC<{
               wordBreak: isSingleLine ? 'normal' : 'break-word',
               overflowWrap: 'break-word',
             }}
-            onChange={(v) => {
-              setInput(v);
+            onChange={(e) => {
+              setInput(e.target.value);
             }}
             onPaste={onPaste}
             onFocus={handleInputFocus}
             onBlur={handleInputBlur}
             {...compositionHandlers}
-            autoSize={isSingleLine ? false : { minRows: 1, maxRows: 10 }}
             onKeyDown={createKeyDownHandler(sendMessageHandler)}
-          ></Input.TextArea>
+          />
           {isSingleLine && (
             <div className='flex items-center gap-2'>
               {sendButtonPrefix}
               {isLoading || loading ? (
-                <Button shape='circle' type='secondary' className='bg-animate' icon={<div className='mx-auto size-12px bg-6'></div>} onClick={stopHandler}></Button>
+                <Button variant='outline' size='icon' className='rounded-full' onClick={stopHandler}>
+                  <div className='mx-auto size-12px bg-6 rounded-full'></div>
+                </Button>
               ) : (
                 <Button
-                  shape='circle'
-                  type='primary'
-                  icon={<ArrowUp theme='outline' size='14' fill='white' strokeWidth={2} />}
+                  size='icon'
+                  className='rounded-full'
                   onClick={() => {
                     sendMessageHandler();
                   }}
-                />
+                >
+                  <ArrowUp size={14} />
+                </Button>
               )}
             </div>
           )}
@@ -328,16 +330,19 @@ const SendBox: React.FC<{
             <div className='flex items-center gap-2'>
               {sendButtonPrefix}
               {isLoading || loading ? (
-                <Button shape='circle' type='secondary' className='bg-animate' icon={<div className='mx-auto size-12px bg-6'></div>} onClick={stopHandler}></Button>
+                <Button variant='outline' size='icon' className='rounded-full' onClick={stopHandler}>
+                  <div className='mx-auto size-12px bg-6 rounded-full'></div>
+                </Button>
               ) : (
                 <Button
-                  shape='circle'
-                  type='primary'
-                  icon={<ArrowUp theme='outline' size='14' fill='white' strokeWidth={2} />}
+                  size='icon'
+                  className='rounded-full'
                   onClick={() => {
                     sendMessageHandler();
                   }}
-                />
+                >
+                  <ArrowUp size={14} />
+                </Button>
               )}
             </div>
           </div>

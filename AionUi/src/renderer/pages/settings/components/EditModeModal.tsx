@@ -1,5 +1,5 @@
 import type { IProvider } from '@/common/storage';
-import ModalHOC from '@/renderer/components/base/ModalHOC';
+import ModalHOC from '@/renderer/utils/ModalHOC';
 import { Input } from '@/renderer/components/ui/input';
 import { Label } from '@/renderer/components/ui/label';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -127,8 +127,8 @@ const EditModeModal: React.FC<EditModeModalProps> = ({ visible, data, onChange, 
   }, [data, visible]);
 
   const handleSubmit = () => {
-    if (!name || !apiKey) return;
-    onChange({ ...(data || {}), name, baseUrl, apiKey });
+    if (!data || !name || !apiKey) return;
+    onChange({ ...data, name, baseUrl, apiKey });
   };
 
   if (!visible) return null;

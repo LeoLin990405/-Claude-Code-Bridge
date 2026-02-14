@@ -7,7 +7,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/renderer/components/ui/tooltip';
-import { CheckOne, CloseOne, Delete, Edit, Plus, DeleteFive, CheckSmall, Shield, Loader2 } from '@icon-park/react';
+import { CheckOne, CloseOne, Delete, Edit, Plus, DeleteFive, CheckSmall, Shield, LoadingOne } from '@icon-park/react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -154,7 +154,7 @@ const ApiKeyEditorModal: React.FC<ApiKeyEditorModalProps> = ({ visible, apiKeys,
   const getStatusIcon = (status: KeyStatus) => {
     switch (status) {
       case 'testing':
-        return <Loader2 size={14} className="animate-spin" />;
+        return <LoadingOne theme='outline' size={14} className='loading lh-[1] flex' />;
       case 'valid':
         return <CheckOne theme='filled' size={16} className='text-green-500 flex' />;
       case 'invalid':

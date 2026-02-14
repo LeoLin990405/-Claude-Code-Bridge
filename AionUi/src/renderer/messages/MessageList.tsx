@@ -42,6 +42,8 @@ type IMessageVO =
     };
 
 // Image preview context
+// Note: Image.PreviewGroup from Arco is kept for cross-message image preview functionality
+// TODO: Replace with a shadcn-compatible solution in future
 export const ImagePreviewContext = createContext<{ inPreviewGroup: boolean }>({ inPreviewGroup: false });
 
 const MessageItem: React.FC<{ message: TMessage }> = React.memo(
@@ -169,6 +171,7 @@ const MessageList: React.FC<{ className?: string }> = () => {
   return (
     <div className='relative flex-1 h-full'>
       {/* Use PreviewGroup to wrap all messages for cross-message image preview */}
+      {/* Note: Image.PreviewGroup is kept from Arco Design as shadcn doesn't have equivalent */}
       <Image.PreviewGroup actionsLayout={['zoomIn', 'zoomOut', 'originalSize', 'rotateLeft', 'rotateRight']}>
         <ImagePreviewContext.Provider value={{ inPreviewGroup: true }}>
           <Virtuoso
