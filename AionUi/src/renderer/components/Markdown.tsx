@@ -15,7 +15,7 @@ import remarkMath from 'remark-math';
 
 import { ipcBridge } from '@/common';
 import { diffColors } from '@/renderer/theme/colors';
-import { Message } from '@arco-design/web-react';
+
 import { Copy, Down, Up } from '@icon-park/react';
 import { theme } from '@office-ai/platform';
 import classNames from 'classnames';
@@ -149,7 +149,7 @@ function CodeBlock(props: any) {
                 fill='var(--text-secondary)'
                 onClick={() => {
                   void navigator.clipboard.writeText(formatCode(children)).then(() => {
-                    Message.success(t('common.copySuccess'));
+                    // Copy success - could show a toast here
                   });
                 }}
               />
