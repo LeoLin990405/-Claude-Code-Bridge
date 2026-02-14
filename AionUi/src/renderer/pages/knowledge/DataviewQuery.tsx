@@ -5,11 +5,18 @@
  */
 
 import React, { useMemo, useState } from 'react';
-import { Button, Card, Input, Message, Space, Table, Typography } from '@arco-design/web-react';
-import { IconRefresh } from '@arco-design/web-react/icon';
-
-const { Paragraph, Text } = Typography;
-const { TextArea } = Input;
+import { Button } from '@/renderer/components/ui/button';
+import { Input } from '@/renderer/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/renderer/components/ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/renderer/components/ui/table';
+import { RefreshCw } from 'lucide-react';
 
 const GATEWAY_URL = 'http://localhost:8765';
 
@@ -38,20 +45,7 @@ const DataviewQuery: React.FC = () => {
   const [result, setResult] = useState<DataviewResponse | null>(null);
 
   const tableColumns = useMemo(() => {
-    const columns = result?.columns || [];
-    return columns.map((column) => ({
-      title: column,
-      dataIndex: column,
-      render: (value: unknown) => {
-        if (value === null || value === undefined) {
-          return '-';
-        }
-        if (typeof value === 'object') {
-          return JSON.stringify(value);
-        }
-        return String(value);
-      },
-    }));
+    return result?.columns || [];
   }, [result]);
 
   const tableData = useMemo(() => {
@@ -61,11 +55,9 @@ const DataviewQuery: React.FC = () => {
     }));
   }, [result]);
 
-
-
   const runQuery = async () => {
     if (!query.trim()) {
-      Message.warning('请输入 Dataview 查询语句');
+      console.warn('请输入 Dataview 查询语句');
       return;
     }
 
@@ -80,14 +72,12 @@ const DataviewQuery: React.FC = () => {
       const payload = (await response.json()) as DataviewResponse;
       setResult(payload);
 
-      if (payload.status === 'success') {
-        Message.success(`Dataview 查询完成，共 ${payload.count} 条`);
-      } else {
-        Message.error(payload.error || 'Dataview 查询失败');
+      if (payload.status !== 'success') {
+        console.error(payload.error || 'Dataview 查询失败');
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      Message.error(message);
+      console.error(message);
       setResult({
         status: 'error',
         query,
@@ -103,54 +93,87 @@ const DataviewQuery: React.FC = () => {
   };
 
   return (
-    <Space direction='vertical' size='large' style={{ width: '100%' }}>
+    <div className="flex flex-col gap-6 w-full">
       <Card>
-        <Space direction='vertical' size='medium' style={{ width: '100%' }}>
-          <TextArea
+        <CardContent className="pt-6 space-y-4">
+          <textarea
             value={query}
-            onChange={setQuery}
-            autoSize={{ minRows: 8, maxRows: 16 }}
+            onChange={(e) => setQuery(e.target.value)}
+            rows={8}
             placeholder='输入 Dataview 查询'
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           />
-          <Space>
-            <Button type='primary' loading={loading} onClick={runQuery}>
-              执行 Dataview 查询
+          <div className="flex gap-2">
+            <Button onClick={runQuery} disabled={loading}>
+              {loading ? '执行中...' : '执行 Dataview 查询'}
             </Button>
             <Button
-              icon={<IconRefresh />}
+              variant="outline"
               onClick={() => {
                 setQuery(DEFAULT_QUERY);
               }}
+              className="gap-2"
             >
+              <RefreshCw size={16} />
               恢复示例查询
             </Button>
-          </Space>
-          <Paragraph type='secondary' style={{ margin: 0 }}>
+          </div>
+          <p className="text-sm text-muted-foreground m-0">
             提示：当前后端支持 `WHERE type/category/source_count`、`SORT`、`LIMIT` 的轻量语法子集。
-          </Paragraph>
-        </Space>
+          </p>
+        </CardContent>
       </Card>
 
-      <Card title='Dataview 查询结果'>
-        {!result ? (
-          <Text type='secondary'>尚未执行查询</Text>
-        ) : result.status !== 'success' ? (
-          <Text type='error'>{result.error || '查询失败'}</Text>
-        ) : (
-          <Space direction='vertical' size='small' style={{ width: '100%' }}>
-            <Text type='secondary'>
-              执行时间：{new Date(result.executed_at).toLocaleString()} ｜ 结果数：{result.count}
-            </Text>
-            <Table
-              rowKey='__rowKey'
-              columns={tableColumns}
-              data={tableData}
-              pagination={{ pageSize: 10 }}
-            />
-          </Space>
-        )}
+      <Card>
+        <CardHeader>
+          <CardTitle>Dataview 查询结果</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {!result ? (
+            <p className="text-muted-foreground">尚未执行查询</p>
+          ) : result.status !== 'success' ? (
+            <p className="text-destructive">{result.error || '查询失败'}</p>
+          ) : (
+            <div className="space-y-2 w-full">
+              <p className="text-sm text-muted-foreground">
+                执行时间：{new Date(result.executed_at).toLocaleString()} ｜ 结果数：{result.count}
+              </p>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    {tableColumns.map((column) => (
+                      <TableHead key={column}>{column}</TableHead>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {tableData.map((row) => (
+                    <TableRow key={row.__rowKey as string}>
+                      {tableColumns.map((column) => {
+                        const value = row[column];
+                        let displayValue: string;
+                        if (value === null || value === undefined) {
+                          displayValue = '-';
+                        } else if (typeof value === 'object') {
+                          displayValue = JSON.stringify(value);
+                        } else {
+                          displayValue = String(value);
+                        }
+                        return (
+                          <TableCell key={`${row.__rowKey}-${column}`}>
+                            {displayValue}
+                          </TableCell>
+                        );
+                      })}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
       </Card>
-    </Space>
+    </div>
   );
 };
 

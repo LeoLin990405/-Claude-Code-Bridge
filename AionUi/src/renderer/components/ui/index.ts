@@ -2,6 +2,7 @@
 // All components are built on top of Radix UI primitives
 
 export { Alert, AlertTitle, AlertDescription } from "./alert"
+export { Avatar, AvatarImage, AvatarFallback } from "./avatar"
 export { Description, type DescriptionItem } from "./description"
 export { Badge, badgeVariants } from "./badge"
 export { Button, buttonVariants } from "./button"

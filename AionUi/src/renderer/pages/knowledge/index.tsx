@@ -4,8 +4,12 @@
  * Unified interface for NotebookLM + Obsidian + PDF Pipeline + Browser Automation + Visualization.
  */
 import React, { useEffect, useMemo, useState } from 'react';
-import { Badge, Button, Card, Empty, Input, List, Message, Space, Spin, Tabs, Tag, Typography, Upload } from '@arco-design/web-react';
-import { IconBook, IconFile, IconLaunch, IconRefresh, IconSearch, IconSound, IconUpload } from '@arco-design/web-react/icon';
+import { Button } from '@/renderer/components/ui/button';
+import { Input } from '@/renderer/components/ui/input';
+import { Badge } from '@/renderer/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/renderer/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/renderer/components/ui/tabs';
+import { Book, FileText, ExternalLink, RefreshCw, Search, Volume2, Upload } from 'lucide-react';
 import { ipcBridge } from '@/common';
 import type { IObsidianDailySyncStatus } from '@/common/ipcBridge';
 import KnowledgeGraph, { type KnowledgeGraphEdge, type KnowledgeGraphNode } from '@/renderer/components/KnowledgeGraph';
@@ -14,9 +18,6 @@ import Dashboard, { type DashboardSnapshot } from './Dashboard';
 import NotebookLMAuth from './NotebookLMAuth';
 import SmartQuery from './SmartQuery';
 import DataviewQuery from './DataviewQuery';
-
-const { TabPane } = Tabs;
-const { Paragraph, Text, Title } = Typography;
 
 const GATEWAY_URL = 'http://localhost:8765';
 const VAULT_NAME = 'Knowledge-Hub';
@@ -81,7 +82,7 @@ const KnowledgeHubPage: React.FC = () => {
       const payload = await response.json();
       setStatus(payload);
     } catch {
-      Message.error('Failed to fetch system status');
+      console.error('Failed to fetch system status');
     }
   };
 
@@ -92,7 +93,7 @@ const KnowledgeHubPage: React.FC = () => {
       const payload = await response.json();
       setNotebooks(payload.notebooks || []);
     } catch {
-      Message.error('Failed to fetch notebooks');
+      console.error('Failed to fetch notebooks');
     } finally {
       setLoading(false);
     }
@@ -143,14 +144,12 @@ const KnowledgeHubPage: React.FC = () => {
     setRunningDailySync(true);
     try {
       const result = await ipcBridge.obsidianDailySync.runNow.invoke();
-      if (result.success) {
-        Message.success(result.summary || 'Daily sync completed');
-      } else {
-        Message.error(result.error || 'Daily sync failed');
+      if (!result.success) {
+        console.error(result.error || 'Daily sync failed');
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      Message.error(message);
+      console.error(message);
     } finally {
       setRunningDailySync(false);
       await fetchDailySyncStatus();
@@ -194,13 +193,12 @@ const KnowledgeHubPage: React.FC = () => {
       const payload = await response.json();
 
       if (payload.status === 'success') {
-        Message.success(`PDF processed successfully! Notebook ID: ${payload.notebook_id}`);
         await Promise.all([fetchNotebooks(), fetchDashboard(), fetchGraph(), fetchTimeline()]);
       } else {
-        Message.error(payload.error || 'Failed to process PDF');
+        console.error(payload.error || 'Failed to process PDF');
       }
     } catch {
-      Message.error('Failed to upload PDF');
+      console.error('Failed to upload PDF');
     } finally {
       setUploading(false);
     }
@@ -215,10 +213,8 @@ const KnowledgeHubPage: React.FC = () => {
       path: notePath,
     });
 
-    if (result.success) {
-      Message.success('Opened in Obsidian');
-    } else {
-      Message.error(result.error || 'Failed to open in Obsidian');
+    if (!result.success) {
+      console.error(result.error || 'Failed to open in Obsidian');
     }
   };
 
@@ -228,10 +224,8 @@ const KnowledgeHubPage: React.FC = () => {
       path: item.path,
     });
 
-    if (result.success) {
-      Message.success('Opened in Obsidian');
-    } else {
-      Message.error(result.error || 'Failed to open note');
+    if (!result.success) {
+      console.error(result.error || 'Failed to open note');
     }
   };
 
@@ -256,235 +250,264 @@ const KnowledgeHubPage: React.FC = () => {
       <div style={{ marginBottom: 24 }}>
         <div style={{ alignItems: 'center', display: 'flex', justifyContent: 'space-between' }}>
           <div>
-            <Title heading={3} style={{ margin: 0 }}>
+            <h1 className="text-2xl font-bold m-0">
               Knowledge Hub v3.0
-            </Title>
-            <Paragraph style={{ color: 'var(--color-text-3)', margin: '8px 0 0 0' }}>NotebookLM + Obsidian + PDF 自动化 + Browser Automation + Graph View</Paragraph>
+            </h1>
+            <p className="text-muted-foreground mt-2">NotebookLM + Obsidian + PDF 自动化 + Browser Automation + Graph View</p>
           </div>
-          <Space>
-            <Upload accept='.pdf' beforeUpload={handleUploadPDF} showUploadList={false}>
-              <Button type='primary' icon={<IconUpload />} loading={uploading}>
-                上传 PDF
+          <div className="flex gap-2">
+            <label className="cursor-pointer">
+              <input
+                type="file"
+                accept=".pdf"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) void handleUploadPDF(file);
+                }}
+              />
+              <Button disabled={uploading} className="gap-2">
+                <Upload size={16} />
+                {uploading ? '上传中...' : '上传 PDF'}
               </Button>
-            </Upload>
-            <Button icon={<IconRefresh />} onClick={() => void refreshAll()}>
+            </label>
+            <Button variant="outline" onClick={() => void refreshAll()} className="gap-2">
+              <RefreshCw size={16} />
               刷新
             </Button>
-          </Space>
+          </div>
         </div>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 16, marginBottom: 24 }}>
         <Card>
-          <Space direction='vertical' size='small'>
-            <Text type='secondary'>Obsidian CLI</Text>
-            <Title heading={5} style={{ margin: 0 }}>
-              {status?.obsidian_cli_version || 'Loading...'}
-            </Title>
-            <Badge status={status?.obsidian_cli_available ? 'success' : 'error'} text={status?.obsidian_cli_available ? '可用' : '不可用'} />
-          </Space>
+          <CardContent className="pt-6 space-y-2">
+            <div className="text-sm text-muted-foreground">Obsidian CLI</div>
+            <div className="text-xl font-bold">{status?.obsidian_cli_version || 'Loading...'}</div>
+            <Badge variant={status?.obsidian_cli_available ? 'default' : 'destructive'}>
+              {status?.obsidian_cli_available ? '可用' : '不可用'}
+            </Badge>
+          </CardContent>
         </Card>
 
         <Card>
-          <Space direction='vertical' size='small'>
-            <Text type='secondary'>NotebookLM Manager</Text>
-            <Title heading={5} style={{ margin: 0 }}>
-              {status?.notebooklm_manager_ready ? '就绪' : '未就绪'}
-            </Title>
-            <Badge status={status?.notebooklm_manager_ready ? 'success' : 'error'} text={status?.notebooklm_manager_ready ? 'Ready' : 'Unavailable'} />
-          </Space>
+          <CardContent className="pt-6 space-y-2">
+            <div className="text-sm text-muted-foreground">NotebookLM Manager</div>
+            <div className="text-xl font-bold">{status?.notebooklm_manager_ready ? '就绪' : '未就绪'}</div>
+            <Badge variant={status?.notebooklm_manager_ready ? 'default' : 'destructive'}>
+              {status?.notebooklm_manager_ready ? 'Ready' : 'Unavailable'}
+            </Badge>
+          </CardContent>
         </Card>
 
         <Card>
-          <Space direction='vertical' size='small'>
-            <Text type='secondary'>总 Notebooks</Text>
-            <Title heading={5} style={{ margin: 0 }}>
-              {status?.total_notebooks || 0}
-            </Title>
-            <IconBook style={{ color: 'var(--color-primary-6)', fontSize: 24 }} />
-          </Space>
+          <CardContent className="pt-6 space-y-2">
+            <div className="text-sm text-muted-foreground">总 Notebooks</div>
+            <div className="text-xl font-bold">{status?.total_notebooks || 0}</div>
+            <Book className="h-6 w-6 text-primary" />
+          </CardContent>
         </Card>
 
         <Card>
-          <Space direction='vertical' size='small'>
-            <Text type='secondary'>Vault 路径</Text>
-            <Title heading={6} style={{ margin: 0, wordBreak: 'break-all' }}>
-              {status?.vault_path?.split('/').pop() || 'N/A'}
-            </Title>
-            <IconFile style={{ color: 'var(--color-primary-6)', fontSize: 24 }} />
-          </Space>
+          <CardContent className="pt-6 space-y-2">
+            <div className="text-sm text-muted-foreground">Vault 路径</div>
+            <div className="text-xl font-bold break-all">{status?.vault_path?.split('/').pop() || 'N/A'}</div>
+            <FileText className="h-6 w-6 text-primary" />
+          </CardContent>
         </Card>
       </div>
 
       <Card>
-        <Tabs defaultActiveTab='dashboard'>
-          <TabPane key='dashboard' title='Dashboard'>
-            <Dashboard data={dashboard} />
-          </TabPane>
+        <CardContent className="p-0">
+          <Tabs defaultValue="dashboard">
+            <TabsList className="px-4 pt-2">
+              <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+              <TabsTrigger value="graph">Graph View</TabsTrigger>
+              <TabsTrigger value="timeline">Timeline</TabsTrigger>
+              <TabsTrigger value="notebooks">Notebooks</TabsTrigger>
+              <TabsTrigger value="upload">上传 PDF</TabsTrigger>
+              <TabsTrigger value="automation-auth">NotebookLM 认证</TabsTrigger>
+              <TabsTrigger value="smart-query">智能查询</TabsTrigger>
+              <TabsTrigger value="dataview">Dataview</TabsTrigger>
+              <TabsTrigger value="settings">设置</TabsTrigger>
+            </TabsList>
 
-          <TabPane key='graph' title='Graph View'>
-            <KnowledgeGraph nodes={graphNodes} edges={graphEdges} />
-          </TabPane>
+            <TabsContent value="dashboard">
+              <Dashboard data={dashboard} />
+            </TabsContent>
 
-          <TabPane key='timeline' title='Timeline'>
-            <TimelineView events={timelineEvents} />
-          </TabPane>
+            <TabsContent value="graph">
+              <KnowledgeGraph nodes={graphNodes} edges={graphEdges} />
+            </TabsContent>
 
-          <TabPane key='notebooks' title='Notebooks'>
-            <Input prefix={<IconSearch />} placeholder='Search notebooks by title or category...' value={searchQuery} onChange={setSearchQuery} allowClear className='mb-16px' />
+            <TabsContent value="timeline">
+              <TimelineView events={timelineEvents} />
+            </TabsContent>
 
-            {loading ? (
-              <div style={{ padding: 40, textAlign: 'center' }}>
-                <Spin />
-              </div>
-            ) : (
-              <>
-                {filteredNotebooks.length === 0 && obsidianResults.length === 0 ? (
-                  <Empty description={searchQuery ? 'No matching notebooks found' : '暂无 Notebooks'} style={{ padding: 40 }} />
+            <TabsContent value="notebooks">
+              <div className="p-4">
+                <div className="relative mb-4">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search notebooks by title or category..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+
+                {loading ? (
+                  <div className="flex items-center justify-center py-10">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  </div>
                 ) : (
-                  <Space direction='vertical' size='large' style={{ width: '100%' }}>
-                    {filteredNotebooks.length > 0 && (
-                      <div>
-                        <Text bold style={{ color: 'var(--color-text-2)', display: 'block', marginBottom: 12 }}>
-                          Notebooks ({filteredNotebooks.length})
-                        </Text>
-                        <List
-                          dataSource={filteredNotebooks}
-                          render={(item: Notebook) => (
-                            <List.Item key={item.notebook_id}>
-                              <div style={{ alignItems: 'center', display: 'flex', flex: 1, justifyContent: 'space-between' }}>
-                                <div>
-                                  <Text bold>{item.title}</Text>
-                                  <div style={{ marginTop: 4 }}>
-                                    <Tag color='blue' size='small'>
-                                      {item.category}
-                                    </Tag>
-                                    <Tag size='small'>{item.source_count} sources</Tag>
-                                    <Text type='secondary' style={{ fontSize: 12, marginLeft: 8 }}>
-                                      {new Date(item.created_at).toLocaleDateString('zh-CN')}
-                                    </Text>
+                  <>
+                    {filteredNotebooks.length === 0 && obsidianResults.length === 0 ? (
+                      <div className="flex items-center justify-center py-10 text-muted-foreground">
+                        {searchQuery ? 'No matching notebooks found' : '暂无 Notebooks'}
+                      </div>
+                    ) : (
+                      <div className="space-y-6">
+                        {filteredNotebooks.length > 0 && (
+                          <div>
+                            <div className="text-sm font-medium text-muted-foreground mb-3">
+                              Notebooks ({filteredNotebooks.length})
+                            </div>
+                            <div className="space-y-2">
+                              {(filteredNotebooks as Notebook[]).map((item) => (
+                                <div key={item.notebook_id} className="flex items-center justify-between p-3 border rounded-md">
+                                  <div>
+                                    <div className="font-medium">{item.title}</div>
+                                    <div className="mt-1 flex gap-2">
+                                      <Badge variant="default">{item.category}</Badge>
+                                      <Badge variant="outline">{item.source_count} sources</Badge>
+                                      <span className="text-xs text-muted-foreground">
+                                        {new Date(item.created_at).toLocaleDateString('zh-CN')}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <Button size="sm" variant="outline" onClick={() => void openNotebookInObsidian(item)} className="gap-1">
+                                      <ExternalLink size={14} />
+                                      Obsidian
+                                    </Button>
+                                    <Button size="sm" variant="outline" className="gap-1">
+                                      <Volume2 size={14} />
+                                      Audio
+                                    </Button>
+                                    <Button size="sm">查看</Button>
                                   </div>
                                 </div>
-                                <Space>
-                                  <Button size='small' icon={<IconLaunch />} onClick={() => void openNotebookInObsidian(item)}>
-                                    Obsidian
-                                  </Button>
-                                  <Button size='small' icon={<IconSound />}>
-                                    Audio
-                                  </Button>
-                                  <Button size='small' type='primary'>
-                                    查看
-                                  </Button>
-                                </Space>
-                              </div>
-                            </List.Item>
-                          )}
-                        />
-                      </div>
-                    )}
+                              ))}
+                            </div>
+                          </div>
+                        )}
 
-                    {searchQuery && obsidianResults.length > 0 && (
-                      <div>
-                        <Text bold style={{ color: 'var(--color-text-2)', display: 'block', marginBottom: 12 }}>
-                          Obsidian Vault ({obsidianResults.length})
-                          {searchingVault && <Spin size={12} style={{ marginLeft: 8 }} />}
-                        </Text>
-                        <List
-                          dataSource={obsidianResults}
-                          render={(item: ObsidianSearchResult) => (
-                            <List.Item key={item.path}>
-                              <div style={{ alignItems: 'center', display: 'flex', flex: 1, justifyContent: 'space-between' }}>
-                                <Text>{item.path}</Text>
-                                <Button size='small' type='text' icon={<IconLaunch />} onClick={() => void openSearchResultInObsidian(item)}>
-                                  Open
-                                </Button>
-                              </div>
-                            </List.Item>
-                          )}
-                        />
+                        {searchQuery && obsidianResults.length > 0 && (
+                          <div>
+                            <div className="text-sm font-medium text-muted-foreground mb-3">
+                              Obsidian Vault ({obsidianResults.length})
+                              {searchingVault && <span className="ml-2">...</span>}
+                            </div>
+                            <div className="space-y-2">
+                              {(obsidianResults as ObsidianSearchResult[]).map((item) => (
+                                <div key={item.path} className="flex items-center justify-between p-3 border rounded-md">
+                                  <span>{item.path}</span>
+                                  <Button size="sm" variant="ghost" onClick={() => void openSearchResultInObsidian(item)} className="gap-1">
+                                    <ExternalLink size={14} />
+                                    Open
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
-                  </Space>
+                  </>
                 )}
-              </>
-            )}
-          </TabPane>
+              </div>
+            </TabsContent>
 
-          <TabPane key='upload' title='上传 PDF'>
-            <div style={{ padding: 40, textAlign: 'center' }}>
-              <Upload drag accept='.pdf' beforeUpload={handleUploadPDF} showUploadList={false}>
-                <div style={{ padding: 40 }}>
-                  <IconUpload style={{ color: 'var(--color-primary-6)', fontSize: 48 }} />
-                  <Title heading={5} style={{ marginTop: 16 }}>
-                    拖拽 PDF 文件到此处上传
-                  </Title>
-                  <Paragraph type='secondary'>自动创建 Notebook + 生成 Artifacts + 同步 Obsidian</Paragraph>
+            <TabsContent value="upload">
+              <div className="p-10 text-center border-2 border-dashed border-muted rounded-lg m-4">
+                <label className="cursor-pointer block">
+                  <input
+                    type="file"
+                    accept=".pdf"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) void handleUploadPDF(file);
+                    }}
+                  />
+                  <Upload className="h-12 w-12 text-primary mx-auto mb-4" />
+                  <h3 className="text-lg font-medium mb-2">拖拽 PDF 文件到此处上传</h3>
+                  <p className="text-muted-foreground">自动创建 Notebook + 生成 Artifacts + 同步 Obsidian</p>
+                </label>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="automation-auth">
+              <NotebookLMAuth />
+            </TabsContent>
+
+            <TabsContent value="smart-query">
+              <SmartQuery />
+            </TabsContent>
+
+            <TabsContent value="dataview">
+              <DataviewQuery />
+            </TabsContent>
+
+            <TabsContent value="settings">
+              <div className="p-5">
+                <h3 className="text-lg font-medium mb-4">系统配置</h3>
+                <p className="mb-2">
+                  <span className="font-medium">Vault 路径: </span>
+                  <code className="bg-muted px-2 py-1 rounded">{status?.vault_path || 'N/A'}</code>
+                </p>
+                <p className="mb-2">
+                  <span className="font-medium">Obsidian CLI: </span>
+                  <code className="bg-muted px-2 py-1 rounded">{status?.obsidian_cli_version || 'Not installed'}</code>
+                </p>
+                <p className="mb-2">
+                  <span className="font-medium">Gateway API: </span>
+                  <code className="bg-muted px-2 py-1 rounded">{GATEWAY_URL}</code>
+                </p>
+
+                <h3 className="text-lg font-medium mt-6 mb-4">Daily Sync</h3>
+                <p className="mb-2">
+                  <span className="font-medium">Vault: </span>
+                  <code className="bg-muted px-2 py-1 rounded">{dailySyncStatus?.vault || 'N/A'}</code>
+                </p>
+                <p className="mb-2">
+                  <span className="font-medium">Schedule: </span>
+                  <code className="bg-muted px-2 py-1 rounded">{dailySyncStatus?.schedule || 'N/A'}</code>
+                </p>
+                <p className="mb-2">
+                  <span className="font-medium">Next Run: </span>
+                  <code className="bg-muted px-2 py-1 rounded">{formatTimestamp(dailySyncStatus?.nextRunAt)}</code>
+                </p>
+                <p className="mb-2">
+                  <span className="font-medium">Last Success: </span>
+                  <code className="bg-muted px-2 py-1 rounded">{formatTimestamp(dailySyncStatus?.lastSuccessAt)}</code>
+                </p>
+                <p className="mb-4">
+                  <span className="font-medium">Last Error: </span>
+                  <code className="bg-muted px-2 py-1 rounded">{dailySyncStatus?.lastError || 'None'}</code>
+                </p>
+
+                <div className="flex gap-2">
+                  <Button onClick={() => void runDailySyncNow()} disabled={runningDailySync}>
+                    {runningDailySync ? '执行中...' : '手动执行 Daily Sync'}
+                  </Button>
+                  <Button variant="outline" onClick={() => void fetchDailySyncStatus()}>刷新 Daily Sync 状态</Button>
                 </div>
-              </Upload>
-            </div>
-          </TabPane>
-
-          <TabPane key='automation-auth' title='NotebookLM 认证'>
-            <NotebookLMAuth />
-          </TabPane>
-
-          <TabPane key='smart-query' title='智能查询'>
-            <SmartQuery />
-          </TabPane>
-
-          <TabPane key='dataview' title='Dataview'>
-            <DataviewQuery />
-          </TabPane>
-
-          <TabPane key='settings' title='设置'>
-            <div style={{ padding: 20 }}>
-              <Title heading={6}>系统配置</Title>
-              <Paragraph>
-                <Text bold>Vault 路径: </Text>
-                <Text code>{status?.vault_path || 'N/A'}</Text>
-              </Paragraph>
-              <Paragraph>
-                <Text bold>Obsidian CLI: </Text>
-                <Text code>{status?.obsidian_cli_version || 'Not installed'}</Text>
-              </Paragraph>
-              <Paragraph>
-                <Text bold>Gateway API: </Text>
-                <Text code>{GATEWAY_URL}</Text>
-              </Paragraph>
-
-              <Title heading={6} style={{ marginTop: 20 }}>
-                Daily Sync
-              </Title>
-              <Paragraph>
-                <Text bold>Vault: </Text>
-                <Text code>{dailySyncStatus?.vault || 'N/A'}</Text>
-              </Paragraph>
-              <Paragraph>
-                <Text bold>Schedule: </Text>
-                <Text code>{dailySyncStatus?.schedule || 'N/A'}</Text>
-              </Paragraph>
-              <Paragraph>
-                <Text bold>Next Run: </Text>
-                <Text code>{formatTimestamp(dailySyncStatus?.nextRunAt)}</Text>
-              </Paragraph>
-              <Paragraph>
-                <Text bold>Last Success: </Text>
-                <Text code>{formatTimestamp(dailySyncStatus?.lastSuccessAt)}</Text>
-              </Paragraph>
-              <Paragraph>
-                <Text bold>Last Error: </Text>
-                <Text code>{dailySyncStatus?.lastError || 'None'}</Text>
-              </Paragraph>
-
-              <Space>
-                <Button type='primary' loading={runningDailySync} onClick={() => void runDailySyncNow()}>
-                  手动执行 Daily Sync
-                </Button>
-                <Button onClick={() => void fetchDailySyncStatus()}>刷新 Daily Sync 状态</Button>
-              </Space>
-            </div>
-          </TabPane>
-        </Tabs>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
       </Card>
     </div>
   );

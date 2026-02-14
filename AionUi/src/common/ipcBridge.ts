@@ -413,6 +413,61 @@ export interface IAgentTeamExecutionResult {
   started: number;
   completed: number;
   failed: number;
+
+
+// ==================
+// Skills Manager Types
+// ==================
+
+export interface ISkill {
+  id: string;
+  name: string;
+  category: string;
+  description: string | null;
+  file_path: string;
+  content: string | null;
+  manifest: string | null;
+  created_at: number;
+  updated_at: number;
+  version: string | null;
+  author: string | null;
+  tags: string[];
+}
+
+export interface ISkillDetail extends ISkill {
+  enabled_tools: string[];
+}
+
+export interface IAITool {
+  id: string;
+  name: string;
+  type: string;
+  display_name: string;
+  skills_path: string;
+  config_path: string | null;
+  icon_url: string | null;
+  enabled: number;
+  detected: number;
+  last_detected_at: number | null;
+  created_at: number;
+  updated_at: number;
+}
+
+export interface ISyncResult {
+  skill_id: string;
+  tool_id: string;
+  success: boolean;
+  symlink_path?: string;
+  error?: string;
+}
+
+export interface ISkillToolMappingView {
+  tool_id: string;
+  enabled: number;
+  synced: number;
+  symlink_path: string | null;
+  sync_error: string | null;
+}
 }
 
 
@@ -461,6 +516,31 @@ export const agentTeams = {
   getCostAnalysis: bridge.buildProvider<IBridgeResponse<IAgentCostAnalysis>, { team_id: string }>('agent-teams.get-cost-analysis'),
 };
 
+
+
+export const skills = {
+  list: bridge.buildProvider<IBridgeResponse<ISkill[]>, { category?: string }>('skills.list'),
+  get: bridge.buildProvider<IBridgeResponse<ISkillDetail>, { id: string }>('skills.get'),
+  create: bridge.buildProvider<IBridgeResponse<ISkillDetail>, { name: string; category: string; description?: string; content: string; manifest?: Record<string, unknown>; enabled_tools?: string[]; tags?: string[] }>('skills.create'),
+  update: bridge.buildProvider<IBridgeResponse<ISkillDetail>, { id: string; updates: { description?: string | null; content?: string; manifest?: Record<string, unknown> | null; enabled_tools?: string[]; tags?: string[] } }>('skills.update'),
+  delete: bridge.buildProvider<IBridgeResponse<{ success: boolean }>, { id: string }>('skills.delete'),
+};
+
+export const tools = {
+  detect: bridge.buildProvider<IBridgeResponse<IAITool[]>, void>('tools.detect'),
+  list: bridge.buildProvider<IBridgeResponse<IAITool[]>, void>('tools.list'),
+  setEnabled: bridge.buildProvider<IBridgeResponse<{ success: boolean }>, { tool_id: string; enabled: boolean }>('tools.set-enabled'),
+  add: bridge.buildProvider<IBridgeResponse<IAITool>, { name: string; display_name?: string; skills_path: string; config_path?: string }>('tools.add'),
+};
+
+export const sync = {
+  executeAll: bridge.buildProvider<IBridgeResponse<ISyncResult[]>, void>('sync.execute-all'),
+  executeOne: bridge.buildProvider<IBridgeResponse<ISyncResult>, { skill_id: string; tool_id: string }>('sync.execute-one'),
+  unsync: bridge.buildProvider<IBridgeResponse<{ success: boolean }>, { skill_id: string; tool_id: string }>('sync.unsync'),
+  status: bridge.buildProvider<IBridgeResponse<{ totalSkills: number; syncedSkills: number; errors: number }>, void>('sync.status'),
+  getMappingsForSkill: bridge.buildProvider<IBridgeResponse<ISkillToolMappingView[]>, { skill_id: string }>('sync.get-mappings-for-skill'),
+  setMappingEnabled: bridge.buildProvider<IBridgeResponse<{ success: boolean }>, { skill_id: string; tool_id: string; enabled: boolean }>('sync.set-mapping-enabled'),
+};
 export const previewHistory = {
   list: bridge.buildProvider<PreviewSnapshotInfo[], { target: PreviewHistoryTarget }>('preview-history.list'),
   save: bridge.buildProvider<PreviewSnapshotInfo, { target: PreviewHistoryTarget; content: string }>('preview-history.save'),

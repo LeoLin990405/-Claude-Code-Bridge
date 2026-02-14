@@ -4,13 +4,12 @@
  * Unified interface for managing conversation history, memory search, and context
  */
 import React, { useState } from 'react';
-import { Card, Tabs } from '@arco-design/web-react';
+import { Card, CardContent } from '@/renderer/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/renderer/components/ui/tabs';
 import { useTranslation } from 'react-i18next';
 import SessionsList from './SessionsList';
 import SearchView from './SearchView';
 import ContextView from './ContextView';
-
-const { TabPane } = Tabs;
 
 const MemoryHub: React.FC = () => {
   const { t } = useTranslation();
@@ -30,17 +29,24 @@ const MemoryHub: React.FC = () => {
 
       {/* Main Content */}
       <Card className='flex-1 min-h-0'>
-        <Tabs activeTab={activeTab} onChange={setActiveTab}>
-          <TabPane key='sessions' title={t('memory.tabs.sessions')}>
-            <SessionsList />
-          </TabPane>
-          <TabPane key='search' title={t('memory.tabs.search')}>
-            <SearchView />
-          </TabPane>
-          <TabPane key='context' title={t('memory.tabs.context')}>
-            <ContextView />
-          </TabPane>
-        </Tabs>
+        <CardContent className="p-0 h-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
+            <TabsList className="px-4 pt-2">
+              <TabsTrigger value='sessions'>{t('memory.tabs.sessions')}</TabsTrigger>
+              <TabsTrigger value='search'>{t('memory.tabs.search')}</TabsTrigger>
+              <TabsTrigger value='context'>{t('memory.tabs.context')}</TabsTrigger>
+            </TabsList>
+            <TabsContent value='sessions' className="flex-1 overflow-hidden">
+              <SessionsList />
+            </TabsContent>
+            <TabsContent value='search' className="flex-1 overflow-hidden">
+              <SearchView />
+            </TabsContent>
+            <TabsContent value='context' className="flex-1 overflow-hidden">
+              <ContextView />
+            </TabsContent>
+          </Tabs>
+        </CardContent>
       </Card>
     </div>
   );

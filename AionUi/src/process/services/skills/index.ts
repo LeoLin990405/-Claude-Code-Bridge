@@ -4,3 +4,4 @@ export * from './SkillsService';
 export * from './AIToolDetector';
 export * from './SymlinkManager';
 export * from './SyncService';
+export * from './runtime';

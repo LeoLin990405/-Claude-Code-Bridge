@@ -2,8 +2,9 @@
  * SearchView - Search through conversation messages
  */
 import React, { useState } from 'react';
-import { Input, List, Empty, Spin, Tag } from '@arco-design/web-react';
-import { IconSearch } from '@arco-design/web-react/icon';
+import { Input } from '@/renderer/components/ui/input';
+import { Badge } from '@/renderer/components/ui/badge';
+import { Search } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useMemory } from '@/renderer/context/MemoryContext';
@@ -30,46 +31,56 @@ const SearchView: React.FC = () => {
   return (
     <div className='h-full flex flex-col p-16px'>
       {/* Search Input */}
-      <Input.Search
-        placeholder={t('memory.search.placeholder')}
-        value={query}
-        onChange={setQuery}
-        onSearch={handleSearch}
-        prefix={<IconSearch />}
-        size='large'
-        className='mb-24px'
-        loading={isLoading}
-      />
+      <div className="flex gap-2 mb-24px">
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder={t('memory.search.placeholder')}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+            className="pl-10"
+          />
+        </div>
+        <button
+          onClick={handleSearch}
+          disabled={isLoading}
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50"
+        >
+          {isLoading ? '...' : t('memory.search.button', { defaultValue: 'Search' })}
+        </button>
+      </div>
 
       {/* Results */}
       <div className='flex-1 overflow-y-auto'>
         {isLoading ? (
           <div className='flex items-center justify-center h-full'>
-            <Spin />
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         ) : searchResults.length === 0 ? (
-          <Empty description={t('memory.search.noResults')} />
+          <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+            {t('memory.search.noResults')}
+          </div>
         ) : (
-          <List
-            dataSource={searchResults}
-            render={(item: Message) => (
-              <List.Item
+          <div className="space-y-2">
+            {(searchResults as Message[]).map((item) => (
+              <div
                 key={item.id}
-                className='hover:bg-fill-2 cursor-pointer rd-6px p-12px'
+                className='hover:bg-fill-2 cursor-pointer rounded-md p-12px border'
                 onClick={() => navigate(`/conversation/${item.conversation_id}`)}
               >
                 <div className='w-full'>
                   <div className='flex items-center gap-8px mb-8px'>
-                    <Tag size='small'>{item.type}</Tag>
+                    <Badge variant="outline">{item.type}</Badge>
                     <span className='text-12px text-t-secondary'>
                       {new Date(item.created_at).toLocaleString()}
                     </span>
                   </div>
                   <div className='text-14px text-t-primary line-clamp-3'>{item.content}</div>
                 </div>
-              </List.Item>
-            )}
-          />
+              </div>
+            ))}
+          </div>
         )}
       </div>
     </div>

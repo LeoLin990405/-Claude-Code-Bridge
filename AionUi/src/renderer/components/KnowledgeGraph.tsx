@@ -5,9 +5,7 @@
  */
 
 import React, { useMemo } from 'react';
-import { Card, Empty, Typography } from '@arco-design/web-react';
-
-const { Text } = Typography;
+import { Card, CardContent } from '@/renderer/components/ui/card';
 
 export type KnowledgeGraphNode = {
   id: string;
@@ -74,49 +72,53 @@ const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({ nodes, edges, width = 9
   if (nodes.length === 0) {
     return (
       <Card>
-        <Empty description='暂无可视化节点数据' />
+        <CardContent className="flex items-center justify-center py-12 text-muted-foreground">
+          暂无可视化节点数据
+        </CardContent>
       </Card>
     );
   }
 
   return (
     <Card>
-      <div style={{ overflowX: 'auto' }}>
-        <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} style={{ background: 'var(--bg-1)', borderRadius: 12 }}>
-          {edges.map((edge) => {
-            const from = positions.get(edge.source);
-            const to = positions.get(edge.target);
-            if (!from || !to) {
-              return null;
-            }
-            return <line key={`${edge.source}-${edge.target}-${edge.type || 'rel'}`} x1={from.x} y1={from.y} x2={to.x} y2={to.y} stroke='rgba(14, 165, 233, 0.35)' strokeWidth={edge.type === 'hub' ? 2 : 1.2} />;
-          })}
+      <CardContent>
+        <div style={{ overflowX: 'auto' }}>
+          <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} style={{ background: 'var(--bg-1)', borderRadius: 12 }}>
+            {edges.map((edge) => {
+              const from = positions.get(edge.source);
+              const to = positions.get(edge.target);
+              if (!from || !to) {
+                return null;
+              }
+              return <line key={`${edge.source}-${edge.target}-${edge.type || 'rel'}`} x1={from.x} y1={from.y} x2={to.x} y2={to.y} stroke='rgba(14, 165, 233, 0.35)' strokeWidth={edge.type === 'hub' ? 2 : 1.2} />;
+            })}
 
-          {nodes.map((node) => {
-            const point = positions.get(node.id);
-            if (!point) {
-              return null;
-            }
-            const color = categoryColor.get(node.category || 'general') || '#0ea5e9';
-            const ratio = node.max_sources > 0 ? node.source_count / node.max_sources : 0;
-            const radius = 10 + Math.min(Math.max(ratio, 0), 1) * 9;
+            {nodes.map((node) => {
+              const point = positions.get(node.id);
+              if (!point) {
+                return null;
+              }
+              const color = categoryColor.get(node.category || 'general') || '#0ea5e9';
+              const ratio = node.max_sources > 0 ? node.source_count / node.max_sources : 0;
+              const radius = 10 + Math.min(Math.max(ratio, 0), 1) * 9;
 
-            return (
-              <g key={node.id}>
-                <circle cx={point.x} cy={point.y} r={radius + 4} fill='rgba(255,255,255,0.85)' />
-                <circle cx={point.x} cy={point.y} r={radius} fill={color} />
-                <text x={point.x + radius + 6} y={point.y + 4} fontSize='12' fill='var(--text-primary)'>
-                  {node.label}
-                </text>
-              </g>
-            );
-          })}
-        </svg>
-      </div>
+              return (
+                <g key={node.id}>
+                  <circle cx={point.x} cy={point.y} r={radius + 4} fill='rgba(255,255,255,0.85)' />
+                  <circle cx={point.x} cy={point.y} r={radius} fill={color} />
+                  <text x={point.x + radius + 6} y={point.y + 4} fontSize='12' fill='var(--text-primary)'>
+                    {node.label}
+                  </text>
+                </g>
+              );
+            })}
+          </svg>
+        </div>
 
-      <div style={{ marginTop: 12 }}>
-        <Text type='secondary'>节点大小表示来源占用比例，连线表示同类或高活跃笔记的关联。</Text>
-      </div>
+        <div className="mt-3 text-sm text-muted-foreground">
+          节点大小表示来源占用比例，连线表示同类或高活跃笔记的关联。
+        </div>
+      </CardContent>
     </Card>
   );
 };

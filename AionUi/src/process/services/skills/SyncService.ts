@@ -169,6 +169,22 @@ export class SyncService {
       .run(Date.now(), skillId, toolId);
   }
 
+
+
+  getMappingsForSkill(skillId: string): Array<{ tool_id: string; enabled: number; synced: number; symlink_path: string | null; sync_error: string | null }> {
+    const rows = this.db
+      .prepare(
+        `
+        SELECT tool_id, enabled, synced, symlink_path, sync_error
+        FROM skill_tool_mapping
+        WHERE skill_id = ?
+        ORDER BY tool_id ASC
+      `
+      )
+      .all(skillId) as Array<{ tool_id: string; enabled: number; synced: number; symlink_path: string | null; sync_error: string | null }>;
+
+    return rows;
+  }
   status(): { totalSkills: number; syncedSkills: number; errors: number } {
     const totalSkills = (this.db.prepare('SELECT COUNT(*) as cnt FROM skills').get() as any).cnt as number;
     const syncedSkills = (this.db.prepare('SELECT COUNT(*) as cnt FROM skill_tool_mapping WHERE synced = 1').get() as any).cnt as number;

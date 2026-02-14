@@ -2,8 +2,10 @@
  * ContextView - Display and manage active conversation context
  */
 import React, { useState } from 'react';
-import { Card, Empty, Button, Statistic, List, Tag } from '@arco-design/web-react';
-import { IconDelete } from '@arco-design/web-react/icon';
+import { Card, CardContent, CardHeader, CardTitle } from '@/renderer/components/ui/card';
+import { Button } from '@/renderer/components/ui/button';
+import { Badge } from '@/renderer/components/ui/badge';
+import { Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 type ContextInfo = {
@@ -35,8 +37,8 @@ const ContextView: React.FC = () => {
 
   if (!contextInfo) {
     return (
-      <div className='flex items-center justify-center h-full'>
-        <Empty description={t('memory.context.noActive')} />
+      <div className='flex items-center justify-center h-full text-muted-foreground'>
+        {t('memory.context.noActive')}
       </div>
     );
   }
@@ -49,37 +51,48 @@ const ContextView: React.FC = () => {
         style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}
       >
         <Card>
-          <Statistic title={t('memory.context.messages')} value={contextInfo.message_count || 0} />
+          <CardContent className="pt-6">
+            <div className="text-2xl font-bold">{contextInfo.message_count || 0}</div>
+            <div className="text-sm text-muted-foreground">{t('memory.context.messages')}</div>
+          </CardContent>
         </Card>
         <Card>
-          <Statistic title={t('memory.context.tokens')} value={contextInfo.token_count || 0} />
+          <CardContent className="pt-6">
+            <div className="text-2xl font-bold">{contextInfo.token_count || 0}</div>
+            <div className="text-sm text-muted-foreground">{t('memory.context.tokens')}</div>
+          </CardContent>
         </Card>
-        <Card style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Button type='primary' status='danger' icon={<IconDelete />} onClick={handleClearContext}>
-            {t('memory.context.clear')}
-          </Button>
+        <Card className="flex items-center justify-center">
+          <CardContent>
+            <Button variant="destructive" onClick={handleClearContext} className="gap-2">
+              <Trash2 size={16} />
+              {t('memory.context.clear')}
+            </Button>
+          </CardContent>
         </Card>
       </div>
 
       {/* Context Messages */}
       {contextInfo.messages && contextInfo.messages.length > 0 && (
-        <Card title={t('memory.context.active')}>
-          <List
-            dataSource={contextInfo.messages}
-            render={(item) => (
-              <List.Item key={item.id}>
-                <div className='w-full'>
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('memory.context.active')}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {contextInfo.messages.map((item) => (
+                <div key={item.id} className="border-b last:border-0 pb-3 last:pb-0">
                   <div className='flex items-center gap-8px mb-8px'>
-                    <Tag size='small'>{item.type}</Tag>
+                    <Badge variant="outline">{item.type}</Badge>
                     <span className='text-12px text-t-secondary'>
                       {new Date(item.created_at).toLocaleString()}
                     </span>
                   </div>
                   <div className='text-14px text-t-primary line-clamp-2'>{item.content}</div>
                 </div>
-              </List.Item>
-            )}
-          />
+              ))}
+            </div>
+          </CardContent>
         </Card>
       )}
     </div>
