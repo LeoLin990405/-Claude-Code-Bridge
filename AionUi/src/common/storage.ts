@@ -36,6 +36,12 @@ export interface IConfigStorageRefer {
     cliPath?: string;
     yoloMode?: boolean;
   };
+  'kimi.config'?: {
+    apiKey?: string;
+    baseUrl?: string;
+    model?: 'kimi-normal' | 'kimi-thinking';
+    cliPath?: string;
+  };
   'hivemind.config'?: {
     gatewayUrl?: string;
     defaultProvider?: string | null;

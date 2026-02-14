@@ -23,6 +23,7 @@ import SystemModalContent from './contents/SystemModalContent';
 import ToolsModalContent from './contents/ToolsModalContent';
 import WebuiModalContent from './contents/WebuiModalContent';
 import HivemindModalContent from './contents/HivemindModalContent';
+import KimiModalContent from './contents/KimiModalContent';
 import { SettingsViewModeProvider } from './settingsViewContext';
 
 // ==================== 常量定义 / Constants ====================
@@ -53,7 +54,7 @@ const RESIZE_DEBOUNCE_DELAY = 150;
 
 /**
  * 设置标签页类型 / Settings tab type */
-export type SettingTab = 'hivemind' | 'gemini' | 'model' | 'agent' | 'tools' | 'security' | 'webui' | 'system' | 'about';
+export type SettingTab = 'hivemind' | 'gemini' | 'kimi' | 'model' | 'agent' | 'tools' | 'security' | 'webui' | 'system' | 'about';
 
 /**
  * 设置弹窗组件属性 / Settings modal component props */
@@ -170,6 +171,11 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onCancel, defaul
         icon: <Gemini theme='outline' size='20' fill={iconColors.secondary} />,
       },
       {
+        key: 'kimi',
+        label: t('settings.kimiConfig', { defaultValue: 'Kimi' }),
+        icon: <Communication theme='outline' size='20' fill={iconColors.secondary} />,
+      },
+      {
         key: 'model',
         label: t('settings.model'),
         icon: <LinkCloud theme='outline' size='20' fill={iconColors.secondary} />,
@@ -220,6 +226,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onCancel, defaul
         return <HivemindModalContent />;
       case 'gemini':
         return <GeminiModalContent onRequestClose={onCancel} />;
+      case 'kimi':
+        return <KimiModalContent onRequestClose={onCancel} />;
       case 'model':
         return <ModelModalContent />;
       case 'agent':

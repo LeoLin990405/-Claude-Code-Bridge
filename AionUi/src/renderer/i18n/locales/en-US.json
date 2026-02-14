@@ -871,7 +871,26 @@
       "waitingConnection": "WebSocket connection is being established. Please wait...",
       "showOptionalFields": "Show optional settings",
       "hideOptionalFields": "Hide optional settings"
-    }
+    },
+    "kimiApiKey": "Kimi API Key",
+    "kimiApiKeyPlaceholder": "Enter your Moonshot API key (sk-...)",
+    "kimiApiKeyDescription": "Get your API key from https://platform.moonshot.cn",
+    "kimiBaseUrl": "API Base URL",
+    "kimiModel": "Default Model",
+    "kimiNormalMode": "Standard Mode",
+    "kimiNormalModeDesc": "Fast response for quick queries (~10s)",
+    "kimiThinkingMode": "Thinking Mode",
+    "kimiThinkingModeDesc": "Detailed reasoning with thought chain (~25s)",
+    "kimiCliPath": "CLI Path (Optional)",
+    "kimiCliPathPlaceholder": "/usr/local/bin/kimi or leave empty for auto-detect",
+    "kimiCliPathDescription": "Specify custom Kimi CLI path if not in PATH",
+    "kimiHealthCheck": "Connection Test",
+    "kimiCheckConnection": "Test Connection",
+    "kimiHealthCheckSuccess": "Connection successful!",
+    "kimiHealthCheckFailed": "Connection failed. Please check your configuration.",
+    "kimiConnectionSuccess": "Connected",
+    "kimiConnectionFailed": "Disconnected",
+    "kimiConfig": "Kimi"
   },
   "messages": {
     "fileChanges": "File Changes",
@@ -1486,8 +1505,8 @@
     "tasks": "Tasks",
     "monitor": "Monitor",
     "analytics": "Analytics"
-  }
-  ,"skills": {
+  },
+  "skills": {
     "title": "Skills",
     "subtitle": "Manage and sync reusable skills across AI tools.",
     "newSkill": "New Skill",
@@ -1497,5 +1516,4 @@
     "editor": "Skill Editor",
     "enableForTools": "Enable for Tools"
   }
-
 }

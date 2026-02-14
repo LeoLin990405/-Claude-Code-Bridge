@@ -4,7 +4,7 @@
 
 **AionUi** is a unified AI agent graphical interface that transforms command-line AI agents into a modern, efficient chat interface. It supports multiple CLI AI tools including Gemini CLI, Claude Code, CodeX, Qwen Code, and more.
 
-- **Version**: 1.11.0
+- **Version**: 1.11.1
 - **License**: Apache-2.0
 - **Platform**: Cross-platform (macOS, Windows, Linux)
 

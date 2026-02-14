@@ -1,7 +1,7 @@
 {
   "name": "HiveMind",
   "productName": "HiveMind",
-  "version": "1.11.0",
+  "version": "1.11.1",
   "description": "HiveMind Gateway 桌面客户端 - 统一的多 AI 聊天界面和监控仪表盘",
   "main": ".webpack/main",
   "scripts": {

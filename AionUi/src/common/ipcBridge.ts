@@ -788,3 +788,18 @@ export const channel = {
   pluginStatusChanged: bridge.buildEmitter<{ pluginId: string; status: IChannelPluginStatus }>('channel.plugin-status-changed'),
   userAuthorized: bridge.buildEmitter<IChannelUser>('channel.user-authorized'),
 };
+
+// ==================== Models API ====================
+// HiveMind 模型选择相关接口
+export const models = {
+  // 获取指定 Provider 的模型列表
+  getModels: bridge.buildProvider<import('@/types/acpTypes').ModelConfig[], import('@/types/acpTypes').AcpBackendAll>('models:getModels'),
+  // 获取 Ollama 动态模型列表
+  getOllamaModels: bridge.buildProvider<import('@/types/acpTypes').ModelConfig[], void>('models:getOllamaModels'),
+  // 获取用户的模型偏好设置
+  getUserPreferences: bridge.buildProvider<import('@/types/acpTypes').UserModelPreferences, void>('models:getUserPreferences'),
+  // 保存用户的模型偏好
+  saveUserPreferences: bridge.buildProvider<void, import('@/types/acpTypes').UserModelPreferences>('models:saveUserPreferences'),
+  // 获取指定 Provider 的默认模型
+  getDefaultModel: bridge.buildProvider<import('@/types/acpTypes').ModelConfig | null, import('@/types/acpTypes').AcpBackendAll>('models:getDefaultModel'),
+};
