@@ -123,35 +123,46 @@ For complex forms (AddPlatformModal):
 22. ✅ `TasksKanbanPage.tsx` - Arco Card/Button/Form/Select → shadcn
 23. ✅ `TeamDetailPage.tsx` - Arco Tabs/Card/Table/Form → shadcn
 
-## Phase 3-6: Pending
+## Phase 3: Knowledge/Memory ✅ COMPLETE (100%)
 
-- Phase 3: Knowledge/Memory (10 files)
+### Migrated Files ✅
+1. ✅ `Avatar` component created
+2. ✅ `memory/index.tsx` - Arco Card/Tabs → shadcn
+3. ✅ `memory/SearchView.tsx` - Arco Input/List/Empty/Spin/Tag → shadcn
+4. ✅ `memory/ContextView.tsx` - Arco Card/Empty/Button/Statistic/List/Tag → shadcn
+5. ✅ `memory/SessionsList.tsx` - Arco List/Avatar/Tag/Button/Popconfirm/Empty/Spin → shadcn
+6. ✅ `components/KnowledgeGraph.tsx` - Arco Card/Empty/Typography → shadcn
+7. ✅ `knowledge/DataviewQuery.tsx` - Arco Button/Card/Input/Message/Space/Table → shadcn
+8. ✅ `knowledge/index.tsx` - Arco Badge/Button/Card/Empty/Input/List/Message/Space/Spin/Tabs/Tag/Typography/Upload → shadcn
+
+## Phase 4-6: Pending
+
 - Phase 4: Conversation (18 files)
 - Phase 5: Monitor/Cron (8 files)
 - Phase 6: Cleanup & Optimization
 
 ## Statistics
 
-- **Total Commits**: 12
-- **Files Modified**: 60+
-- **Lines Changed**: +5,000, -1,000
-- **UI Components**: 23
+- **Total Commits**: 14
+- **Files Modified**: 70+
+- **Lines Changed**: +6,500, -1,500
+- **UI Components**: 24 (added Avatar)
 - **Test Files**: 5
 
 ### Migration Progress
-- Phase 0: ✅ 100% (Foundation)
-- Phase 1: ✅ 100% (Settings Pages)
+- Phase 0: ✅ 100% (Foundation - 21 components)
+- Phase 1: ✅ 100% (Settings Pages - 9 files)
 - Phase 2: ✅ 100% (Agent Teams - 23 files)
-- Phase 3: ⏳ 0% (Knowledge/Memory - 10 files)
+- Phase 3: ✅ 100% (Knowledge/Memory - 8 files)
 - Phase 4: ⏳ 0% (Conversation - 18 files)
 - Phase 5: ⏳ 0% (Monitor/Cron - 8 files)
 - Phase 6: ⏳ 0% (Cleanup & Optimization)
 
 ## Next Steps
 
-1. ✅ Complete Agent Teams page components migration
-2. Migrate SettingsModal content components (8+ files)
-3. Enter Phase 3: Knowledge/Memory (10 files)
+1. ✅ Complete Agent Teams migration (23 files)
+2. ✅ Complete Knowledge/Memory migration (8 files)
+3. Migrate SettingsModal content components (8+ files)
 4. Enter Phase 4: Conversation (18 files)
 5. Remove Arco Design dependency
 6. Performance testing
