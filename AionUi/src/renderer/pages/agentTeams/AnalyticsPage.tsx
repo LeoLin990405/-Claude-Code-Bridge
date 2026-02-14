@@ -5,14 +5,28 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { Card, Grid, Select, Space, Statistic, Table, Tag } from '@arco-design/web-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/renderer/components/ui/card';
+import { Badge } from '@/renderer/components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/renderer/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/renderer/components/ui/table';
 import { motion } from 'framer-motion';
 import type { IAgentCostAnalysis, IAgentTeam, IAgentTeamStats } from '@/common/ipcBridge';
 import { agentTeamsApi } from './api';
 import { CostChart } from './components';
 import { Typography } from '@/renderer/components/atoms/Typography';
-
-const { Row, Col } = Grid;
 
 const AnalyticsPage: React.FC = () => {
   const [teams, setTeams] = useState<IAgentTeam[]>([]);
@@ -73,86 +87,135 @@ const AnalyticsPage: React.FC = () => {
           <Typography variant="h4" bold>Analytics</Typography>
           <Typography variant="body2" color="secondary">Cost and performance analysis for AI teams</Typography>
         </div>
-        <Card style={{ borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }} bodyStyle={{ padding: '8px 16px' }}>
-          <Space align='center'>
-            <Typography variant="body2" bold>Team:</Typography>
-            <Select
-              style={{ width: 220, borderRadius: 'var(--radius-sm)' }}
-              value={teamId}
-              onChange={(value) => setTeamId(String(value))}
-              options={teams.map((team) => ({ label: team.name, value: team.id }))}
-            />
-          </Space>
+        <Card>
+          <CardContent className="py-2 px-4">
+            <div className="flex items-center gap-2">
+              <Typography variant="body2" bold>Team:</Typography>
+              <Select
+                value={teamId}
+                onValueChange={setTeamId}
+              >
+                <SelectTrigger className="w-[220px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {teams.map((team) => (
+                    <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
         </Card>
       </div>
 
-      <Space direction='vertical' size='large' style={{ width: '100%' }}>
-        <Row gutter={16}>
-          <Col span={6}>
-            <Card style={{ borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-sm)' }}>
+      <div className="flex flex-col gap-6 w-full">
+        <div className="grid grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="pt-6">
               <div><Typography variant="caption" color="secondary">Total Tasks</Typography><Typography variant="h4" bold>{stats?.total_tasks || 0}</Typography></div>
-            </Card>
-          </Col>
-          <Col span={6}>
-            <Card style={{ borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-sm)' }}>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
               <div><Typography variant="caption" color="secondary">Completed</Typography><Typography variant="h4" bold style={{ color: 'var(--color-success)' }}>{stats?.completed_tasks || 0}</Typography></div>
-            </Card>
-          </Col>
-          <Col span={6}>
-            <Card style={{ borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-sm)' }}>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
               <div><Typography variant="caption" color="secondary">Failed</Typography><Typography variant="h4" bold style={{ color: 'var(--color-error)' }}>{stats?.failed_tasks || 0}</Typography></div>
-            </Card>
-          </Col>
-          <Col span={6}>
-            <Card style={{ borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-sm)' }}>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
               <div><Typography variant="caption" color="secondary">Total Cost (USD)</Typography><Typography variant="h4" bold style={{ color: 'var(--color-warning)' }}>{(cost?.total_cost_usd || 0).toFixed(4)}</Typography></div>
-            </Card>
-          </Col>
-        </Row>
+            </CardContent>
+          </Card>
+        </div>
 
-        <Card 
-          title={<Typography variant="h6">Cost by Provider (Chart)</Typography>}
-          style={{ borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-md)' }}
-        >
-          <CostChart cost={cost} />
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              <Typography variant="h6">Cost by Provider (Chart)</Typography>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CostChart cost={cost} />
+          </CardContent>
         </Card>
 
-        <Card 
-          title={<Typography variant="h6">Cost by Provider</Typography>}
-          style={{ borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-md)' }}
-        >
-          <Table
-            rowKey='provider'
-            data={providerRows}
-            pagination={false}
-            columns={[
-              { title: 'Provider', dataIndex: 'provider', render: (value: string) => <Tag color='arcoblue' style={{ borderRadius: 'var(--radius-sm)' }}>{value}</Tag> },
-              { title: 'Tasks', dataIndex: 'tasks_count' },
-              { title: 'Input Tokens', dataIndex: 'input_tokens' },
-              { title: 'Output Tokens', dataIndex: 'output_tokens' },
-              { title: 'Cost (USD)', dataIndex: 'cost_usd', render: (value: number) => <Typography color="warning" bold>${value.toFixed(4)}</Typography> },
-            ]}
-          />
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              <Typography variant="h6">Cost by Provider</Typography>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Provider</TableHead>
+                  <TableHead>Tasks</TableHead>
+                  <TableHead>Input Tokens</TableHead>
+                  <TableHead>Output Tokens</TableHead>
+                  <TableHead>Cost (USD)</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {providerRows.map((row) => (
+                  <TableRow key={row.provider}>
+                    <TableCell>
+                      <Badge variant="default">{row.provider}</Badge>
+                    </TableCell>
+                    <TableCell>{row.tasks_count}</TableCell>
+                    <TableCell>{row.input_tokens}</TableCell>
+                    <TableCell>{row.output_tokens}</TableCell>
+                    <TableCell>
+                      <Typography color="warning" bold>${row.cost_usd.toFixed(4)}</Typography>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
         </Card>
 
-        <Card 
-          title={<Typography variant="h6">Cost by Model</Typography>}
-          style={{ borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-md)' }}
-        >
-          <Table
-            rowKey='model'
-            data={modelRows}
-            pagination={false}
-            columns={[
-              { title: 'Model', dataIndex: 'model', render: (value: string) => <Tag style={{ borderRadius: 'var(--radius-sm)' }}>{value}</Tag> },
-              { title: 'Tasks', dataIndex: 'tasks_count' },
-              { title: 'Input Tokens', dataIndex: 'input_tokens' },
-              { title: 'Output Tokens', dataIndex: 'output_tokens' },
-              { title: 'Cost (USD)', dataIndex: 'cost_usd', render: (value: number) => <Typography color="warning" bold>${value.toFixed(4)}</Typography> },
-            ]}
-          />
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              <Typography variant="h6">Cost by Model</Typography>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Model</TableHead>
+                  <TableHead>Tasks</TableHead>
+                  <TableHead>Input Tokens</TableHead>
+                  <TableHead>Output Tokens</TableHead>
+                  <TableHead>Cost (USD)</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {modelRows.map((row) => (
+                  <TableRow key={row.model}>
+                    <TableCell>
+                      <Badge variant="outline">{row.model}</Badge>
+                    </TableCell>
+                    <TableCell>{row.tasks_count}</TableCell>
+                    <TableCell>{row.input_tokens}</TableCell>
+                    <TableCell>{row.output_tokens}</TableCell>
+                    <TableCell>
+                      <Typography color="warning" bold>${row.cost_usd.toFixed(4)}</Typography>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
         </Card>
-      </Space>
+      </div>
     </motion.div>
   );
 };

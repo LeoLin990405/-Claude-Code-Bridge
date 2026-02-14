@@ -5,7 +5,16 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { Card, Space, Table, Tag } from '@arco-design/web-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/renderer/components/ui/card';
+import { Badge } from '@/renderer/components/ui/badge';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/renderer/components/ui/table';
 import { motion } from 'framer-motion';
 import { ipcBridge } from '@/common';
 import type { IAgentTask, IAgentTeamMessage } from '@/common/ipcBridge';
@@ -30,6 +39,14 @@ const MonitorDashboard: React.FC = () => {
     };
   }, []);
 
+  const getStatusVariant = (status: IAgentTask['status']) => {
+    switch (status) {
+      case 'completed': return 'default';
+      case 'failed': return 'destructive';
+      default: return 'secondary';
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -41,81 +58,91 @@ const MonitorDashboard: React.FC = () => {
         <Typography variant="body2" color="secondary">Live stream of tasks and messages across all teams</Typography>
       </div>
 
-      <Space direction='vertical' size='large' style={{ width: '100%' }}>
-        <Card 
-          title={<Typography variant="h6">Task Updates</Typography>}
-          style={{ borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)' }}
-        >
-          <Table
-            rowKey='id'
-            data={recentTasks}
-            pagination={{ pageSize: 8 }}
-            columns={[
-              { 
-                title: 'Task', 
-                dataIndex: 'subject',
-                render: (val) => <Typography variant="body2" bold>{val}</Typography>
-              },
-              { 
-                title: 'Team', 
-                dataIndex: 'team_id',
-                render: (val) => <code style={{ fontSize: '11px' }}>{val}</code>
-              },
-              {
-                title: 'Status',
-                dataIndex: 'status',
-                render: (status: IAgentTask['status']) => (
-                  <Tag 
-                    color={status === 'completed' ? 'green' : status === 'failed' ? 'red' : 'arcoblue'}
-                    style={{ borderRadius: 'var(--radius-sm)' }}
-                  >
-                    {status}
-                  </Tag>
-                ),
-              },
-              { title: 'Provider', dataIndex: 'provider' },
-              {
-                title: 'Updated',
-                dataIndex: 'updated_at',
-                render: (value: number) => <Typography variant="caption" color="secondary">{new Date(value).toLocaleTimeString()}</Typography>,
-              },
-            ]}
-          />
+      <div className="flex flex-col gap-6 w-full">
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              <Typography variant="h6">Task Updates</Typography>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Task</TableHead>
+                  <TableHead>Team</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Provider</TableHead>
+                  <TableHead>Updated</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {recentTasks.map((task) => (
+                  <TableRow key={task.id}>
+                    <TableCell>
+                      <Typography variant="body2" bold>{task.subject}</Typography>
+                    </TableCell>
+                    <TableCell>
+                      <code style={{ fontSize: '11px' }}>{task.team_id}</code>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={getStatusVariant(task.status)}>
+                        {task.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{task.provider}</TableCell>
+                    <TableCell>
+                      <Typography variant="caption" color="secondary">
+                        {new Date(task.updated_at).toLocaleTimeString()}
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
         </Card>
 
-        <Card 
-          title={<Typography variant="h6">Message Stream</Typography>}
-          style={{ borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)' }}
-        >
-          <Table
-            rowKey='id'
-            data={recentMessages}
-            pagination={{ pageSize: 10 }}
-            columns={[
-              { 
-                title: 'Type', 
-                dataIndex: 'type',
-                render: (val: string) => <Tag size="small" style={{ borderRadius: 'var(--radius-sm)' }}>{val.toUpperCase()}</Tag>
-              },
-              { 
-                title: 'Team', 
-                dataIndex: 'team_id',
-                render: (val) => <code style={{ fontSize: '11px' }}>{val}</code>
-              },
-              { 
-                title: 'Content', 
-                dataIndex: 'content',
-                render: (val) => <Typography variant="body2" className="line-clamp-1">{val}</Typography>
-              },
-              {
-                title: 'Time',
-                dataIndex: 'created_at',
-                render: (value: number) => <Typography variant="caption" color="secondary">{new Date(value).toLocaleTimeString()}</Typography>,
-              },
-            ]}
-          />
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              <Typography variant="h6">Message Stream</Typography>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Team</TableHead>
+                  <TableHead>Content</TableHead>
+                  <TableHead>Time</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {recentMessages.map((message) => (
+                  <TableRow key={message.id}>
+                    <TableCell>
+                      <Badge variant="outline">{message.type.toUpperCase()}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <code style={{ fontSize: '11px' }}>{message.team_id}</code>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" className="line-clamp-1">{message.content}</Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="caption" color="secondary">
+                        {new Date(message.created_at).toLocaleTimeString()}
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
         </Card>
-      </Space>
+      </div>
     </motion.div>
   );
 };
