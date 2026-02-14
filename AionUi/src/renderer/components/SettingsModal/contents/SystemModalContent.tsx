@@ -7,7 +7,22 @@
 import { ipcBridge } from '@/common';
 import LanguageSwitcher from '@/renderer/components/LanguageSwitcher';
 import { iconColors } from '@/renderer/theme/colors';
-import { Alert, Button, Form, Modal, Tooltip } from '@arco-design/web-react';
+import { Button } from '@/renderer/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/renderer/components/ui/dialog';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/renderer/components/ui/tooltip';
+import { Alert, AlertDescription } from '@/renderer/components/ui/alert';
 import { FolderOpen } from '@icon-park/react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -25,47 +40,57 @@ const DirInputItem: React.FC<{
   label: string;
   /** 表单字段名 / Form field name */
   field: string;
-}> = ({ label, field }) => {
+  /** 当前值 / Current value */
+  value: string;
+  /** 值变更回调 / Value change callback */
+  onChange: (value: string) => void;
+}> = ({ label, field, value, onChange }) => {
   const { t } = useTranslation();
+
+  const handlePick = () => {
+    ipcBridge.dialog.showOpen
+      .invoke({
+        defaultPath: value,
+        properties: ['openDirectory', 'createDirectory'],
+      })
+      .then((data) => {
+        if (data?.[0]) {
+          onChange(data[0]);
+        }
+      })
+      .catch((error) => {
+        console.error('Failed to open directory dialog:', error);
+      });
+  };
+
   return (
-    <Form.Item label={label} field={field}>
-      {(value, form) => {
-        const currentValue = form.getFieldValue(field) || '';
-
-        const handlePick = () => {
-          ipcBridge.dialog.showOpen
-            .invoke({
-              defaultPath: currentValue,
-              properties: ['openDirectory', 'createDirectory'],
-            })
-            .then((data) => {
-              if (data?.[0]) {
-                form.setFieldValue(field, data[0]);
-              }
-            })
-            .catch((error) => {
-              console.error('Failed to open directory dialog:', error);
-            });
-        };
-
-        return (
-          <div className='aion-dir-input h-[32px] flex items-center rounded-8px border border-solid border-transparent pl-14px bg-[var(--fill-0)]'>
-            <Tooltip content={currentValue || t('settings.dirNotConfigured')} position='top'>
-              <div className='flex-1 min-w-0 text-13px text-t-primary truncate '>{currentValue || t('settings.dirNotConfigured')}</div>
-            </Tooltip>
-            <Button
-              type='text'
-              style={{ borderLeft: '1px solid var(--color-border-2)', borderRadius: '0 8px 8px 0' }}
-              icon={<FolderOpen theme='outline' size='18' fill={iconColors.primary} />}
-              onClick={(e) => {
-                e.stopPropagation();
-                handlePick();
-              }}
-            />
-          </div>
-        );
-      }}
-    </Form.Item>
+    <div className='flex flex-col gap-8px'>
+      <label className='text-sm font-medium text-t-primary'>{label}</label>
+      <div className='aion-dir-input h-[32px] flex items-center rounded-8px border border-solid border-transparent pl-14px bg-[var(--fill-0)]'>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className='flex-1 min-w-0 text-13px text-t-primary truncate'>{value || t('settings.dirNotConfigured')}</div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{value || t('settings.dirNotConfigured')}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        <Button
+          variant='ghost'
+          size='icon'
+          className='h-8 w-8 rounded-l-none border-l border-border'
+          style={{ borderRadius: '0 8px 8px 0' }}
+          onClick={(e) => {
+            e.stopPropagation();
+            handlePick();
+          }}
+        >
+          <FolderOpen theme='outline' size='18' fill={iconColors.primary} />
+        </Button>
+      </div>
+    </div>
   );
 };
 
@@ -103,12 +128,18 @@ interface SystemModalContentProps {
 
 const SystemModalContent: React.FC<SystemModalContentProps> = ({ onRequestClose }) => {
   const { t } = useTranslation();
-  const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const [modal, modalContextHolder] = Modal.useModal();
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [confirmResolve, setConfirmResolve] = useState<((value: boolean) => void) | null>(null);
   const [error, setError] = useState<string | null>(null);
   const viewMode = useSettingsViewMode();
   const isPageMode = viewMode === 'page';
+
+  // Form data
+  const [formData, setFormData] = useState({
+    cacheDir: '',
+    workDir: '',
+  });
 
   // Get system directory info
   const { data: systemInfo } = useSWR('system.dir.info', () => ipcBridge.application.systemInfo.invoke());
@@ -116,24 +147,34 @@ const SystemModalContent: React.FC<SystemModalContentProps> = ({ onRequestClose 
   // Initialize form data
   useEffect(() => {
     if (systemInfo) {
-      form.setFieldValue('cacheDir', systemInfo.cacheDir);
-      form.setFieldValue('workDir', systemInfo.workDir);
+      setFormData({
+        cacheDir: systemInfo.cacheDir || '',
+        workDir: systemInfo.workDir || '',
+      });
     }
-  }, [systemInfo, form]);
+  }, [systemInfo]);
 
   // 偏好设置项配置 / Preference items configuration
   const preferenceItems = [{ key: 'language', label: t('settings.language'), component: <LanguageSwitcher /> }];
 
   // 目录配置保存确认 / Directory configuration save confirmation
-  const saveDirConfigValidate = (_values: { cacheDir: string; workDir: string }): Promise<unknown> => {
-    return new Promise((resolve, reject) => {
-      modal.confirm({
-        title: t('settings.updateConfirm'),
-        content: t('settings.restartConfirm'),
-        onOk: resolve,
-        onCancel: reject,
-      });
+  const saveDirConfigValidate = (): Promise<boolean> => {
+    return new Promise((resolve) => {
+      setConfirmResolve(() => resolve);
+      setConfirmDialogOpen(true);
     });
+  };
+
+  const handleConfirm = () => {
+    setConfirmDialogOpen(false);
+    confirmResolve?.(true);
+    setConfirmResolve(null);
+  };
+
+  const handleCancelConfirm = () => {
+    setConfirmDialogOpen(false);
+    confirmResolve?.(false);
+    setConfirmResolve(null);
   };
 
   /**
@@ -144,8 +185,7 @@ const SystemModalContent: React.FC<SystemModalContentProps> = ({ onRequestClose 
   const onSubmit = async () => {
     let shouldClose = false;
     try {
-      const values = await form.validate();
-      const { cacheDir, workDir } = values;
+      const { cacheDir, workDir } = formData;
       setLoading(true);
       setError(null);
 
@@ -153,18 +193,14 @@ const SystemModalContent: React.FC<SystemModalContentProps> = ({ onRequestClose 
       const needsRestart = cacheDir !== systemInfo?.cacheDir || workDir !== systemInfo?.workDir;
 
       if (needsRestart) {
-        try {
-          await saveDirConfigValidate(values);
+        const confirmed = await saveDirConfigValidate();
+        if (confirmed) {
           const result = await ipcBridge.application.updateSystemInfo.invoke({ cacheDir, workDir });
           if (result.success) {
             await ipcBridge.application.restart.invoke();
             shouldClose = true;
           } else {
             setError(result.msg || 'Failed to update system info');
-          }
-        } catch (caughtError: unknown) {
-          if (caughtError) {
-            setError(caughtError instanceof Error ? caughtError.message : String(caughtError));
           }
         }
       } else {
@@ -183,8 +219,10 @@ const SystemModalContent: React.FC<SystemModalContentProps> = ({ onRequestClose 
   // 重置表单到初始值 / Reset form to initial values
   const onReset = () => {
     if (systemInfo) {
-      form.setFieldValue('cacheDir', systemInfo.cacheDir);
-      form.setFieldValue('workDir', systemInfo.workDir);
+      setFormData({
+        cacheDir: systemInfo.cacheDir || '',
+        workDir: systemInfo.workDir || '',
+      });
     }
     setError(null);
   };
@@ -194,9 +232,27 @@ const SystemModalContent: React.FC<SystemModalContentProps> = ({ onRequestClose 
     onRequestClose?.();
   };
 
+  const handleDirChange = (field: 'cacheDir' | 'workDir', value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
   return (
     <div className='flex flex-col h-full w-full'>
-      {modalContextHolder}
+      {/* Confirm Dialog */}
+      <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('settings.updateConfirm')}</DialogTitle>
+            <DialogDescription>{t('settings.restartConfirm')}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant='outline' onClick={handleCancelConfirm}>
+              {t('common.cancel')}
+            </Button>
+            <Button onClick={handleConfirm}>{t('common.confirm')}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* 内容区域 / Content Area */}
       <AionScrollArea className='flex-1 min-h-0 pb-16px' disableOverflow={isPageMode}>
@@ -210,22 +266,36 @@ const SystemModalContent: React.FC<SystemModalContentProps> = ({ onRequestClose 
                 </PreferenceRow>
               ))}
             </div>
-            <Form form={form} layout='vertical' className='space-y-16px'>
-              <DirInputItem label={t('settings.cacheDir')} field='cacheDir' />
-              <DirInputItem label={t('settings.workDir')} field='workDir' />
-              {error && <Alert className='mt-16px' type='error' content={typeof error === 'string' ? error : JSON.stringify(error)} />}
-            </Form>
+            <div className='space-y-16px'>
+              <DirInputItem
+                label={t('settings.cacheDir')}
+                field='cacheDir'
+                value={formData.cacheDir}
+                onChange={(value) => handleDirChange('cacheDir', value)}
+              />
+              <DirInputItem
+                label={t('settings.workDir')}
+                field='workDir'
+                value={formData.workDir}
+                onChange={(value) => handleDirChange('workDir', value)}
+              />
+              {error && (
+                <Alert variant='destructive'>
+                  <AlertDescription>{typeof error === 'string' ? error : JSON.stringify(error)}</AlertDescription>
+                </Alert>
+              )}
+            </div>
           </div>
         </div>
       </AionScrollArea>
 
       {/* 底部操作栏 / Footer with action buttons */}
       <div className={classNames('flex-shrink-0 flex gap-10px border-t border-border-2 px-24px pt-10px', isPageMode ? 'border-none px-0 pt-10px flex-col md:flex-row md:justify-end' : 'justify-end')}>
-        <Button className={classNames('rd-100px', isPageMode && 'w-full md:w-auto')} onClick={handleCancel}>
+        <Button variant='outline' className={classNames('rounded-full', isPageMode && 'w-full md:w-auto')} onClick={handleCancel}>
           {t('common.cancel')}
         </Button>
-        <Button type='primary' loading={loading} onClick={onSubmit} className={classNames('rd-100px', isPageMode && 'w-full md:w-auto')}>
-          {t('common.save')}
+        <Button disabled={loading} onClick={onSubmit} className={classNames('rounded-full', isPageMode && 'w-full md:w-auto')}>
+          {loading ? t('common.saving') : t('common.save')}
         </Button>
       </div>
     </div>

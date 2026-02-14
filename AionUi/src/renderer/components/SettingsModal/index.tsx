@@ -9,7 +9,7 @@ import AionScrollArea from '@/renderer/components/base/AionScrollArea';
 import { DesignTokens } from '@/renderer/design-system';
 import { iconColors } from '@/renderer/theme/colors';
 import { isElectronDesktop } from '@/renderer/utils/platform';
-import { Tabs } from '@arco-design/web-react';
+import { Tabs, TabsList, TabsTrigger } from '@/renderer/components/ui/tabs';
 import { Communication, Computer, Earth, Gemini, Info, LinkCloud, Shield, Toolkit } from '@icon-park/react';
 import classNames from 'classnames';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -52,13 +52,11 @@ const RESIZE_DEBOUNCE_DELAY = 150;
 // ==================== 类型定义 / Type Definitions ====================
 
 /**
- * 设置标签页类型 / Settings tab type
- */
+ * 设置标签页类型 / Settings tab type */
 export type SettingTab = 'hivemind' | 'gemini' | 'model' | 'agent' | 'tools' | 'security' | 'webui' | 'system' | 'about';
 
 /**
- * 设置弹窗组件属性 / Settings modal component props
- */
+ * 设置弹窗组件属性 / Settings modal component props */
 interface SettingsModalProps {
   /** 弹窗显示状态 / Modal visibility state */
   visible: boolean;
@@ -69,8 +67,7 @@ interface SettingsModalProps {
 }
 
 /**
- * 二级弹窗组件属性 / Secondary modal component props
- */
+ * 二级弹窗组件属性 / Secondary modal component props */
 interface SubModalProps {
   /** 弹窗显示状态 / Modal visibility state */
   visible: boolean;
@@ -253,10 +250,14 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onCancel, defaul
   // 移动端菜单（Tabs切换）/ Mobile menu (Tabs)
   const mobileMenu = (
     <div className='mt-16px mb-20px'>
-      <Tabs activeTab={activeTab} onChange={handleTabChange} type='line' size='default' className='settings-mobile-tabs [&_.arco-tabs-nav]:border-b-0'>
-        {menuItems.map((item) => (
-          <Tabs.TabPane key={item.key} title={item.label} />
-        ))}
+      <Tabs value={activeTab} onValueChange={(value) => handleTabChange(value as SettingTab)} className='settings-mobile-tabs'>
+        <TabsList className='border-b-0 bg-transparent'>
+          {menuItems.map((item) => (
+            <TabsTrigger key={item.key} value={item.key}>
+              {item.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
       </Tabs>
     </div>
   );
