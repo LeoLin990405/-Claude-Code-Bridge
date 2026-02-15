@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2026 AionUi (aionui.com)
+ * Copyright 2026 HiveMind (hivemind.com)
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -10,10 +10,11 @@ import { CSS } from '@dnd-kit/utilities';
 import { Badge } from '@/renderer/components/ui/badge';
 import { Button } from '@/renderer/components/ui/button';
 import { motion } from 'framer-motion';
-import { Play, FileText, Connection } from '@icon-park/react';
+import { Play, Connection } from '@icon-park/react';
 import { Typography } from '@/renderer/components/atoms/Typography';
 import type { IAgentTask } from '@/common/ipcBridge';
 import IconParkHOC from '@/renderer/components/IconParkHOC';
+import classNames from 'classnames';
 
 interface TaskCardProps {
   task: IAgentTask;
@@ -23,10 +24,8 @@ interface TaskCardProps {
 }
 
 const IconPlay = IconParkHOC(Play);
-const IconFile = IconParkHOC(FileText);
 const IconLink = IconParkHOC(Connection);
 
-// Provider 颜色映射
 const PROVIDER_COLORS: Record<string, { color: string; bg: string }> = {
   claude: { color: '#0ea5e9', bg: '#0ea5e920' },
   kimi: { color: '#10b981', bg: '#10b98120' },
@@ -35,7 +34,6 @@ const PROVIDER_COLORS: Record<string, { color: string; bg: string }> = {
   deepseek: { color: '#ef4444', bg: '#ef444420' },
 };
 
-// 优先级颜色
 const getPriorityColor = (priority: number) => {
   if (priority >= 8) return { color: '#ef4444', bg: '#ef444420', label: '高' };
   if (priority >= 5) return { color: '#f59e0b', bg: '#f59e0b20', label: '中' };
@@ -59,16 +57,11 @@ export const TaskCard: React.FC<TaskCardProps> = React.memo(
         <motion.div
           whileHover={{ scale: isDragging ? 1 : 1.02, y: -2 }}
           whileTap={{ scale: 0.98 }}
-          className={`
-          bg-bg-0 rounded-lg p-4 border border-line-2 shadow-sm
-          cursor-grab active:cursor-grabbing
-          hover:shadow-md hover:border-primary/30
-          transition-all duration-200
-          ${isSortableDragging || isDragging ? 'opacity-50 shadow-lg' : ''}
-        `}
+          className={classNames('hive-agent-task-card', {
+            'hive-agent-task-card--dragging opacity-50': isSortableDragging || isDragging,
+          })}
         >
-          {/* 头部：优先级和 Provider */}
-          <div className='flex items-center justify-between mb-3'>
+          <div className='hive-agent-task-card__header'>
             <div className='flex items-center gap-2'>
               <Badge
                 variant='outline'
@@ -103,7 +96,6 @@ export const TaskCard: React.FC<TaskCardProps> = React.memo(
             )}
           </div>
 
-          {/* 标题 */}
           <Button
             variant='ghost'
             className='w-full p-0 h-auto text-left mb-2 hover:text-primary justify-start'
@@ -117,25 +109,22 @@ export const TaskCard: React.FC<TaskCardProps> = React.memo(
             </Typography>
           </Button>
 
-          {/* 描述 */}
           <Typography variant='caption' color='secondary' className='line-clamp-2 mb-3 block'>
             {task.description}
           </Typography>
 
-          {/* 依赖指示器 */}
           {task.blocked_by.length > 0 && (
-            <div className='flex items-center gap-1 mb-3 text-warning text-xs'>
+            <div className='hive-agent-task-card__dependency'>
               <IconLink />
               <span>依赖 {task.blocked_by.length} 个任务</span>
             </div>
           )}
 
-          {/* 底部操作栏 */}
-          <div className='flex items-center justify-between pt-2 border-t border-line-2'>
+          <div className='hive-agent-task-card__footer'>
             <div className='flex items-center gap-2'>
               {task.assigned_to && (
-                <div className='flex items-center gap-1 text-xs text-t-secondary'>
-                  <div className='w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-xs text-primary'>{task.assigned_to.substring(0, 1).toUpperCase()}</div>
+                <div className='hive-agent-task-card__assignee'>
+                  <div className='hive-agent-task-card__assignee-avatar'>{task.assigned_to.substring(0, 1).toUpperCase()}</div>
                   <span className='max-w-20 truncate'>{task.assigned_to.substring(0, 8)}</span>
                 </div>
               )}
@@ -156,16 +145,15 @@ export const TaskCard: React.FC<TaskCardProps> = React.memo(
             )}
           </div>
 
-          {/* 状态标签 */}
           {task.status === 'completed' && (
-            <div className='mt-2 flex items-center gap-1 text-xs text-success'>
-              <span className='w-1.5 h-1.5 rounded-full bg-success' />
+            <div className='hive-agent-task-card__status hive-agent-task-card__status--completed'>
+              <span className='hive-agent-task-card__status-dot' />
               <span>已完成</span>
             </div>
           )}
           {task.status === 'failed' && (
-            <div className='mt-2 flex items-center gap-1 text-xs text-error'>
-              <span className='w-1.5 h-1.5 rounded-full bg-error' />
+            <div className='hive-agent-task-card__status hive-agent-task-card__status--failed'>
+              <span className='hive-agent-task-card__status-dot' />
               <span>失败</span>
             </div>
           )}
@@ -174,7 +162,6 @@ export const TaskCard: React.FC<TaskCardProps> = React.memo(
     );
   },
   (prevProps, nextProps) => {
-    // 自定义比较函数，只在必要时重新渲染
     return prevProps.task.id === nextProps.task.id && prevProps.task.status === nextProps.task.status && prevProps.task.updated_at === nextProps.task.updated_at && prevProps.isDragging === nextProps.isDragging;
   }
 );

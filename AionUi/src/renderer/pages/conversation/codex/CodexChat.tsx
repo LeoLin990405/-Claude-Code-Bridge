@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2025 HiveMind (hivemind.com)
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -25,7 +25,7 @@ const CodexChat: React.FC<{
   }, [workspace]);
   return (
     <ConversationProvider value={{ conversationId: conversation_id, workspace, type: 'codex' }}>
-      <div className='flex-1 flex flex-col px-20px'>
+      <div className='hive-chat-scene flex-1 flex flex-col px-20px'>
         <FlexFullContainer>
           <MessageList className='flex-1'></MessageList>
         </FlexFullContainer>

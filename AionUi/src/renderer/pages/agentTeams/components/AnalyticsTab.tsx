@@ -12,9 +12,9 @@ interface AnalyticsTabProps {
 
 export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({ stats, cost }) => {
   return (
-    <div style={{ padding: '24px 0' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
-        <Card>
+    <div className='hive-agent-tab-section'>
+      <div className='hive-agent-analytics-grid'>
+        <Card className='hive-agent-surface'>
           <CardHeader>
             <CardTitle>
               <Typography variant='h6'>Cost Distribution</Typography>
@@ -24,7 +24,7 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({ stats, cost }) => {
             <CostChart cost={cost} />
           </CardContent>
         </Card>
-        <Card>
+        <Card className='hive-agent-surface'>
           <CardHeader>
             <CardTitle>
               <Typography variant='h6'>Teammate Performance</Typography>

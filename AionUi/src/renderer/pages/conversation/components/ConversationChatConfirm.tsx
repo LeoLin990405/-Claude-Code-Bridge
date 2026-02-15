@@ -150,7 +150,7 @@ const ConversationChatConfirm: React.FC<PropsWithChildren<{ conversation_id: str
       <div>
         {/* 错误提示卡片 / Error notification card */}
         <div
-          className={`relative p-16px bg-white flex flex-col overflow-hidden m-b-20px rd-20px max-w-800px w-full mx-auto box-border`}
+          className={`hive-confirm-card relative p-16px bg-white flex flex-col overflow-hidden m-b-20px rd-20px max-w-800px w-full mx-auto box-border`}
           style={{
             boxShadow: '0px 2px 20px 0px rgba(74, 88, 250, 0.1)',
           }}
@@ -168,7 +168,7 @@ const ConversationChatConfirm: React.FC<PropsWithChildren<{ conversation_id: str
                 .then((data) => setConfirmations(data))
                 .catch((err) => setLoadError(err instanceof Error ? err.message : 'Failed to load'));
             }}
-            className='px-12px py-6px bg-[rgba(22,93,255,1)] text-white rd-6px text-12px cursor-pointer hover:opacity-80 transition-opacity'
+            className='hive-confirm-retry px-12px py-6px bg-[rgba(22,93,255,1)] text-white rd-6px text-12px cursor-pointer hover:opacity-80 transition-opacity'
           >
             {t('common.retry', 'Retry')}
           </button>
@@ -189,7 +189,7 @@ const ConversationChatConfirm: React.FC<PropsWithChildren<{ conversation_id: str
     <>
       {hasConfirmation && confirmation && (
         <div
-          className={`relative p-16px bg-white flex flex-col overflow-hidden m-b-20px rd-20px max-w-800px max-h-[calc(100vh-200px)] w-full mx-auto box-border`}
+          className={`hive-confirm-card relative p-16px bg-white flex flex-col overflow-hidden m-b-20px rd-20px max-w-800px max-h-[calc(100vh-200px)] w-full mx-auto box-border`}
           style={{
             boxShadow: '0px 2px 20px 0px rgba(74, 88, 250, 0.1)',
           }}
@@ -213,7 +213,7 @@ const ConversationChatConfirm: React.FC<PropsWithChildren<{ conversation_id: str
                     void ipcBridge.conversation.confirmation.confirm.invoke({ conversation_id, callId: confirmation.callId, msg_id: confirmation.id, data: option.value });
                   }}
                   key={label + option.value + index}
-                  className='b-1px b-solid h-30px lh-30px b-[rgba(229,230,235,1)] rd-8px px-12px hover:bg-[rgba(229,231,240,1)] cursor-pointer mt-10px'
+                  className='hive-confirm-option b-1px b-solid h-30px lh-30px b-[rgba(229,230,235,1)] rd-8px px-12px hover:bg-[rgba(229,231,240,1)] cursor-pointer mt-10px'
                 >
                   {label}
                 </div>

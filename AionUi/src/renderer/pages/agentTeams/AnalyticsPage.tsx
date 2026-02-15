@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2026 AionUi (aionui.com)
+ * Copyright 2026 HiveMind (hivemind.com)
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -64,8 +64,8 @@ const AnalyticsPage: React.FC = () => {
   }, [cost]);
 
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ padding: '24px' }}>
-      <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className='hive-agent-page hive-agent-page--analytics'>
+      <div className='hive-agent-page__header'>
         <div>
           <Typography variant='h4' bold>
             Analytics
@@ -74,7 +74,7 @@ const AnalyticsPage: React.FC = () => {
             Cost and performance analysis for AI teams
           </Typography>
         </div>
-        <Card>
+        <Card className='hive-agent-surface'>
           <CardContent className='py-2 px-4'>
             <div className='flex items-center gap-2'>
               <Typography variant='body2' bold>
@@ -99,7 +99,7 @@ const AnalyticsPage: React.FC = () => {
 
       <div className='flex flex-col gap-6 w-full'>
         <div className='grid grid-cols-4 gap-4'>
-          <Card>
+          <Card className='hive-agent-surface'>
             <CardContent className='pt-6'>
               <div>
                 <Typography variant='caption' color='secondary'>
@@ -111,37 +111,37 @@ const AnalyticsPage: React.FC = () => {
               </div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className='hive-agent-surface'>
             <CardContent className='pt-6'>
               <div>
                 <Typography variant='caption' color='secondary'>
                   Completed
                 </Typography>
-                <Typography variant='h4' bold style={{ color: 'var(--color-success)' }}>
+                <Typography variant='h4' bold className='hive-agent-metric hive-agent-metric--success'>
                   {stats?.completed_tasks || 0}
                 </Typography>
               </div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className='hive-agent-surface'>
             <CardContent className='pt-6'>
               <div>
                 <Typography variant='caption' color='secondary'>
                   Failed
                 </Typography>
-                <Typography variant='h4' bold style={{ color: 'var(--color-error)' }}>
+                <Typography variant='h4' bold className='hive-agent-metric hive-agent-metric--error'>
                   {stats?.failed_tasks || 0}
                 </Typography>
               </div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className='hive-agent-surface'>
             <CardContent className='pt-6'>
               <div>
                 <Typography variant='caption' color='secondary'>
                   Total Cost (USD)
                 </Typography>
-                <Typography variant='h4' bold style={{ color: 'var(--color-warning)' }}>
+                <Typography variant='h4' bold className='hive-agent-metric hive-agent-metric--warning'>
                   {(cost?.total_cost_usd || 0).toFixed(4)}
                 </Typography>
               </div>
@@ -149,7 +149,7 @@ const AnalyticsPage: React.FC = () => {
           </Card>
         </div>
 
-        <Card>
+        <Card className='hive-agent-surface'>
           <CardHeader>
             <CardTitle>
               <Typography variant='h6'>Cost by Provider (Chart)</Typography>
@@ -160,7 +160,7 @@ const AnalyticsPage: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className='hive-agent-surface'>
           <CardHeader>
             <CardTitle>
               <Typography variant='h6'>Cost by Provider</Typography>
@@ -198,7 +198,7 @@ const AnalyticsPage: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className='hive-agent-surface'>
           <CardHeader>
             <CardTitle>
               <Typography variant='h6'>Cost by Model</Typography>

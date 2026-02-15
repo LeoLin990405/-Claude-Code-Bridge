@@ -13,11 +13,13 @@ import useSWR from 'swr';
 import AuggieLogo from '@/renderer/assets/logos/auggie.svg';
 import ClaudeLogo from '@/renderer/assets/logos/claude.svg';
 import CodexLogo from '@/renderer/assets/logos/codex.svg';
+import DeepSeekLogo from '@/renderer/assets/logos/deepseek.svg';
 import GeminiLogo from '@/renderer/assets/logos/gemini.svg';
 import GitHubLogo from '@/renderer/assets/logos/github.svg';
 import GooseLogo from '@/renderer/assets/logos/goose.svg';
 import IflowLogo from '@/renderer/assets/logos/iflow.svg';
 import KimiLogo from '@/renderer/assets/logos/kimi.svg';
+import OpenClawLogo from '@/renderer/assets/logos/openclaw.svg';
 import OpenCodeLogo from '@/renderer/assets/logos/opencode.svg';
 import QoderLogo from '@/renderer/assets/logos/qoder.png';
 import QwenLogo from '@/renderer/assets/logos/qwen.svg';
@@ -36,6 +38,8 @@ const AGENT_LOGO_MAP: Partial<Record<AcpBackend, string>> = {
   opencode: OpenCodeLogo,
   copilot: GitHubLogo,
   qoder: QoderLogo,
+  deepseek: DeepSeekLogo,
+  'openclaw-gateway': OpenClawLogo,
 };
 
 import { iconColors } from '@/renderer/theme/colors';
@@ -67,7 +71,7 @@ interface WorkspaceHeaderProps {
 }
 
 const WorkspacePanelHeader: React.FC<WorkspaceHeaderProps> = ({ children, showToggle = false, collapsed, onToggle, togglePlacement = 'right' }) => (
-  <div className='workspace-panel-header flex items-center justify-start px-3 py-1 gap-3 border-b border-[var(--bg-3)]' style={{ height: WORKSPACE_HEADER_HEIGHT, minHeight: WORKSPACE_HEADER_HEIGHT }}>
+  <div className='workspace-panel-header hive-workspace-panel-header flex items-center justify-start px-3 py-1 gap-3 border-b border-[var(--bg-3)]' style={{ height: WORKSPACE_HEADER_HEIGHT, minHeight: WORKSPACE_HEADER_HEIGHT }}>
     {showToggle && togglePlacement === 'left' && (
       <button type='button' className='workspace-header__toggle mr-1' aria-label='Toggle workspace' onClick={onToggle}>
         {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
@@ -363,7 +367,7 @@ const ChatLayout: React.FC<{
 
   return (
     <div
-      className='size-full text-black'
+      className='hive-chat-layout size-full text-t-primary'
       style={
         {
           // fontFamily: `cursive,"anthropicSans","anthropicSans Fallback",system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif`,
@@ -371,10 +375,10 @@ const ChatLayout: React.FC<{
       }
     >
       {/* 主内容区域：会话面板 + 工作空间面板 + 预览面板 / Main content area: chat + workspace + preview */}
-      <div ref={containerRef} className='flex flex-1 relative w-full overflow-hidden'>
+      <div ref={containerRef} className='hive-chat-layout__body flex flex-1 relative w-full overflow-hidden'>
         {/* 会话面板（带拖动句柄）/ Chat panel (with drag handle) */}
         <div
-          className='flex flex-col relative'
+          className='hive-chat-panel flex flex-col relative'
           style={{
             // 使用 flexBasis 设置宽度，避免 width 和 flexBasis 冲突
             flexGrow: isPreviewOpen && isDesktop ? 0 : chatFlex,
@@ -385,7 +389,7 @@ const ChatLayout: React.FC<{
           }}
         >
           <div
-            className='flex flex-col h-full'
+            className='hive-chat-panel-shell flex flex-col h-full'
             onClick={() => {
               const isMobile = window.innerWidth < 768;
               if (isMobile && !rightSiderCollapsed) {
@@ -395,7 +399,7 @@ const ChatLayout: React.FC<{
           >
             {/* 会话 Tabs 栏 / Conversation tabs bar */}
             <ConversationTabs />
-            <header className={classNames('h-9 flex items-center justify-between px-4 gap-4 bg-1 chat-layout-header')}>
+            <header className={classNames('h-9 flex items-center justify-between px-4 gap-4 bg-1 chat-layout-header hive-chat-header')}>
               <div>{props.headerLeft}</div>
               <FlexFullContainer className='h-full' containerClassName='flex items-center gap-4'>
                 {!hasTabs && <span className='font-bold text-base text-t-primary inline-block overflow-hidden text-ellipsis whitespace-nowrap shrink-0 max-w-[50%]'>{props.title}</span>}
@@ -404,7 +408,7 @@ const ChatLayout: React.FC<{
                 {/* headerExtra 会在右上角优先渲染，例如模型切换按钮 / headerExtra renders at top-right for items like model switchers */}
                 {props.headerExtra}
                 {(backend || agentLogo) && (
-                  <div className='ml-4 flex items-center gap-2 bg-2 w-fit rounded-full px-2 py-0.5'>
+                  <div className='hive-chat-agent-badge ml-4 flex items-center gap-2 bg-2 w-fit rounded-full px-2 py-0.5'>
                     {agentLogo ? agentLogoIsEmoji ? <span className='text-sm'>{agentLogo}</span> : <img src={agentLogo} alt={`${agentName || 'agent'} logo`} width={16} height={16} style={{ objectFit: 'contain' }} /> : AGENT_LOGO_MAP[backend as AcpBackend] ? <img src={AGENT_LOGO_MAP[backend as AcpBackend]} alt={`${backend} logo`} width={16} height={16} style={{ objectFit: 'contain' }} /> : <Bot size={16} className='text-primary' />}
                     <span className='text-sm text-t-primary'>{displayName}</span>
                   </div>
@@ -416,7 +420,7 @@ const ChatLayout: React.FC<{
                 )}
               </div>
             </header>
-            <main className='flex flex-col flex-1 bg-1 overflow-hidden'>{props.children}</main>
+            <main className='hive-chat-main flex flex-col flex-1 bg-1 overflow-hidden'>{props.children}</main>
           </div>
 
           {/* 会话右侧拖动手柄：在桌面模式下调节会话和预览的宽度比例 */}
@@ -431,7 +435,7 @@ const ChatLayout: React.FC<{
         {/* 预览面板（移到中间位置）/ Preview panel (moved to middle position) */}
         {isPreviewOpen && (
           <div
-            className='preview-panel flex flex-col relative my-3 mr-3 ml-2 rounded-[15px]'
+            className='preview-panel hive-chat-preview-panel flex flex-col relative my-3 mr-3 ml-2 rounded-[15px]'
             style={{
               // 使用 flexGrow: 1 填充剩余空间（会话和工作空间使用固定 flexBasis）
               flexGrow: layout?.isMobile ? 0 : 1,
@@ -448,7 +452,7 @@ const ChatLayout: React.FC<{
         {/* 工作空间面板（移到最右边）/ Workspace panel (moved to rightmost position) */}
         {workspaceEnabled && !layout?.isMobile && (
           <div
-            className={classNames('bg-1 relative chat-layout-right-sider layout-sider')}
+            className={classNames('bg-1 relative chat-layout-right-sider layout-sider hive-workspace-panel')}
             style={{
               // 使用 flexBasis 设置宽度，避免 width 和 flexBasis 冲突
               flexGrow: isPreviewOpen ? 0 : workspaceFlex,
@@ -481,7 +485,7 @@ const ChatLayout: React.FC<{
         {/* 移动端工作空间（保持原有的固定定位）/ Mobile workspace (keep original fixed positioning) */}
         {workspaceEnabled && layout?.isMobile && (
           <div
-            className='bg-1 relative chat-layout-right-sider'
+            className='bg-1 relative chat-layout-right-sider hive-workspace-panel'
             style={{
               position: 'fixed',
               right: 0,
@@ -505,7 +509,7 @@ const ChatLayout: React.FC<{
         )}
 
         {!isMacRuntime && !isWindowsRuntime && workspaceEnabled && rightSiderCollapsed && !layout?.isMobile && (
-          <button type='button' className='workspace-toggle-floating workspace-header__toggle absolute top-1/2 right-2 z-10' style={{ transform: 'translateY(-50%)' }} onClick={() => dispatchWorkspaceToggleEvent()} aria-label='Expand workspace'>
+          <button type='button' className='workspace-toggle-floating hive-workspace-float-toggle workspace-header__toggle absolute top-1/2 right-2 z-10' style={{ transform: 'translateY(-50%)' }} onClick={() => dispatchWorkspaceToggleEvent()} aria-label='Expand workspace'>
             <ChevronLeft size={16} />
           </button>
         )}

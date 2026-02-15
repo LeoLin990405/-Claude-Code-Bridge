@@ -12,7 +12,6 @@ const SettingsSider: React.FC<{ collapsed?: boolean }> = ({ collapsed = false })
   const { t } = useTranslation();
   const { pathname } = useLocation();
 
-  // 检测是否在 Electron 桌面环境 / Check if running in Electron desktop environment
   const isDesktop = isElectronDesktop();
 
   const menus = useMemo(() => {
@@ -54,7 +53,6 @@ const SettingsSider: React.FC<{ collapsed?: boolean }> = ({ collapsed = false })
       },
     ];
 
-    // 桌面端显示 WebUI，WebUI 浏览器模式下显示 Channels / Desktop shows WebUI, WebUI browser mode shows Channels
     items.push({
       label: t('settings.webui'),
       icon: isDesktop ? <Earth /> : <Communication />,
@@ -79,13 +77,13 @@ const SettingsSider: React.FC<{ collapsed?: boolean }> = ({ collapsed = false })
 
   return (
     <TooltipProvider>
-      <div className={classNames('flex-1 settings-sider flex flex-col gap-2px', { 'settings-sider--collapsed': collapsed })}>
+      <div className={classNames('hive-settings-sider flex-1 settings-sider flex flex-col gap-6px', { 'settings-sider--collapsed': collapsed })}>
         {menus.map((item) => {
           const isSelected = pathname.includes(item.path);
           const menuItem = (
             <div
-              className={classNames('settings-sider__item hover:bg-aou-1 px-12px py-8px rd-8px flex justify-start items-center group cursor-pointer relative overflow-hidden group shrink-0 conversation-item [&.conversation-item+&.conversation-item]:mt-2px', {
-                '!bg-aou-2 ': isSelected,
+              className={classNames('hive-settings-sider__item settings-sider__item px-12px py-8px rd-10px flex justify-start items-center group cursor-pointer relative overflow-hidden shrink-0 transition-colors', {
+                'hive-settings-sider__item--active !bg-aou-2': isSelected,
               })}
               onClick={() => {
                 Promise.resolve(navigate(`/settings/${item.path}`, { replace: true })).catch((error) => {
@@ -99,7 +97,7 @@ const SettingsSider: React.FC<{ collapsed?: boolean }> = ({ collapsed = false })
                 className: 'mt-2px ml-2px mr-8px flex',
               })}
               <FlexFullContainer className='h-24px'>
-                <div className='settings-sider__item-label text-nowrap overflow-hidden inline-block w-full text-14px lh-24px whitespace-nowrap text-t-primary'>{item.label}</div>
+                <div className='hive-settings-sider__item-label settings-sider__item-label text-nowrap overflow-hidden inline-block w-full text-14px lh-24px whitespace-nowrap text-t-primary'>{item.label}</div>
               </FlexFullContainer>
             </div>
           );

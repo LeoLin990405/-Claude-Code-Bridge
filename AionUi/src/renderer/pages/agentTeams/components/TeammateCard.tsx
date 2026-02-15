@@ -10,20 +10,8 @@ interface TeammateCardProps {
 
 export const TeammateCard: React.FC<TeammateCardProps> = ({ teammate }) => {
   return (
-    <motion.div
-      whileHover={{ y: -4 }}
-      style={{
-        padding: 16,
-        background: 'var(--bg-1)',
-        borderRadius: 'var(--radius-md)',
-        border: '1px solid var(--color-border)',
-        boxShadow: 'var(--shadow-sm)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '8px',
-      }}
-    >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <motion.div whileHover={{ y: -4 }} className='hive-agent-teammate-card'>
+      <div className='hive-agent-teammate-card__header'>
         <Typography variant='body1' bold>
           {teammate.name}
         </Typography>
@@ -34,13 +22,13 @@ export const TeammateCard: React.FC<TeammateCardProps> = ({ teammate }) => {
         {teammate.role}
       </Typography>
 
-      <div style={{ marginTop: '4px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+      <div className='hive-agent-teammate-card__meta'>
         <Badge variant='outline'>{teammate.provider}</Badge>
         <Badge variant='outline'>{teammate.model}</Badge>
       </div>
 
       {teammate.skills.length > 0 && (
-        <div style={{ marginTop: '8px', display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+        <div className='hive-agent-teammate-card__skills'>
           {teammate.skills.map((skill) => (
             <Badge key={skill} variant='secondary'>
               {skill}

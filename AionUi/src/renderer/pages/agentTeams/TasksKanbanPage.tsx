@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2026 AionUi (aionui.com)
+ * Copyright 2026 HiveMind (hivemind.com)
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -213,8 +213,8 @@ const TasksKanbanPage: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: '24px', height: '100%', overflowY: 'auto' }}>
-      <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div className='hive-agent-page hive-agent-page--tasks h-full overflow-y-auto'>
+      <div className='hive-agent-page__header'>
         <div>
           <Typography variant='h4' bold>
             Tasks Kanban
@@ -223,7 +223,7 @@ const TasksKanbanPage: React.FC = () => {
             Drag and drop tasks to manage their workflow
           </Typography>
         </div>
-        <Card>
+        <Card className='hive-agent-surface'>
           <CardContent className='py-2 px-4'>
             <div className='flex items-center gap-2'>
               <Typography variant='body2' bold>
@@ -272,16 +272,7 @@ const TasksKanbanPage: React.FC = () => {
       </Card>
 
       <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
-        <div
-          style={{
-            display: 'flex',
-            gap: '20px',
-            overflowX: 'auto',
-            paddingBottom: '24px',
-            minHeight: '600px',
-            alignItems: 'flex-start',
-          }}
-        >
+        <div className='hive-agent-kanban-board'>
           {STATUSES.map((status) => (
             <KanbanColumn key={status} id={status} title={status} tasks={tasks.filter((t) => t.status === status)} onViewDetail={(id) => navigate(`/agent-teams/tasks/${id}`)} onRun={runTask} />
           ))}

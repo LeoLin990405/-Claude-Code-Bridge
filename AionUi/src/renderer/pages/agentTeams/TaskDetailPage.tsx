@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2026 AionUi (aionui.com)
+ * Copyright 2026 HiveMind (hivemind.com)
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -80,14 +80,14 @@ const TaskDetailPage: React.FC = () => {
 
   if (!task) {
     return (
-      <Card>
+      <Card className='hive-agent-surface hive-agent-page hive-agent-page--task-detail'>
         <CardContent>Task not found.</CardContent>
       </Card>
     );
   }
 
   return (
-    <Card>
+    <Card className='hive-agent-surface hive-agent-page hive-agent-page--task-detail'>
       <CardHeader>
         <CardTitle>{task.subject}</CardTitle>
       </CardHeader>
@@ -117,7 +117,7 @@ const TaskDetailPage: React.FC = () => {
           ]}
         />
 
-        <div className='flex flex-wrap gap-2 pt-4'>
+        <div className='hive-agent-page__actions flex flex-wrap gap-2 pt-4'>
           <Button onClick={() => void refresh()} variant='outline'>
             Refresh
           </Button>

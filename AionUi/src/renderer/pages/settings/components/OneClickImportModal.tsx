@@ -5,8 +5,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Loader2 } from 'lucide-react';
 import { Check } from '@icon-park/react';
 import { iconColors } from '@/renderer/theme/colors';
-import AionSteps from '@/renderer/components/base/AionSteps';
-import AionModal from '@/renderer/components/base/AionModal';
+import HiveSteps from '@/renderer/components/base/HiveSteps';
+import HiveModal from '@/renderer/components/base/HiveModal';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -250,16 +250,16 @@ const OneClickImportModal: React.FC<OneClickImportModalProps> = ({ visible, onCa
   );
 
   return (
-    <AionModal header={{ title: t('settings.mcpOneKeyImport'), showClose: true }} visible={visible} onCancel={onCancel} footer={{ render: renderFooter }} style={{ width: 600, height: 420 }} contentStyle={{ borderRadius: 16, padding: '24px', background: 'var(--bg-1)', overflow: 'hidden', height: 420 - 96 }}>
+    <HiveModal header={{ title: t('settings.mcpOneKeyImport'), showClose: true }} visible={visible} onCancel={onCancel} footer={{ render: renderFooter }} style={{ width: 600, height: 420 }} contentStyle={{ borderRadius: 16, padding: '24px', background: 'var(--bg-1)', overflow: 'hidden', height: 420 - 96 }}>
       <div className='flex flex-col h-275px mt-20px'>
         <div className='mb-6 text-t-secondary text-sm'>{t('settings.mcpImportDescription')}</div>
 
         <div className='mb-6'>
-          <AionSteps current={currentStep} size='small'>
-            <AionSteps.Step title={t('settings.mcpStepSelectAgent')} icon={currentStep > 1 ? <Check theme='filled' size={16} fill='#0ea5e9' /> : undefined} />
-            <AionSteps.Step title={t('settings.mcpStepFetchTools')} icon={currentStep > 2 ? <Check theme='filled' size={16} fill='#0ea5e9' /> : undefined} />
-            <AionSteps.Step title={t('settings.mcpStepImportSuccess')} />
-          </AionSteps>
+          <HiveSteps current={currentStep} size='small'>
+            <HiveSteps.Step title={t('settings.mcpStepSelectAgent')} icon={currentStep > 1 ? <Check theme='filled' size={16} fill='#0ea5e9' /> : undefined} />
+            <HiveSteps.Step title={t('settings.mcpStepFetchTools')} icon={currentStep > 2 ? <Check theme='filled' size={16} fill='#0ea5e9' /> : undefined} />
+            <HiveSteps.Step title={t('settings.mcpStepImportSuccess')} />
+          </HiveSteps>
         </div>
 
         <div className={`mb-6 flex-1 overflow-y-auto ${currentStep === 1 ? 'min-h-[60px]' : 'min-h-[180px]'}`}>
@@ -268,7 +268,7 @@ const OneClickImportModal: React.FC<OneClickImportModalProps> = ({ visible, onCa
           {currentStep === 3 && renderStep3()}
         </div>
       </div>
-    </AionModal>
+    </HiveModal>
   );
 };
 

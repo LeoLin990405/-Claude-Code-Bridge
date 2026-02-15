@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2025 HiveMind (hivemind.com)
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -41,9 +41,6 @@ type IMessageVO =
       messages: Array<IMessageToolGroup | IMessageAcpToolCall>;
     };
 
-// Image preview context
-// Note: Image.PreviewGroup from Arco is kept for cross-message image preview functionality
-// TODO: Replace with a shadcn-compatible solution in future
 export const ImagePreviewContext = createContext<{ inPreviewGroup: boolean }>({ inPreviewGroup: false });
 
 const MessageItem: React.FC<{ message: TMessage }> = React.memo(
@@ -51,10 +48,10 @@ const MessageItem: React.FC<{ message: TMessage }> = React.memo(
     const { message } = props as { message: TMessage };
     return (
       <div
-        className={classNames('flex items-start message-item [&>div]:max-w-full px-8px m-t-10px max-w-full md:max-w-780px mx-auto', message.type, {
-          'justify-center': message.position === 'center',
-          'justify-end': message.position === 'right',
-          'justify-start': message.position === 'left',
+        className={classNames('flex items-start message-item hive-message-item [&>div]:max-w-full px-8px m-t-10px max-w-full md:max-w-780px mx-auto', message.type, {
+          'justify-center hive-message-item--center': message.position === 'center',
+          'justify-end hive-message-item--right': message.position === 'right',
+          'justify-start hive-message-item--left': message.position === 'left',
         })}
       >
         {props.children}
@@ -78,7 +75,6 @@ const MessageItem: React.FC<{ message: TMessage }> = React.memo(
       case 'acp_tool_call':
         return <MessageAcpToolCall message={message}></MessageAcpToolCall>;
       case 'codex_permission':
-        // Permission UI is now handled by ConversationChatConfirm component
         return null;
       case 'codex_tool_call':
         return <MessageCodexToolCall message={message}></MessageCodexToolCall>;
@@ -91,11 +87,10 @@ const MessageItem: React.FC<{ message: TMessage }> = React.memo(
   (prev, next) => prev.message.id === next.message.id && prev.message.content === next.message.content && prev.message.position === next.message.position && prev.message.type === next.message.type
 );
 
-const MessageList: React.FC<{ className?: string }> = () => {
+const MessageList: React.FC<{ className?: string }> = ({ className }) => {
   const list = useMessageList();
   const { t } = useTranslation();
 
-  // Pre-process message list to group Codex turn_diff messages
   const processedList = useMemo(() => {
     const result: Array<IMessageVO> = [];
     let diffsChanges: FileChangeInfo[] = [];
@@ -144,13 +139,11 @@ const MessageList: React.FC<{ className?: string }> = () => {
     return result;
   }, [list]);
 
-  // Use auto-scroll hook
   const { virtuosoRef, handleScroll, showScrollButton, scrollToBottom, hideScrollButton } = useAutoScroll({
     messages: list,
     itemCount: processedList.length,
   });
 
-  // Click scroll button
   const handleScrollButtonClick = () => {
     hideScrollButton();
     scrollToBottom('smooth');
@@ -159,7 +152,7 @@ const MessageList: React.FC<{ className?: string }> = () => {
   const renderItem = (_index: number, item: (typeof processedList)[0]) => {
     if ('type' in item && ['file_summary', 'tool_summary'].includes(item.type)) {
       return (
-        <div key={item.id} className={'w-full message-item px-8px m-t-10px max-w-full md:max-w-780px mx-auto ' + item.type}>
+        <div key={item.id} className={'w-full message-item hive-message-item hive-message-item--summary px-8px m-t-10px max-w-full md:max-w-780px mx-auto ' + item.type}>
           {item.type === 'file_summary' && <MessageFileChanges diffsChanges={item.diffs} />}
           {item.type === 'tool_summary' && <MessageToolGroupSummary messages={item.messages}></MessageToolGroupSummary>}
         </div>
@@ -169,14 +162,12 @@ const MessageList: React.FC<{ className?: string }> = () => {
   };
 
   return (
-    <div className='relative flex-1 h-full'>
-      {/* Use PreviewGroup to wrap all messages for cross-message image preview */}
-      {/* Note: Image.PreviewGroup is kept from Arco Design as shadcn doesn't have equivalent */}
+    <div className={classNames('relative flex-1 h-full hive-message-list', className)}>
       <Image.PreviewGroup actionsLayout={['zoomIn', 'zoomOut', 'originalSize', 'rotateLeft', 'rotateRight']}>
         <ImagePreviewContext.Provider value={{ inPreviewGroup: true }}>
           <Virtuoso
             ref={virtuosoRef}
-            className='flex-1 h-full pb-10px box-border'
+            className='flex-1 h-full pb-10px box-border hive-message-scroll'
             data={processedList}
             initialTopMostItemIndex={processedList.length - 1}
             atBottomThreshold={100}
@@ -193,11 +184,9 @@ const MessageList: React.FC<{ className?: string }> = () => {
 
       {showScrollButton && (
         <>
-          {/* Gradient mask */}
-          <div className='absolute bottom-0 left-0 right-0 h-100px pointer-events-none' />
-          {/* Scroll button */}
+          <div className='absolute bottom-0 left-0 right-0 h-100px pointer-events-none hive-scroll-bottom-mask' />
           <div className='absolute bottom-20px left-50% transform -translate-x-50% z-100'>
-            <div className='flex items-center justify-center w-40px h-40px rd-full bg-base shadow-lg cursor-pointer hover:bg-1 transition-all hover:scale-110 border-1 border-solid border-3' onClick={handleScrollButtonClick} title={t('messages.scrollToBottom')} style={{ lineHeight: 0 }}>
+            <div className='hive-scroll-bottom-btn flex items-center justify-center w-40px h-40px rd-full bg-base shadow-lg cursor-pointer hover:bg-1 transition-all hover:scale-110 border-1 border-solid border-3' onClick={handleScrollButtonClick} title={t('messages.scrollToBottom')} style={{ lineHeight: 0 }}>
               <Down theme='filled' size='20' fill={iconColors.secondary} style={{ display: 'block' }} />
             </div>
           </div>

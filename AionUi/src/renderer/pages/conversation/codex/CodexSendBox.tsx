@@ -1,8 +1,12 @@
 import { ipcBridge } from '@/common';
 import type { TMessage } from '@/common/chatLib';
+import type { AcpBackendAll } from '@/types/acpTypes';
 import { transformMessage } from '@/common/chatLib';
 import { uuid } from '@/common/utils';
+import type { TokenUsageData } from '@/common/storage';
 import SendBox from '@/renderer/components/sendbox';
+import ContextUsageIndicator from '@/renderer/components/ContextUsageIndicator';
+import ModelSelector from '@/renderer/components/ModelSelector';
 import { getSendBoxDraftHook, type FileOrFolderItem } from '@/renderer/hooks/useSendBoxDraft';
 import { useAddOrUpdateMessage } from '@/renderer/messages/hooks';
 import { allSupportedExts, type FileMetadata } from '@/renderer/services/FileService';
@@ -21,6 +25,7 @@ import HorizontalFileList from '@/renderer/components/HorizontalFileList';
 import { usePreviewContext } from '@/renderer/pages/conversation/preview';
 import { useLatestRef } from '@/renderer/hooks/useLatestRef';
 import { useAutoTitle } from '@/renderer/hooks/useAutoTitle';
+import { getModelContextLimit } from '@/renderer/utils/modelContextLimits';
 
 interface CodexDraftData {
   _type: 'codex';
@@ -28,6 +33,8 @@ interface CodexDraftData {
   content: string;
   uploadFile: string[];
 }
+
+const CODEX_PROVIDER: AcpBackendAll = 'codex';
 
 const useCodexSendBoxDraft = getSendBoxDraftHook('codex', {
   _type: 'codex',
@@ -50,6 +57,8 @@ const CodexSendBox: React.FC<{ conversation_id: string }> = ({ conversation_id }
     description: '',
     subject: '',
   });
+  const [preferredModel, setPreferredModel] = useState<string | null>(null);
+  const [tokenUsage] = useState<TokenUsageData | null>(null);
 
   // Think 消息节流：限制更新频率，减少渲染次数
   // Throttle thought updates to reduce render frequency
@@ -129,6 +138,64 @@ const CodexSendBox: React.FC<{ conversation_id: string }> = ({ conversation_id }
     setCodexStatus(null);
     setThought({ subject: '', description: '' });
   }, [conversation_id]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadPreferredModel = async () => {
+      try {
+        const prefs = await ipcBridge.models.getUserPreferences.invoke();
+        const selected = prefs.selectedModels?.[CODEX_PROVIDER] ?? null;
+        if (selected) {
+          if (!cancelled) setPreferredModel(selected);
+          return;
+        }
+        const fallbackModel = await ipcBridge.models.getDefaultModel.invoke({ provider: CODEX_PROVIDER });
+        if (!cancelled) setPreferredModel(fallbackModel?.id ?? null);
+      } catch (_error) {
+        if (!cancelled) setPreferredModel(null);
+      }
+    };
+    void loadPreferredModel();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleModelChange = useCallback(async (modelId: string) => {
+    setPreferredModel(modelId);
+    try {
+      const prefs = await ipcBridge.models.getUserPreferences.invoke();
+      await ipcBridge.models.saveUserPreferences.invoke({
+        selectedModels: {
+          ...(prefs.selectedModels || {}),
+          [CODEX_PROVIDER]: modelId,
+        },
+        lastUpdated: prefs.lastUpdated,
+      });
+    } catch (error) {
+      console.error('Failed to save preferred model:', error);
+    }
+  }, []);
+
+  const contextLimit = useMemo(() => getModelContextLimit(preferredModel), [preferredModel]);
+
+  const sendButtonPrefix = useMemo(
+    () => (
+      <>
+        <ContextUsageIndicator tokenUsage={tokenUsage} contextLimit={contextLimit} showWhenEmpty size={24} />
+        <ModelSelector
+          provider={CODEX_PROVIDER}
+          value={preferredModel}
+          onChange={(modelId) => {
+            void handleModelChange(modelId);
+          }}
+          disabled={running || aiProcessing}
+          className='w-[220px]'
+        />
+      </>
+    ),
+    [tokenUsage, contextLimit, preferredModel, handleModelChange, running, aiProcessing]
+  );
 
   // 注册预览面板添加到发送框的 handler
   // Register handler for adding text from preview panel to sendbox
@@ -265,6 +332,7 @@ const CodexSendBox: React.FC<{ conversation_id: string }> = ({ conversation_id }
         msg_id,
         conversation_id,
         files: [...currentUploadFile, ...atPathStrings], // 包含上传文件和选中的工作空间文件
+        model: preferredModel,
       });
       void checkAndUpdateTitle(conversation_id, message);
       emitter.emit('chat.history.refresh');
@@ -321,7 +389,7 @@ const CodexSendBox: React.FC<{ conversation_id: string }> = ({ conversation_id }
         addOrUpdateMessage(userMessage, true); // 立即保存到存储，避免刷新丢失
 
         // 发送消息到后端处理
-        await ipcBridge.codexConversation.sendMessage.invoke({ input: initialDisplayMessage, msg_id, conversation_id, files, loading_id });
+        await ipcBridge.codexConversation.sendMessage.invoke({ input: initialDisplayMessage, msg_id, conversation_id, files, loading_id, model: preferredModel });
         void checkAndUpdateTitle(conversation_id, input);
         emitter.emit('chat.history.refresh');
 
@@ -386,6 +454,7 @@ const CodexSendBox: React.FC<{ conversation_id: string }> = ({ conversation_id }
         onStop={handleStop}
         onFilesAdded={handleFilesAdded}
         supportedExts={allSupportedExts}
+        sendButtonPrefix={sendButtonPrefix}
         tools={
           <Button
             variant='secondary'

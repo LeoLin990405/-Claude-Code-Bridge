@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2026 AionUi (aionui.com)
+ * Copyright 2026 HiveMind (hivemind.com)
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -11,6 +11,7 @@ import { motion } from 'framer-motion';
 import { Typography } from '@/renderer/components/atoms/Typography';
 import { TaskCard } from './TaskCard';
 import type { IAgentTask } from '@/common/ipcBridge';
+import classNames from 'classnames';
 
 interface KanbanColumnProps {
   id: string;
@@ -20,7 +21,6 @@ interface KanbanColumnProps {
   onRun?: (taskId: string) => void;
 }
 
-// 状态配置
 const STATUS_CONFIG: Record<string, { label: string; color: string; bgColor: string }> = {
   pending: { label: '待处理', color: '#94a3b8', bgColor: '#94a3b820' },
   in_progress: { label: '进行中', color: '#0ea5e9', bgColor: '#0ea5e920' },
@@ -38,30 +38,27 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({ id, title, tasks, on
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className='flex flex-col w-80 flex-shrink-0'
+      className={classNames('hive-agent-kanban-column', {
+        'hive-agent-kanban-column--over': isOver,
+      })}
       style={{
-        background: 'var(--bg-1)',
-        borderRadius: 'var(--radius-lg)',
-        border: `1px solid ${isOver ? config.color : 'var(--color-border)'}`,
-        boxShadow: isOver ? `0 0 0 2px ${config.color}40` : 'var(--shadow-sm)',
-        transition: 'all 0.2s ease',
+        borderColor: isOver ? config.color : undefined,
+        boxShadow: isOver ? `0 0 0 2px ${config.color}40` : undefined,
       }}
     >
-      {/* 列头部 */}
       <div
-        className='p-4 border-b border-line-2'
+        className='hive-agent-kanban-column__header'
         style={{
-          borderTop: `3px solid ${config.color}`,
-          borderRadius: 'var(--radius-lg) var(--radius-lg) 0 0',
+          borderTopColor: config.color,
         }}
       >
-        <div className='flex items-center justify-between'>
-          <div className='flex items-center gap-2'>
+        <div className='hive-agent-kanban-column__header-inner'>
+          <div className='hive-agent-kanban-column__title'>
             <Typography variant='body1' bold className='text-t-primary'>
               {config.label}
             </Typography>
             <span
-              className='px-2 py-0.5 text-xs font-medium rounded-full'
+              className='hive-agent-kanban-column__count'
               style={{
                 backgroundColor: config.bgColor,
                 color: config.color,
@@ -70,18 +67,15 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({ id, title, tasks, on
               {tasks.length}
             </span>
           </div>
-          <div className='w-2 h-2 rounded-full' style={{ backgroundColor: config.color }} />
+          <div className='hive-agent-kanban-column__dot' style={{ backgroundColor: config.color }} />
         </div>
       </div>
 
-      {/* 列内容区域 */}
       <div
         ref={setNodeRef}
-        className='flex-1 p-4 space-y-3 min-h-[400px] max-h-[calc(100vh-300px)] overflow-y-auto'
+        className='hive-agent-kanban-column__content'
         style={{
-          backgroundColor: isOver ? `${config.color}08` : 'transparent',
-          transition: 'background-color 0.2s ease',
-          borderRadius: '0 0 var(--radius-lg) var(--radius-lg)',
+          backgroundColor: isOver ? `${config.color}08` : undefined,
         }}
       >
         <SortableContext id={id} items={tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
@@ -93,7 +87,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({ id, title, tasks, on
         </SortableContext>
 
         {tasks.length === 0 && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className='flex flex-col items-center justify-center h-32 border-2 border-dashed border-line-2 rounded-lg'>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className='hive-agent-kanban-column__empty'>
             <Typography variant='caption' color='tertiary'>
               拖拽任务到此处
             </Typography>

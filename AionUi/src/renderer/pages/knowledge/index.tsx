@@ -246,9 +246,9 @@ const KnowledgeHubPage: React.FC = () => {
   }, [searchQuery, status?.obsidian_cli_available]);
 
   return (
-    <div style={{ margin: '0 auto', maxWidth: 1400, padding: 24 }}>
-      <div style={{ marginBottom: 24 }}>
-        <div style={{ alignItems: 'center', display: 'flex', justifyContent: 'space-between' }}>
+    <div className='hive-knowledge-page'>
+      <div className='hive-knowledge-header'>
+        <div className='hive-knowledge-header__inner'>
           <div>
             <h1 className='text-2xl font-bold m-0'>Knowledge Hub v3.0</h1>
             <p className='text-muted-foreground mt-2'>NotebookLM + Obsidian + PDF 自动化 + Browser Automation + Graph View</p>
@@ -277,8 +277,8 @@ const KnowledgeHubPage: React.FC = () => {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 16, marginBottom: 24 }}>
-        <Card>
+      <div className='hive-knowledge-stats-grid'>
+        <Card className='hive-knowledge-card'>
           <CardContent className='pt-6 space-y-2'>
             <div className='text-sm text-muted-foreground'>Obsidian CLI</div>
             <div className='text-xl font-bold'>{status?.obsidian_cli_version || 'Loading...'}</div>
@@ -286,7 +286,7 @@ const KnowledgeHubPage: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className='hive-knowledge-card'>
           <CardContent className='pt-6 space-y-2'>
             <div className='text-sm text-muted-foreground'>NotebookLM Manager</div>
             <div className='text-xl font-bold'>{status?.notebooklm_manager_ready ? '就绪' : '未就绪'}</div>
@@ -294,7 +294,7 @@ const KnowledgeHubPage: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className='hive-knowledge-card'>
           <CardContent className='pt-6 space-y-2'>
             <div className='text-sm text-muted-foreground'>总 Notebooks</div>
             <div className='text-xl font-bold'>{status?.total_notebooks || 0}</div>
@@ -302,7 +302,7 @@ const KnowledgeHubPage: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className='hive-knowledge-card'>
           <CardContent className='pt-6 space-y-2'>
             <div className='text-sm text-muted-foreground'>Vault 路径</div>
             <div className='text-xl font-bold break-all'>{status?.vault_path?.split('/').pop() || 'N/A'}</div>
@@ -311,10 +311,10 @@ const KnowledgeHubPage: React.FC = () => {
         </Card>
       </div>
 
-      <Card>
+      <Card className='hive-knowledge-card'>
         <CardContent className='p-0'>
           <Tabs defaultValue='dashboard'>
-            <TabsList className='px-4 pt-2'>
+            <TabsList className='hive-knowledge-tabs px-4 pt-2'>
               <TabsTrigger value='dashboard'>Dashboard</TabsTrigger>
               <TabsTrigger value='graph'>Graph View</TabsTrigger>
               <TabsTrigger value='timeline'>Timeline</TabsTrigger>
@@ -339,7 +339,7 @@ const KnowledgeHubPage: React.FC = () => {
             </TabsContent>
 
             <TabsContent value='notebooks'>
-              <div className='p-4'>
+              <div className='hive-knowledge-tab-body p-4'>
                 <div className='relative mb-4'>
                   <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground' />
                   <Input placeholder='Search notebooks by title or category...' value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className='pl-10' />
@@ -412,7 +412,7 @@ const KnowledgeHubPage: React.FC = () => {
             </TabsContent>
 
             <TabsContent value='upload'>
-              <div className='p-10 text-center border-2 border-dashed border-muted rounded-lg m-4'>
+              <div className='hive-knowledge-upload p-10 text-center border-2 border-dashed border-muted rounded-lg m-4'>
                 <label className='cursor-pointer block'>
                   <input
                     type='file'
@@ -443,7 +443,7 @@ const KnowledgeHubPage: React.FC = () => {
             </TabsContent>
 
             <TabsContent value='settings'>
-              <div className='p-5'>
+              <div className='hive-knowledge-settings p-5'>
                 <h3 className='text-lg font-medium mb-4'>系统配置</h3>
                 <p className='mb-2'>
                   <span className='font-medium'>Vault 路径: </span>

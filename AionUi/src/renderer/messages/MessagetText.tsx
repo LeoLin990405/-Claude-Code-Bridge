@@ -1,11 +1,11 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2025 HiveMind (hivemind.com)
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import type { IMessageText } from '@/common/chatLib';
-import { AIONUI_FILES_MARKER } from '@/common/constants';
+import { HIVEMIND_FILES_MARKER } from '@/common/constants';
 import { iconColors } from '@/renderer/theme/colors';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/renderer/components/ui/tooltip';
 import { Copy } from '@icon-park/react';
@@ -19,12 +19,12 @@ import MarkdownView from '../components/Markdown';
 import { stripThinkTags, hasThinkTags } from '../utils/thinkTagFilter';
 
 const parseFileMarker = (content: string) => {
-  const markerIndex = content.indexOf(AIONUI_FILES_MARKER);
+  const markerIndex = content.indexOf(HIVEMIND_FILES_MARKER);
   if (markerIndex === -1) {
     return { text: content, files: [] as string[] };
   }
   const text = content.slice(0, markerIndex).trimEnd();
-  const afterMarker = content.slice(markerIndex + AIONUI_FILES_MARKER.length).trim();
+  const afterMarker = content.slice(markerIndex + HIVEMIND_FILES_MARKER.length).trim();
   const files = afterMarker
     ? afterMarker
         .split('\n')
@@ -50,8 +50,6 @@ const useFormatContent = (content: string) => {
 };
 
 const MessageText: React.FC<{ message: IMessageText }> = ({ message }) => {
-  // Filter think tags from content before rendering
-  // 在渲染前过滤 think 标签
   const contentToRender = useMemo(() => {
     const rawContent = message.content.content;
     if (typeof rawContent === 'string' && hasThinkTags(rawContent)) {
@@ -66,7 +64,6 @@ const MessageText: React.FC<{ message: IMessageText }> = ({ message }) => {
   const [showCopyAlert, setShowCopyAlert] = useState(false);
   const isUserMessage = message.position === 'right';
 
-  // 过滤空内容，避免渲染空DOM
   if (!message.content.content || (typeof message.content.content === 'string' && !message.content.content.trim())) {
     return null;
   }
@@ -90,7 +87,7 @@ const MessageText: React.FC<{ message: IMessageText }> = ({ message }) => {
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className='p-4px rd-4px cursor-pointer hover:bg-3 transition-colors opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto focus-within:opacity-100 focus-within:pointer-events-auto' onClick={handleCopy} style={{ lineHeight: 0 }}>
+          <div className='hive-message-copy-btn p-4px rd-4px cursor-pointer hover:bg-3 transition-colors opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto focus-within:opacity-100 focus-within:pointer-events-auto' onClick={handleCopy} style={{ lineHeight: 0 }}>
             <Copy theme='outline' size='16' fill={iconColors.secondary} />
           </div>
         </TooltipTrigger>
@@ -103,7 +100,7 @@ const MessageText: React.FC<{ message: IMessageText }> = ({ message }) => {
 
   return (
     <>
-      <div className={classNames('flex flex-col group', isUserMessage ? 'items-end' : 'items-start')}>
+      <div className={classNames('flex flex-col group hive-message-block', isUserMessage ? 'items-end' : 'items-start')}>
         {files.length > 0 && (
           <div className={classNames('mt-6px', { 'self-end': isUserMessage })}>
             {files.length === 1 ? (
@@ -120,11 +117,11 @@ const MessageText: React.FC<{ message: IMessageText }> = ({ message }) => {
           </div>
         )}
         <div
-          className={classNames('rd-8px rd-tr-2px [&>p:first-child]:mt-0px [&>p:last-child]:mb-0px md:max-w-780px', {
-            'bg-aou-2 p-8px': isUserMessage,
+          className={classNames('hive-message-bubble rd-8px [&>p:first-child]:mt-0px [&>p:last-child]:mb-0px md:max-w-780px', {
+            'hive-message-bubble--user bg-aou-2 p-8px': isUserMessage,
+            'hive-message-bubble--assistant': !isUserMessage,
           })}
         >
-          {/* JSON 内容使用折叠组件 Use CollapsibleContent for JSON content */}
           {json ? (
             <CollapsibleContent maxHeight={200} defaultCollapsed={true}>
               <MarkdownView codeStyle={{ marginTop: 4, marginBlock: 4 }}>{`\`\`\`json\n${JSON.stringify(data, null, 2)}\n\`\`\``}</MarkdownView>
@@ -143,7 +140,7 @@ const MessageText: React.FC<{ message: IMessageText }> = ({ message }) => {
         </div>
       </div>
       {showCopyAlert && (
-        <div className='fixed top-5 left-1/2 -translate-x-1/2 z-[9999] bg-green-500 text-white px-4 py-2 rounded-md shadow-lg flex items-center gap-2'>
+        <div className='hive-copy-alert fixed top-5 left-1/2 -translate-x-1/2 z-[9999] bg-green-500 text-white px-4 py-2 rounded-md shadow-lg flex items-center gap-2'>
           <span>{t('messages.copySuccess')}</span>
         </div>
       )}

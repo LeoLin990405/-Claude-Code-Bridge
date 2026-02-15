@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2025 HiveMind (hivemind.com)
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -40,16 +40,16 @@ const MessageTips: React.FC<{ message: IMessageTips }> = ({ message }) => {
 
   if (json)
     return (
-      <div className='w-full'>
-        <div className={classNames('bg-message-tips rd-8px p-x-12px p-y-8px flex items-start gap-4px')}>
+      <div className='w-full hive-message-tips'>
+        <div className={classNames('hive-message-tips__card bg-message-tips rd-8px p-x-12px p-y-8px flex items-start gap-4px')}>
           {icon[type] || icon.warning}
           <MarkdownView>{`\`\`\`json\n${JSON.stringify(data, null, 2)}\n\`\`\``}</MarkdownView>
         </div>
       </div>
     );
   return (
-    <div className='w-full'>
-      <div className={classNames('bg-message-tips rd-8px  p-x-12px p-y-8px flex items-start gap-4px')}>
+    <div className='w-full hive-message-tips'>
+      <div className={classNames('hive-message-tips__card bg-message-tips rd-8px  p-x-12px p-y-8px flex items-start gap-4px')}>
         {icon[type] || icon.warning}
         <CollapsibleContent maxHeight={48} defaultCollapsed={true} className='flex-1' useMask={true}>
           <span

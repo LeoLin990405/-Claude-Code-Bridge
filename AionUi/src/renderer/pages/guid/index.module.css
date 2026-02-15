@@ -188,3 +188,31 @@
     max-width: 100px;
   }
 }
+
+:global(body.nexus-mode) .guidContainer {
+  justify-content: flex-start;
+  padding-top: 24px;
+}
+
+:global(body.nexus-mode) .guidLayout {
+  width: clamp(var(--app-min-width, 360px), calc(100% - 32px), 920px);
+}
+
+:global(body.nexus-mode) .guidInputCard {
+  backdrop-filter: blur(8px);
+}
+
+:global(body.nexus-mode) .actionRow {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(75, 85, 99, 0.65);
+}
+
+:global(body.nexus-mode) .presetAgentTag {
+  border: 1px solid rgba(75, 85, 99, 0.7);
+  background: rgba(31, 41, 55, 0.72);
+}
+
+:global(body.nexus-mode) .presetAgentTag:hover {
+  background: rgba(40, 49, 65, 0.86);
+}

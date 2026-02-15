@@ -28,7 +28,7 @@ const SessionsList: React.FC = () => {
   const [sessionToDelete, setSessionToDelete] = useState<string | null>(null);
 
   useEffect(() => {
-    loadSessions();
+    void loadSessions();
   }, [loadSessions]);
 
   const handleExport = async (sessionId: string, event: React.MouseEvent) => {
@@ -48,7 +48,7 @@ const SessionsList: React.FC = () => {
 
   const handleDelete = () => {
     if (sessionToDelete) {
-      deleteSession(sessionToDelete);
+      void deleteSession(sessionToDelete);
       setSessionToDelete(null);
       setDeleteDialogOpen(false);
     }

@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2026 AionUi (aionui.com)
+ * Copyright 2026 HiveMind (hivemind.com)
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -44,8 +44,8 @@ const MonitorDashboard: React.FC = () => {
   };
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: '24px' }}>
-      <div style={{ marginBottom: '24px' }}>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className='hive-agent-page hive-agent-page--monitor'>
+      <div className='hive-agent-page__header hive-agent-page__header--stack'>
         <Typography variant='h4' bold>
           Real-time Monitor
         </Typography>
@@ -55,7 +55,7 @@ const MonitorDashboard: React.FC = () => {
       </div>
 
       <div className='flex flex-col gap-6 w-full'>
-        <Card>
+        <Card className='hive-agent-surface'>
           <CardHeader>
             <CardTitle>
               <Typography variant='h6'>Task Updates</Typography>
@@ -81,7 +81,7 @@ const MonitorDashboard: React.FC = () => {
                       </Typography>
                     </TableCell>
                     <TableCell>
-                      <code style={{ fontSize: '11px' }}>{task.team_id}</code>
+                      <code className='hive-agent-code'>{task.team_id}</code>
                     </TableCell>
                     <TableCell>
                       <Badge variant={getStatusVariant(task.status)}>{task.status}</Badge>
@@ -99,7 +99,7 @@ const MonitorDashboard: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className='hive-agent-surface'>
           <CardHeader>
             <CardTitle>
               <Typography variant='h6'>Message Stream</Typography>
@@ -122,7 +122,7 @@ const MonitorDashboard: React.FC = () => {
                       <Badge variant='outline'>{message.type.toUpperCase()}</Badge>
                     </TableCell>
                     <TableCell>
-                      <code style={{ fontSize: '11px' }}>{message.team_id}</code>
+                      <code className='hive-agent-code'>{message.team_id}</code>
                     </TableCell>
                     <TableCell>
                       <Typography variant='body2' className='line-clamp-1'>

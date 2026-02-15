@@ -14,7 +14,7 @@ interface OverviewTabProps {
 
 export const OverviewTab: React.FC<OverviewTabProps> = ({ team, stats, onRefresh, onQuickCreateTask }) => {
   return (
-    <div style={{ padding: '24px 0' }}>
+    <div className='hive-agent-tab-section'>
       <Description
         column={2}
         items={[
@@ -24,7 +24,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ team, stats, onRefresh
                 Team ID
               </Typography>
             ),
-            value: <code style={{ fontSize: '12px' }}>{team.id}</code>,
+            value: <code className='hive-agent-code'>{team.id}</code>,
           },
           {
             label: (
@@ -73,7 +73,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ team, stats, onRefresh
         ]}
       />
 
-      <div style={{ marginTop: 24, display: 'flex', gap: 12 }}>
+      <div className='hive-agent-overview-actions'>
         <Button onClick={onRefresh} variant='outline'>
           Refresh Data
         </Button>

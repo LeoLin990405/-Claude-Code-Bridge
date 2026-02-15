@@ -1,10 +1,13 @@
 import { ipcBridge } from '@/common';
-import type { AcpBackend } from '@/types/acpTypes';
+import type { AcpBackend, AcpBackendAll } from '@/types/acpTypes';
 import { transformMessage, type TMessage } from '@/common/chatLib';
 import type { IResponseMessage } from '@/common/ipcBridge';
+import type { TokenUsageData } from '@/common/storage';
 import { uuid } from '@/common/utils';
 import SendBox from '@/renderer/components/sendbox';
 import ThoughtDisplay, { type ThoughtData } from '@/renderer/components/ThoughtDisplay';
+import ContextUsageIndicator from '@/renderer/components/ContextUsageIndicator';
+import ModelSelector from '@/renderer/components/ModelSelector';
 import { getSendBoxDraftHook, type FileOrFolderItem } from '@/renderer/hooks/useSendBoxDraft';
 import { createSetUploadFile, useSendBoxFiles } from '@/renderer/hooks/useSendBoxFiles';
 import { useAddOrUpdateMessage } from '@/renderer/messages/hooks';
@@ -22,6 +25,7 @@ import HorizontalFileList from '@/renderer/components/HorizontalFileList';
 import { usePreviewContext } from '@/renderer/pages/conversation/preview';
 import { useLatestRef } from '@/renderer/hooks/useLatestRef';
 import { useAutoTitle } from '@/renderer/hooks/useAutoTitle';
+import { getModelContextLimit } from '@/renderer/utils/modelContextLimits';
 
 const useAcpSendBoxDraft = getSendBoxDraftHook('acp', {
   _type: 'acp',
@@ -212,6 +216,82 @@ const AcpSendBox: React.FC<{
   const { checkAndUpdateTitle } = useAutoTitle();
   const { atPath, uploadFile, setAtPath, setUploadFile, content, setContent } = useSendBoxDraft(conversation_id);
   const { setSendBoxHandler } = usePreviewContext();
+  const [preferredModel, setPreferredModel] = useState<string | null>(null);
+  const [tokenUsage] = useState<TokenUsageData | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadPreferredModel = async () => {
+      try {
+        const provider = backend as AcpBackendAll;
+        const prefs = await ipcBridge.models.getUserPreferences.invoke();
+        const selected = prefs.selectedModels?.[provider] ?? null;
+        if (selected) {
+          if (!cancelled) setPreferredModel(selected);
+          return;
+        }
+
+        const fallbackModel = await ipcBridge.models.getDefaultModel.invoke({ provider });
+        if (!cancelled) {
+          setPreferredModel(fallbackModel?.id ?? null);
+        }
+      } catch (_error) {
+        if (!cancelled) {
+          setPreferredModel(null);
+        }
+      }
+    };
+
+    loadPreferredModel().catch(() => {
+      if (!cancelled) {
+        setPreferredModel(null);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [backend]);
+
+  const handleModelChange = useCallback(
+    async (modelId: string) => {
+      const provider = backend as AcpBackendAll;
+      setPreferredModel(modelId);
+      try {
+        const prefs = await ipcBridge.models.getUserPreferences.invoke();
+        await ipcBridge.models.saveUserPreferences.invoke({
+          selectedModels: {
+            ...(prefs.selectedModels || {}),
+            [provider]: modelId,
+          },
+          lastUpdated: prefs.lastUpdated,
+        });
+      } catch (error) {
+        console.error('Failed to save preferred model:', error);
+      }
+    },
+    [backend]
+  );
+
+  const contextLimit = useMemo(() => getModelContextLimit(preferredModel), [preferredModel]);
+
+  const sendButtonPrefix = useMemo(
+    () => (
+      <>
+        <ContextUsageIndicator tokenUsage={tokenUsage} contextLimit={contextLimit} showWhenEmpty size={24} />
+        <ModelSelector
+          provider={backend as AcpBackendAll}
+          value={preferredModel}
+          onChange={(modelId) => {
+            void handleModelChange(modelId);
+          }}
+          disabled={running || aiProcessing}
+          className='w-[220px]'
+        />
+      </>
+    ),
+    [tokenUsage, contextLimit, backend, preferredModel, handleModelChange, running, aiProcessing]
+  );
 
   // 使用 useLatestRef 保存最新的 setContent/atPath，避免重复注册 handler
   // Use useLatestRef to keep latest setters to avoid re-registering handler
@@ -266,8 +346,9 @@ const AcpSendBox: React.FC<{
 
     const sendInitialMessage = async () => {
       try {
-        const initialMessage = JSON.parse(storedMessage);
+        const initialMessage = JSON.parse(storedMessage) as { input: string; files?: string[]; model?: string | null };
         const { input, files } = initialMessage;
+        const initialModel = typeof initialMessage.model === 'string' ? initialMessage.model : preferredModel;
 
         // ACP: 不使用 buildDisplayMessage，直接传原始 input
         // 文件引用由后端 ACP agent 负责添加（使用复制后的实际路径）
@@ -283,6 +364,7 @@ const AcpSendBox: React.FC<{
           msg_id,
           conversation_id,
           files,
+          model: initialModel,
         });
 
         if (result && result.success === true) {
@@ -317,7 +399,7 @@ const AcpSendBox: React.FC<{
     sendInitialMessage().catch((error) => {
       console.error('Failed to send initial message:', error);
     });
-  }, [conversation_id, backend]);
+  }, [conversation_id, backend, preferredModel]);
 
   const onSendHandler = async (message: string) => {
     const msg_id = uuid();
@@ -346,6 +428,7 @@ const AcpSendBox: React.FC<{
         msg_id,
         conversation_id,
         files: allFiles,
+        model: preferredModel,
       });
       void checkAndUpdateTitle(conversation_id, message);
       emitter.emit('chat.history.refresh');
@@ -419,6 +502,7 @@ const AcpSendBox: React.FC<{
         className='z-10'
         onFilesAdded={handleFilesAdded}
         supportedExts={allSupportedExts}
+        sendButtonPrefix={sendButtonPrefix}
         tools={
           <Button
             variant='secondary'

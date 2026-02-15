@@ -793,11 +793,7 @@ const GeminiSendBox: React.FC<{
                   if (typeof item === 'string') return null;
                   if (!item.isFile) {
                     return (
-                      <Badge
-                        key={item.path}
-                        variant='secondary'
-                        className='gap-1 pr-1'
-                      >
+                      <Badge key={item.path} variant='secondary' className='gap-1 pr-1'>
                         {item.name}
                         <button
                           onClick={() => {

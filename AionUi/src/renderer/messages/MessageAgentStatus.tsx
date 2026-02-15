@@ -1,11 +1,10 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2025 HiveMind (hivemind.com)
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import type { IMessageAgentStatus } from '@/common/chatLib';
-import { Badge } from '@/renderer/components/ui/badge';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -13,9 +12,6 @@ interface MessageAgentStatusProps {
   message: IMessageAgentStatus;
 }
 
-/**
- * Unified agent status message component for all ACP-based agents (Claude, Qwen, Codex, etc.)
- */
 const MessageAgentStatus: React.FC<MessageAgentStatusProps> = ({ message }) => {
   const { t } = useTranslation();
   const { backend, status } = message.content;
@@ -79,7 +75,7 @@ const MessageAgentStatus: React.FC<MessageAgentStatusProps> = ({ message }) => {
 
   return (
     <div
-      className='agent-status-message flex items-center gap-3 p-3 rounded-lg border'
+      className='agent-status-message hive-agent-status flex items-center gap-3 p-3 rounded-lg border'
       style={{
         backgroundColor: isError ? 'var(--color-danger-light-1)' : isSuccess ? 'var(--color-success-light-1)' : 'var(--color-primary-light-1)',
         borderColor: isError ? 'rgb(var(--danger-3))' : isSuccess ? 'rgb(var(--success-3))' : 'rgb(var(--primary-3))',

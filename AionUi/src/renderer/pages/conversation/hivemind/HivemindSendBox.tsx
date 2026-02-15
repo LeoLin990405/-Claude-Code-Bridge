@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2026 AionUi (aionui.com)
+ * Copyright 2026 HiveMind (hivemind.com)
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -15,6 +15,7 @@ import FilePreview from '@/renderer/components/FilePreview';
 import HorizontalFileList from '@/renderer/components/HorizontalFileList';
 import ThoughtDisplay, { type ThoughtData } from '@/renderer/components/ThoughtDisplay';
 import SendBox from '@/renderer/components/sendbox';
+import ModelSelector from '@/renderer/components/ModelSelector';
 import { useAutoTitle } from '@/renderer/hooks/useAutoTitle';
 import { useLatestRef } from '@/renderer/hooks/useLatestRef';
 import { useHivemindStatus } from '@/renderer/hooks/useHivemindStatus';
@@ -23,6 +24,7 @@ import { useAddOrUpdateMessage } from '@/renderer/messages/hooks';
 import { usePreviewContext } from '@/renderer/pages/conversation/preview';
 import { allSupportedExts, type FileMetadata } from '@/renderer/services/FileService';
 import { DesignTokens } from '@/renderer/design-system';
+import { getModelContextLimit } from '@/renderer/utils/modelContextLimits';
 import { iconColors } from '@/renderer/theme/colors';
 import { emitter, useAddEventListener } from '@/renderer/utils/emitter';
 import { buildDisplayMessage, collectSelectedFiles } from '@/renderer/utils/messageFiles';
@@ -31,6 +33,7 @@ import { Button } from '@/renderer/components/ui/button';
 import { Badge } from '@/renderer/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/renderer/components/ui/select';
 import { toast } from 'sonner';
+import type { AcpBackendAll, UserModelPreferences } from '@/types/acpTypes';
 import { Plus, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -44,6 +47,14 @@ const useHivemindSendBoxDraft = getSendBoxDraftHook('hivemind', {
   uploadFile: [],
   selectedProvider: null,
 });
+
+const MODEL_SELECTABLE_PROVIDERS = new Set<AcpBackendAll>(['claude', 'codex', 'gemini', 'kimi', 'qwen', 'deepseek', 'iflow', 'opencode', 'ollama', 'goose', 'auggie', 'copilot', 'qoder', 'openclaw-gateway', 'custom']);
+
+const isModelSelectableProvider = (provider: string | null | undefined): provider is AcpBackendAll => {
+  if (!provider) return false;
+  if (provider.startsWith('@')) return false;
+  return MODEL_SELECTABLE_PROVIDERS.has(provider as AcpBackendAll);
+};
 
 const HivemindSendBox: React.FC<{ conversation_id: string; gatewayUrl?: string }> = ({ conversation_id, gatewayUrl: gatewayUrlProp }) => {
   const { t } = useTranslation();
@@ -63,10 +74,12 @@ const HivemindSendBox: React.FC<{ conversation_id: string; gatewayUrl?: string }
   const [lastTokens, setLastTokens] = useState<number | null>(null);
   const [tokenUsage, setTokenUsage] = useState<TokenUsageData | null>(null);
   const [thought, setThought] = useState<ThoughtData>({ subject: '', description: '' });
+  const [userModelPreferences, setUserModelPreferences] = useState<UserModelPreferences>({ selectedModels: {} });
   const [pendingRetry, setPendingRetry] = useState<{
     message: string;
     files: string[];
     provider: string | null;
+    model: string | null;
   } | null>(null);
 
   const busyRef = useRef(false);
@@ -74,6 +87,7 @@ const HivemindSendBox: React.FC<{ conversation_id: string; gatewayUrl?: string }
     message: string;
     files: string[];
     provider: string | null;
+    model: string | null;
   } | null>(null);
   const exhaustedProvidersRef = useRef<Set<string>>(new Set());
   const quotaHandledMsgRef = useRef<string | null>(null);
@@ -139,6 +153,46 @@ const HivemindSendBox: React.FC<{ conversation_id: string; gatewayUrl?: string }
   const providersRef = useLatestRef(providers);
   const lastProviderRef = useLatestRef(lastProvider);
   const tRef = useLatestRef(t);
+
+  useEffect(() => {
+    let disposed = false;
+
+    const loadModelPreferences = async () => {
+      try {
+        const prefs = await ipcBridge.models.getUserPreferences.invoke();
+        if (disposed) return;
+        setUserModelPreferences({ selectedModels: prefs.selectedModels || {}, lastUpdated: prefs.lastUpdated });
+      } catch (error) {
+        console.error('Failed to load model preferences:', error);
+      }
+    };
+
+    void loadModelPreferences();
+
+    return () => {
+      disposed = true;
+    };
+  }, []);
+
+  const handleModelChange = useCallback(
+    async (provider: AcpBackendAll, modelId: string) => {
+      const nextPreferences: UserModelPreferences = {
+        selectedModels: {
+          ...(userModelPreferences.selectedModels || {}),
+          [provider]: modelId,
+        },
+      };
+
+      setUserModelPreferences(nextPreferences);
+
+      try {
+        await ipcBridge.models.saveUserPreferences.invoke(nextPreferences);
+      } catch (error) {
+        console.error('Failed to save model preferences:', error);
+      }
+    },
+    [userModelPreferences]
+  );
 
   const setContent = useCallback(
     (value: string) => {
@@ -270,8 +324,9 @@ const HivemindSendBox: React.FC<{ conversation_id: string; gatewayUrl?: string }
     void onSendHandler(snapshot.message, {
       files: snapshot.files,
       provider: snapshot.provider,
+      model: snapshot.model,
     });
-  }, [pendingRetry, aiProcessing, running, gatewayConnected]);
+  }, [pendingRetry, aiProcessing, running, gatewayConnected, userModelPreferences]);
 
   useEffect(() => {
     return ipcBridge.conversation.responseStream.on((message) => {
@@ -325,6 +380,7 @@ const HivemindSendBox: React.FC<{ conversation_id: string; gatewayUrl?: string }
                 message: lastSent.message,
                 files: lastSent.files,
                 provider: fallbackProvider,
+                model: isModelSelectableProvider(fallbackProvider) ? (userModelPreferences.selectedModels?.[fallbackProvider] ?? null) : null,
               });
               return;
             }
@@ -492,6 +548,7 @@ const HivemindSendBox: React.FC<{ conversation_id: string; gatewayUrl?: string }
     options?: {
       files?: string[];
       provider?: string | null;
+      model?: string | null;
     }
   ) => {
     if (busyRef.current) {
@@ -510,6 +567,7 @@ const HivemindSendBox: React.FC<{ conversation_id: string; gatewayUrl?: string }
     const msg_id = uuid();
     const currentUploadFiles = [...uploadFileRef.current];
     const currentProvider = options?.provider ?? selectedProviderRef.current;
+    const currentModel = options?.model ?? (isModelSelectableProvider(currentProvider) ? (userModelPreferences.selectedModels?.[currentProvider] ?? null) : null);
 
     setThought({ subject: '', description: '' });
     setLastTokens(null);
@@ -528,6 +586,7 @@ const HivemindSendBox: React.FC<{ conversation_id: string; gatewayUrl?: string }
       message,
       files: filesToSend,
       provider: currentProvider,
+      model: currentModel,
     };
     const displayMessage = buildDisplayMessage(message, filesToSend, workspacePath);
 
@@ -540,6 +599,7 @@ const HivemindSendBox: React.FC<{ conversation_id: string; gatewayUrl?: string }
         conversation_id,
         files: filesToSend,
         provider: currentProvider,
+        model: currentModel,
       });
 
       if (!result.success) {
@@ -566,7 +626,7 @@ const HivemindSendBox: React.FC<{ conversation_id: string; gatewayUrl?: string }
     () => {
       const lastSent = lastSentRef.current;
       if (!lastSent || busyRef.current) return;
-      void onSendHandlerRef.current(lastSent.message, { files: lastSent.files });
+      void onSendHandlerRef.current(lastSent.message, { files: lastSent.files, provider: lastSent.provider, model: lastSent.model });
     },
     []
   );
@@ -592,11 +652,12 @@ const HivemindSendBox: React.FC<{ conversation_id: string; gatewayUrl?: string }
 
       sessionStorage.setItem(processedKey, 'true');
       try {
-        const parsed = JSON.parse(stored) as { input: string; files?: string[]; provider?: string | null };
+        const parsed = JSON.parse(stored) as { input: string; files?: string[]; provider?: string | null; model?: string | null };
         const msg_id = uuid();
         const input = parsed.input || '';
         const files = parsed.files || [];
         const provider = typeof parsed.provider === 'string' ? parsed.provider : selectedProvider;
+        const model = typeof parsed.model === 'string' ? parsed.model : isModelSelectableProvider(provider) ? (userModelPreferences.selectedModels?.[provider] ?? null) : null;
         const displayMessage = buildDisplayMessage(input, files, workspacePath);
 
         busyRef.current = true;
@@ -604,6 +665,7 @@ const HivemindSendBox: React.FC<{ conversation_id: string; gatewayUrl?: string }
           message: input,
           files,
           provider: provider ?? null,
+          model: model ?? null,
         };
         setAiProcessing(true);
         const result = await ipcBridge.conversation.sendMessage.invoke({
@@ -612,6 +674,7 @@ const HivemindSendBox: React.FC<{ conversation_id: string; gatewayUrl?: string }
           conversation_id,
           files,
           provider,
+          model,
         });
 
         if (!result.success) {
@@ -637,7 +700,7 @@ const HivemindSendBox: React.FC<{ conversation_id: string; gatewayUrl?: string }
     return () => {
       clearTimeout(timer);
     };
-  }, [conversation_id, workspacePath, checkAndUpdateTitle, selectedProvider]);
+  }, [conversation_id, workspacePath, checkAndUpdateTitle, selectedProvider, userModelPreferences]);
 
   const getProviderHealthColor = useCallback(
     (providerValue: string): string | null => {
@@ -667,10 +730,10 @@ const HivemindSendBox: React.FC<{ conversation_id: string; gatewayUrl?: string }
         onValueChange={(value: string) => {
           setSelectedProvider(value || null);
         }}
-        disabled={running || aiProcessing || !gatewayConnected}
+        disabled={running || aiProcessing}
       >
-        <SelectTrigger 
-          className="w-[180px] h-7 text-xs"
+        <SelectTrigger
+          className='w-[180px] h-7 text-xs'
           style={{
             borderRadius: DesignTokens.radius.md,
           }}
@@ -705,7 +768,7 @@ const HivemindSendBox: React.FC<{ conversation_id: string; gatewayUrl?: string }
           {HIVEMIND_PROVIDER_OPTIONS.map((opt) => {
             const healthColor = getProviderHealthColor(opt.value);
             return (
-              <SelectItem key={opt.value} value={opt.value} className="text-xs">
+              <SelectItem key={opt.value} value={opt.value} className='text-xs'>
                 <span className='flex items-center gap-1'>
                   {healthColor && (
                     <span
@@ -730,14 +793,39 @@ const HivemindSendBox: React.FC<{ conversation_id: string; gatewayUrl?: string }
     [selectedProvider, running, aiProcessing, gatewayConnected, setSelectedProvider, getProviderHealthColor, t]
   );
 
+  const selectedContextLimit = useMemo(() => {
+    if (!isModelSelectableProvider(selectedProvider)) return undefined;
+    const modelId = userModelPreferences.selectedModels?.[selectedProvider] ?? null;
+    return getModelContextLimit(modelId);
+  }, [selectedProvider, userModelPreferences]);
+
+  const modelSelector = useMemo(() => {
+    if (!isModelSelectableProvider(selectedProvider)) {
+      return null;
+    }
+
+    return (
+      <ModelSelector
+        provider={selectedProvider}
+        value={userModelPreferences.selectedModels?.[selectedProvider] ?? null}
+        onChange={(modelId) => {
+          void handleModelChange(selectedProvider, modelId);
+        }}
+        disabled={running || aiProcessing || !gatewayConnected}
+        className='w-[220px]'
+      />
+    );
+  }, [selectedProvider, userModelPreferences, running, aiProcessing, gatewayConnected, handleModelChange]);
+
   const sendButtonPrefix = useMemo(() => {
     return (
       <>
-        <ContextUsageIndicator tokenUsage={tokenUsage} size={24} />
+        <ContextUsageIndicator tokenUsage={tokenUsage} contextLimit={selectedContextLimit} showWhenEmpty size={24} />
         {providerSelector}
+        {modelSelector}
       </>
     );
-  }, [providerSelector, tokenUsage]);
+  }, [providerSelector, modelSelector, tokenUsage, selectedContextLimit]);
 
   return (
     <div className='max-w-800px w-full mx-auto flex flex-col mt-auto mb-16px'>
@@ -811,11 +899,7 @@ const HivemindSendBox: React.FC<{ conversation_id: string; gatewayUrl?: string }
                   if (typeof item === 'string') return null;
                   if (!item.isFile) {
                     return (
-                      <Badge
-                        key={item.path}
-                        variant='secondary'
-                        className='gap-1 pr-1'
-                      >
+                      <Badge key={item.path} variant='secondary' className='gap-1 pr-1'>
                         {item.name}
                         <button
                           onClick={() => {

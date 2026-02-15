@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next';
 import CodeMirror from '@uiw/react-codemirror';
 import { json } from '@codemirror/lang-json';
 import { useThemeContext } from '@/renderer/context/ThemeContext';
-import AionModal from '@/renderer/components/base/AionModal';
+import HiveModal from '@/renderer/components/base/HiveModal';
 import { uuid } from '@/common/utils';
 import { acpConversation } from '@/common/ipcBridge';
 import { CheckSmall } from '@icon-park/react';
@@ -237,7 +237,7 @@ const CustomAcpAgentModal: React.FC<CustomAcpAgentModalProps> = ({ visible, agen
   if (!visible) return null;
 
   return (
-    <AionModal
+    <HiveModal
       visible={visible}
       onCancel={onCancel}
       onOk={handleSubmit}
@@ -337,7 +337,7 @@ const CustomAcpAgentModal: React.FC<CustomAcpAgentModalProps> = ({ visible, agen
           </Collapse>
         )}
       </div>
-    </AionModal>
+    </HiveModal>
   );
 };
 

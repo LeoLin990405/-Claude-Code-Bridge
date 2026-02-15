@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2026 AionUi (aionui.com)
+ * Copyright 2026 HiveMind (hivemind.com)
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -36,8 +36,8 @@ const HivemindChat: React.FC<{
 
   return (
     <ConversationProvider value={{ conversationId: conversation_id, workspace, type: 'hivemind' }}>
-      <div className='flex-1 flex flex-col px-20px'>
-        {!connected && <Alert className='mx-auto max-w-800px w-full mt-8px' type='warning' content={reconnecting ? t('hivemind.status.reconnecting') : t('hivemind.status.reconnectFailed')} showIcon closable />}
+      <div className='hive-chat-scene flex-1 flex flex-col px-20px'>
+        {!connected && <Alert className='hive-chat-warning mx-auto max-w-800px w-full mt-8px' type='warning' content={reconnecting ? t('hivemind.status.reconnecting') : t('hivemind.status.reconnectFailed')} showIcon closable />}
         <FlexFullContainer>
           <MessageList className='flex-1'></MessageList>
         </FlexFullContainer>

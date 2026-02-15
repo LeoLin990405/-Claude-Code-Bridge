@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2025 HiveMind (hivemind.com)
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -431,7 +431,7 @@ const MessageToolGroup: React.FC<IMessageToolGroupProps> = ({ message }) => {
   }, [message.content]);
 
   return (
-    <div>
+    <div className='hive-tool-group'>
       {message.content.map((content, index) => {
         const { status, callId, name, description, resultDisplay, confirmationDetails } = content;
         const isLoading = status !== 'Success' && status !== 'Error' && status !== 'Canceled';
@@ -466,7 +466,7 @@ const MessageToolGroup: React.FC<IMessageToolGroupProps> = ({ message }) => {
             // 只在第一个 WriteFile 位置显示汇总组件 / Only show summary component at first WriteFile position
             if (index === firstWriteFileIndex && writeFileResults.length > 0) {
               return (
-                <div className='w-full min-w-0' key={callId}>
+                <div className='w-full min-w-0 hive-tool-group__item' key={callId}>
                   <MessageFileChanges writeFileChanges={writeFileResults} />
                 </div>
               );
@@ -487,8 +487,8 @@ const MessageToolGroup: React.FC<IMessageToolGroupProps> = ({ message }) => {
         // 通用工具调用展示 Generic tool call display
         // 将可展开的长内容放在 Alert 下方，保持 Alert 仅展示头部信息
         return (
-          <div key={callId}>
-            <Alert variant={getStatusVariant(status)} className='py-2 px-2'>
+          <div key={callId} className='hive-tool-group__item'>
+            <Alert variant={getStatusVariant(status)} className='py-2 px-2 hive-tool-group__alert'>
               <div className='flex items-center gap-2'>
                 {isLoading ? <LoadingOne theme='outline' size='12' fill={iconColors.primary} className='loading' /> : getStatusIcon(status)}
                 <AlertDescription className='flex items-center gap-1'>

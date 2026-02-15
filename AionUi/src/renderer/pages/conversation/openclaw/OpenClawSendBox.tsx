@@ -1,14 +1,18 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2025 HiveMind (hivemind.com)
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import { ipcBridge } from '@/common';
 import type { TMessage } from '@/common/chatLib';
+import type { AcpBackendAll } from '@/types/acpTypes';
 import { transformMessage } from '@/common/chatLib';
 import { uuid } from '@/common/utils';
+import type { TokenUsageData } from '@/common/storage';
 import SendBox from '@/renderer/components/sendbox';
+import ContextUsageIndicator from '@/renderer/components/ContextUsageIndicator';
+import ModelSelector from '@/renderer/components/ModelSelector';
 import { getSendBoxDraftHook, type FileOrFolderItem } from '@/renderer/hooks/useSendBoxDraft';
 import { useAddOrUpdateMessage } from '@/renderer/messages/hooks';
 import { allSupportedExts, type FileMetadata } from '@/renderer/services/FileService';
@@ -27,6 +31,7 @@ import HorizontalFileList from '@/renderer/components/HorizontalFileList';
 import { usePreviewContext } from '@/renderer/pages/conversation/preview';
 import { useLatestRef } from '@/renderer/hooks/useLatestRef';
 import { useAutoTitle } from '@/renderer/hooks/useAutoTitle';
+import { getModelContextLimit } from '@/renderer/utils/modelContextLimits';
 
 interface OpenClawDraftData {
   _type: 'openclaw-gateway';
@@ -34,6 +39,8 @@ interface OpenClawDraftData {
   content: string;
   uploadFile: string[];
 }
+
+const OPENCLAW_PROVIDER: AcpBackendAll = 'openclaw-gateway';
 
 const useOpenClawSendBoxDraft = getSendBoxDraftHook('openclaw-gateway', {
   _type: 'openclaw-gateway',
@@ -55,6 +62,8 @@ const OpenClawSendBox: React.FC<{ conversation_id: string }> = ({ conversation_i
     description: '',
     subject: '',
   });
+  const [preferredModel, setPreferredModel] = useState<string | null>(null);
+  const [tokenUsage] = useState<TokenUsageData | null>(null);
 
   // Throttle thought updates to reduce render frequency
   const thoughtThrottleRef = useRef<{
@@ -127,6 +136,64 @@ const OpenClawSendBox: React.FC<{ conversation_id: string }> = ({ conversation_i
     setOpenClawStatus(null);
     setThought({ subject: '', description: '' });
   }, [conversation_id]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadPreferredModel = async () => {
+      try {
+        const prefs = await ipcBridge.models.getUserPreferences.invoke();
+        const selected = prefs.selectedModels?.[OPENCLAW_PROVIDER] ?? null;
+        if (selected) {
+          if (!cancelled) setPreferredModel(selected);
+          return;
+        }
+        const fallbackModel = await ipcBridge.models.getDefaultModel.invoke({ provider: OPENCLAW_PROVIDER });
+        if (!cancelled) setPreferredModel(fallbackModel?.id ?? null);
+      } catch (_error) {
+        if (!cancelled) setPreferredModel(null);
+      }
+    };
+    void loadPreferredModel();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleModelChange = useCallback(async (modelId: string) => {
+    setPreferredModel(modelId);
+    try {
+      const prefs = await ipcBridge.models.getUserPreferences.invoke();
+      await ipcBridge.models.saveUserPreferences.invoke({
+        selectedModels: {
+          ...(prefs.selectedModels || {}),
+          [OPENCLAW_PROVIDER]: modelId,
+        },
+        lastUpdated: prefs.lastUpdated,
+      });
+    } catch (error) {
+      console.error('Failed to save preferred model:', error);
+    }
+  }, []);
+
+  const contextLimit = useMemo(() => getModelContextLimit(preferredModel), [preferredModel]);
+
+  const sendButtonPrefix = useMemo(
+    () => (
+      <>
+        <ContextUsageIndicator tokenUsage={tokenUsage} contextLimit={contextLimit} showWhenEmpty size={24} />
+        <ModelSelector
+          provider={OPENCLAW_PROVIDER}
+          value={preferredModel}
+          onChange={(modelId) => {
+            void handleModelChange(modelId);
+          }}
+          disabled={aiProcessing}
+          className='w-[220px]'
+        />
+      </>
+    ),
+    [tokenUsage, contextLimit, preferredModel, handleModelChange, aiProcessing]
+  );
 
   useEffect(() => {
     const handler = (text: string) => {
@@ -270,7 +337,7 @@ const OpenClawSendBox: React.FC<{ conversation_id: string }> = ({ conversation_i
 
       try {
         setAiProcessing(true);
-        const { input, files = [] } = JSON.parse(stored) as { input: string; files?: string[] };
+        const { input, files = [] } = JSON.parse(stored) as { input: string; files?: string[]; model?: string | null };
         const msg_id = `initial_${conversation_id}_${Date.now()}`;
         const loading_id = uuid();
         const initialDisplayMessage = buildDisplayMessage(input, files, workspacePath);
@@ -286,7 +353,7 @@ const OpenClawSendBox: React.FC<{ conversation_id: string }> = ({ conversation_i
         };
         addOrUpdateMessage(userMessage, true);
 
-        await ipcBridge.openclawConversation.sendMessage.invoke({ input: initialDisplayMessage, msg_id, conversation_id, files, loading_id });
+        await ipcBridge.openclawConversation.sendMessage.invoke({ input: initialDisplayMessage, msg_id, conversation_id, files, loading_id, model: preferredModel });
         void checkAndUpdateTitle(conversation_id, input);
         emitter.emit('chat.history.refresh');
         sessionStorage.removeItem(storageKey);
@@ -342,6 +409,7 @@ const OpenClawSendBox: React.FC<{ conversation_id: string }> = ({ conversation_i
         onStop={handleStop}
         onFilesAdded={handleFilesAdded}
         supportedExts={allSupportedExts}
+        sendButtonPrefix={sendButtonPrefix}
         tools={
           <Button
             variant='secondary'
@@ -391,11 +459,7 @@ const OpenClawSendBox: React.FC<{ conversation_id: string }> = ({ conversation_i
                   if (typeof item === 'string') return null;
                   if (!item.isFile) {
                     return (
-                      <Badge
-                        key={item.path}
-                        variant='secondary'
-                        className='gap-1 pr-1'
-                      >
+                      <Badge key={item.path} variant='secondary' className='gap-1 pr-1'>
                         {item.name}
                         <button
                           onClick={() => {

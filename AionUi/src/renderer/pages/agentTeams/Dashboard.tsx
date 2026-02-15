@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2026 AionUi (aionui.com)
+ * Copyright 2026 HiveMind (hivemind.com)
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -215,7 +215,7 @@ const AgentTeamsDashboard: React.FC = () => {
 
   if (loading && teams.length === 0) {
     return (
-      <div className='flex items-center justify-center h-full'>
+      <div className='hive-agent-loading flex items-center justify-center h-full'>
         <div className='text-center'>
           <div className='animate-spin rounded-full h-10 w-10 border-b-2 border-primary mx-auto'></div>
           <p className='mt-4 text-t-secondary'>加载中...</p>
@@ -225,9 +225,9 @@ const AgentTeamsDashboard: React.FC = () => {
   }
 
   return (
-    <motion.div variants={containerVariants} initial='hidden' animate='visible' className='p-6 space-y-6 h-full overflow-y-auto'>
+    <motion.div variants={containerVariants} initial='hidden' animate='visible' className='hive-agent-page hive-agent-page--dashboard space-y-6 h-full overflow-y-auto'>
       {/* 欢迎头部 */}
-      <motion.div variants={itemVariants} className='flex items-center justify-between mb-8'>
+      <motion.div variants={itemVariants} className='hive-agent-page__header mb-8'>
         <div>
           <Typography variant='h3' bold className='text-t-primary'>
             Agent Teams 仪表盘
@@ -252,7 +252,7 @@ const AgentTeamsDashboard: React.FC = () => {
       {/* 任务完成趋势图表 + 最近活动 */}
       <motion.div variants={itemVariants}>
         <div className='grid grid-cols-[1.4fr_1fr] gap-6 mt-6'>
-          <Card>
+          <Card className='hive-agent-surface'>
             <CardHeader>
               <CardTitle>
                 <Typography variant='h6' bold>
@@ -291,7 +291,7 @@ const AgentTeamsDashboard: React.FC = () => {
 
       {/* 活跃团队列表 */}
       <motion.div variants={itemVariants}>
-        <Card>
+        <Card className='hive-agent-surface'>
           <CardHeader>
             <CardTitle>
               <Typography variant='h6' bold>
@@ -354,7 +354,7 @@ const AgentTeamsDashboard: React.FC = () => {
 
       {/* 团队概览表格 */}
       <motion.div variants={itemVariants}>
-        <Card>
+        <Card className='hive-agent-surface'>
           <CardHeader>
             <CardTitle>
               <Typography variant='h6' bold>

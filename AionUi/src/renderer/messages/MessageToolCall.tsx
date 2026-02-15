@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2025 HiveMind (hivemind.com)
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -35,14 +35,14 @@ const MessageToolCall: React.FC<{ message: IMessageToolCall }> = ({ message }) =
     const OpName = message.content.name === 'read_file' ? 'ReadFile' : 'WriteFile';
     const variant = status === 'error' ? 'destructive' : status === 'success' ? 'default' : 'default';
     return (
-      <Alert variant={variant}>
+      <Alert variant={variant} className='hive-tool-call-alert'>
         <AlertDescription>{OpName + ':' + file_path}</AlertDescription>
       </Alert>
     );
   }
   if (message.content.name === 'google_web_search') {
     return (
-      <Alert>
+      <Alert className='hive-tool-call-alert'>
         <MessageSearch theme='outline' fill={iconColors.primary} className='h-4 w-4 mr-2' />
         <AlertDescription>{message.content.args.query}</AlertDescription>
       </Alert>
@@ -52,7 +52,11 @@ const MessageToolCall: React.FC<{ message: IMessageToolCall }> = ({ message }) =
     const shellSnippet = `\`\`\`shell
 ${message.content.args.command}
 #${message.content.args.description}`;
-    return <MarkdownView>{shellSnippet}</MarkdownView>;
+    return (
+      <div className='hive-tool-call-markdown'>
+        <MarkdownView>{shellSnippet}</MarkdownView>
+      </div>
+    );
   }
   if (message.content.name === 'replace') {
     return <ReplacePreview message={message} />;

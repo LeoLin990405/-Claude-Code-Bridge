@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2025 HiveMind (hivemind.com)
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -40,14 +40,14 @@ interface BaseToolCallDisplayProps {
   status: string;
   description?: string | ReactNode;
   icon: string;
-  additionalTags?: ReactNode; // 额外的标签，如 exit code、duration 等
-  children?: ReactNode; // 特定工具的详细信息内容
+  additionalTags?: ReactNode;
+  children?: ReactNode;
 }
 
 const BaseToolCallDisplay: React.FC<BaseToolCallDisplayProps> = ({ toolCallId, title, status, description, icon, additionalTags, children }) => {
   return (
-    <Card className='w-full mb-2'>
-      <CardContent className='p-4'>
+    <Card className='w-full mb-2 hive-tool-call-card'>
+      <CardContent className='p-4 hive-tool-call-card__content'>
         <div className='flex items-start gap-3'>
           <div className='flex-1 min-w-0'>
             <div className='flex items-center gap-2 mb-2'>
@@ -59,10 +59,9 @@ const BaseToolCallDisplay: React.FC<BaseToolCallDisplayProps> = ({ toolCallId, t
 
             {description && <div className='text-sm text-t-secondary mb-2 overflow-hidden'>{description}</div>}
 
-            {/* 特定工具的详细信息 */}
             {children}
 
-            <div className='text-xs text-t-secondary mt-2'>Tool Call ID: {toolCallId}</div>
+            <div className='text-xs text-t-secondary mt-2 hive-tool-call-card__id'>Tool Call ID: {toolCallId}</div>
           </div>
         </div>
       </CardContent>

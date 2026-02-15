@@ -11,7 +11,7 @@ import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import useModeModeList from '../../../hooks/useModeModeList';
 import useProtocolDetection from '../../../hooks/useProtocolDetection';
-import AionModal from '@/renderer/components/base/AionModal';
+import HiveModal from '@/renderer/components/base/HiveModal';
 import ApiKeyEditorModal from './ApiKeyEditorModal';
 import ProtocolDetectionStatus from './ProtocolDetectionStatus';
 import { MODEL_PLATFORMS, NEW_API_PROTOCOL_OPTIONS, getPlatformByValue, isCustomOption, isGeminiPlatform, isNewApiPlatform, type PlatformConfig } from '@/renderer/config/modelPlatforms';
@@ -193,7 +193,7 @@ const AddPlatformModal = ModalHOC<{
   const showBaseUrlField = isCustom || isNewApi || platform === 'gemini';
 
   return (
-    <AionModal visible={modalProps.visible} onCancel={modalCtrl.close} header={{ title: t('settings.addModel'), showClose: true }} style={{ maxWidth: '92vw', borderRadius: 16 }} contentStyle={{ background: 'var(--bg-1)', borderRadius: 16, padding: '20px 24px 16px', overflow: 'auto' }} onOk={handleSubmit} confirmLoading={modalProps.confirmLoading} okText={t('common.confirm')} cancelText={t('common.cancel')}>
+    <HiveModal visible={modalProps.visible} onCancel={modalCtrl.close} header={{ title: t('settings.addModel'), showClose: true }} style={{ maxWidth: '92vw', borderRadius: 16 }} contentStyle={{ background: 'var(--bg-1)', borderRadius: 16, padding: '20px 24px 16px', overflow: 'auto' }} onOk={handleSubmit} confirmLoading={modalProps.confirmLoading} okText={t('common.confirm')} cancelText={t('common.cancel')}>
       {errorMessage && <div className='mb-4 p-3 bg-destructive/10 text-destructive rounded-md text-sm'>{errorMessage}</div>}
 
       <div className='flex flex-col gap-16px py-20px'>
@@ -321,7 +321,7 @@ const AddPlatformModal = ModalHOC<{
           }
         }}
       />
-    </AionModal>
+    </HiveModal>
   );
 });
 

@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2026 AionUi (aionui.com)
+ * Copyright 2026 HiveMind (hivemind.com)
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -146,49 +146,35 @@ const TeamDetailPage: React.FC = () => {
 
   if (!team) {
     return (
-      <Card>
+      <Card className='hive-agent-surface'>
         <CardContent>Team not found</CardContent>
       </Card>
     );
   }
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className='h-full flex flex-col' style={{ padding: '24px', height: '100%', overflowY: 'auto' }}>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className='hive-agent-page hive-agent-page--team-detail h-full flex flex-col overflow-y-auto'>
       {/* Real-time Updates Toast */}
-      <div style={{ position: 'fixed', top: 80, right: 24, zIndex: 1000, display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div className='hive-agent-updates-toast'>
         <AnimatePresence>
           {updates.map((update, idx) => (
-            <motion.div
-              key={`${update}-${idx}`}
-              initial={{ x: 100, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: 100, opacity: 0 }}
-              style={{
-                background: 'var(--color-primary)',
-                color: 'white',
-                padding: '8px 16px',
-                borderRadius: 'var(--radius-md)',
-                boxShadow: 'var(--shadow-lg)',
-                fontSize: '13px',
-                fontWeight: 500,
-              }}
-            >
+            <motion.div key={`${update}-${idx}`} initial={{ x: 100, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: 100, opacity: 0 }} className='hive-agent-updates-toast__item'>
               {update}
             </motion.div>
           ))}
         </AnimatePresence>
       </div>
 
-      <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+      <div className='hive-agent-page__header hive-agent-page__header--top'>
         <div>
           <Typography variant='h3' bold>
             {team.name}
           </Typography>
-          <Typography variant='body2' color='secondary' style={{ marginTop: '4px' }}>
+          <Typography variant='body2' color='secondary' className='mt-1'>
             {team.description || 'No description provided'}
           </Typography>
         </div>
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+        <div className='hive-agent-page__actions'>
           <Badge variant={team.status === 'active' ? 'default' : 'secondary'} className='text-sm px-3 py-1'>
             {team.status.toUpperCase()}
           </Badge>
@@ -204,14 +190,14 @@ const TeamDetailPage: React.FC = () => {
       </div>
 
       {/* Quick Stats Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
+      <div className='hive-agent-stats-grid'>
         <StatBadge label='Teammates' value={teammates.length} />
         <StatBadge label='Total Tasks' value={stats?.total_tasks || 0} />
         <StatBadge label='Completed' value={stats?.completed_tasks || 0} color='success' />
         <StatBadge label='Total Cost' value={`$${team.total_cost_usd.toFixed(4)}`} color='warning' />
       </div>
 
-      <Card>
+      <Card className='hive-agent-surface'>
         <CardContent className='p-0'>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className='px-5 pt-2'>
@@ -243,7 +229,7 @@ const TeamDetailPage: React.FC = () => {
             </TabsContent>
 
             <TabsContent value='teammates'>
-              <div style={{ padding: '24px 0' }}>
+              <div className='hive-agent-tab-section'>
                 <Card className='mb-6'>
                   <CardHeader>
                     <CardTitle>
@@ -260,10 +246,10 @@ const TeamDetailPage: React.FC = () => {
                     </div>
                   </CardContent>
                 </Card>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
+                <div className='hive-agent-teammates-grid'>
                   {teammates.map((teammate) => (
-                    <motion.div key={teammate.id} whileHover={{ y: -4 }} style={{ padding: 16, background: 'var(--bg-1)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-sm)' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <motion.div key={teammate.id} whileHover={{ y: -4 }} className='hive-agent-teammate-card'>
+                      <div className='hive-agent-teammate-card__header'>
                         <Typography variant='body1' bold>
                           {teammate.name}
                         </Typography>
@@ -272,7 +258,7 @@ const TeamDetailPage: React.FC = () => {
                       <Typography variant='body2' color='secondary'>
                         {teammate.role}
                       </Typography>
-                      <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      <div className='hive-agent-teammate-card__meta'>
                         <Badge variant='outline'>{teammate.provider}</Badge>
                         <Badge variant='outline'>{teammate.model}</Badge>
                       </div>

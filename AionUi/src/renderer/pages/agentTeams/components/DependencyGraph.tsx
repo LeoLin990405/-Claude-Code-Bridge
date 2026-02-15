@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2026 AionUi (aionui.com)
+ * Copyright 2026 HiveMind (hivemind.com)
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -48,32 +48,21 @@ const DependencyGraph: React.FC<DependencyGraphProps> = ({ tasks }) => {
 
   if (tasks.length === 0) {
     return (
-      <div style={{ padding: '24px', textAlign: 'center' }}>
+      <div className='hive-agent-empty-state'>
         <div className='text-muted-foreground'>No tasks yet</div>
       </div>
     );
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+    <div className='hive-agent-dependency-graph'>
       <Typography variant='h6'>Dependency Graph</Typography>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <div className='hive-agent-dependency-graph__list'>
         {nodeRows.map(({ task, deps, dependents, isReady }) => (
-          <motion.div
-            key={task.id}
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            style={{
-              padding: '16px',
-              background: 'var(--bg-1)',
-              borderRadius: 'var(--radius-md)',
-              border: '1px solid var(--color-border)',
-              boxShadow: 'var(--shadow-sm)',
-            }}
-          >
+          <motion.div key={task.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} className='hive-agent-dependency-node'>
             <div className='flex flex-col w-full gap-2'>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <div className='hive-agent-dependency-node__header'>
+                <div className='hive-agent-dependency-node__badges'>
                   <Typography variant='body2' bold>
                     {task.subject}
                   </Typography>
@@ -85,12 +74,12 @@ const DependencyGraph: React.FC<DependencyGraphProps> = ({ tasks }) => {
                 </Typography>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '8px' }}>
+              <div className='hive-agent-dependency-node__grid'>
                 <div>
-                  <Typography variant='caption' color='secondary' bold style={{ marginBottom: '4px', display: 'block' }}>
+                  <Typography variant='caption' color='secondary' bold className='hive-agent-dependency-node__label'>
                     Depends on:
                   </Typography>
-                  <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                  <div className='hive-agent-dependency-node__tags'>
                     {deps.length === 0 ? (
                       <Typography variant='caption' color='tertiary'>
                         None
@@ -106,10 +95,10 @@ const DependencyGraph: React.FC<DependencyGraphProps> = ({ tasks }) => {
                 </div>
 
                 <div>
-                  <Typography variant='caption' color='secondary' bold style={{ marginBottom: '4px', display: 'block' }}>
+                  <Typography variant='caption' color='secondary' bold className='hive-agent-dependency-node__label'>
                     Blocks:
                   </Typography>
-                  <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                  <div className='hive-agent-dependency-node__tags'>
                     {dependents.length === 0 ? (
                       <Typography variant='caption' color='tertiary'>
                         None

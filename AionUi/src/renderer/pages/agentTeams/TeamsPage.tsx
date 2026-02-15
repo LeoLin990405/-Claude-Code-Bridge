@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2026 AionUi (aionui.com)
+ * Copyright 2026 HiveMind (hivemind.com)
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -79,8 +79,8 @@ const TeamsPage: React.FC = () => {
   }, []);
 
   return (
-    <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }} style={{ padding: '24px' }}>
-      <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }} className='hive-agent-page hive-agent-page--teams'>
+      <div className='hive-agent-page__header'>
         <div>
           <Typography variant='h4' bold>
             Teams
@@ -92,7 +92,7 @@ const TeamsPage: React.FC = () => {
         <Button onClick={() => setVisible(true)}>Create Team</Button>
       </div>
 
-      <Card>
+      <Card className='hive-agent-surface'>
         <CardContent className='p-0'>
           <Table>
             <TableHeader>
@@ -138,7 +138,7 @@ const TeamsPage: React.FC = () => {
       </Card>
 
       <Dialog open={visible} onOpenChange={setVisible}>
-        <DialogContent className='sm:max-w-[500px]'>
+        <DialogContent className='hive-agent-dialog sm:max-w-[500px]'>
           <DialogHeader>
             <DialogTitle>
               <Typography variant='h6'>Create Team</Typography>

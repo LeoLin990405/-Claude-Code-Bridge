@@ -63,15 +63,15 @@ const MessageToolGroupSummary: React.FC<{ messages: Array<IMessageToolGroup | IM
   };
 
   return (
-    <div>
-      <div className='flex items-center gap-10px color-#86909C cursor-pointer' onClick={() => setShowMore(!showMore)}>
+    <div className='hive-tool-summary'>
+      <div className='flex items-center gap-10px color-#86909C cursor-pointer hive-tool-summary__toggle' onClick={() => setShowMore(!showMore)}>
         <Badge variant='outline' className='text-[#86909C] border-[#86909C]'>
           View Steps
         </Badge>
         {showMore ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
       </div>
       {showMore && (
-        <div className='p-l-20px flex flex-col gap-8px pt-8px'>
+        <div className='p-l-20px flex flex-col gap-8px pt-8px hive-tool-summary__list'>
           {tools.map((item) => {
             if (!item) return null;
             return (
