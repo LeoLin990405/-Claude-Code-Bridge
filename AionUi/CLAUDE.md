@@ -1,8 +1,8 @@
-# AionUi - Project Guide for Claude
+# HiveMind - Project Guide for Claude
 
 ## Project Overview
 
-**AionUi** is a unified AI agent graphical interface that transforms command-line AI agents into a modern, efficient chat interface. It supports multiple CLI AI tools including Gemini CLI, Claude Code, CodeX, Qwen Code, and more.
+**HiveMind** is a unified AI agent graphical interface that transforms command-line AI agents into a modern, efficient chat interface. It supports multiple CLI AI tools including Gemini CLI, Claude Code, CodeX, Qwen Code, and more.
 
 - **Version**: 1.11.1
 - **License**: Apache-2.0

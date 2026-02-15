@@ -1,9 +1,9 @@
 <p align="center">
-  <img src="./resources/aionui-banner-1.png" alt="AionUi - Cowork with Your CLI AI Agent" width="100%">
+  <img src="./resources/hivemind-banner-1.png" alt="HiveMind - Cowork with Your CLI AI Agent" width="100%">
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/github/v/release/iOfficeAI/AionUi?style=flat-square&color=32CD32" alt="Version">
+  <img src="https://img.shields.io/github/v/release/iOfficeAI/HiveMind?style=flat-square&color=32CD32" alt="Version">
   &nbsp;
   <img src="https://img.shields.io/badge/license-Apache--2.0-32CD32?style=flat-square&logo=apache&logoColor=white" alt="License">
   &nbsp;
@@ -24,13 +24,13 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/iOfficeAI/AionUi/releases">
+  <a href="https://github.com/iOfficeAI/HiveMind/releases">
     <img src="https://img.shields.io/badge/⬇️%20Descargar%20ahora-Última%20versión-32CD32?style=for-the-badge&logo=github&logoColor=white" alt="Download Latest Release" height="50">
   </a>
 </p>
 
 <p align="center">
-  <a href="./readme.md">English</a> | <a href="./readme_ch.md">简体中文</a> | <a href="./readme_tw.md">繁體中文</a> | <a href="./readme_jp.md">日本語</a> | <a href="./readme_ko.md">한국어</a> | <strong>Español</strong> | <a href="./readme_pt.md">Português</a> | <a href="https://www.aionui.com" target="_blank">Sitio oficial</a> | <a href="https://twitter.com/AionUI" target="_blank">Twitter</a>
+  <a href="./readme.md">English</a> | <a href="./readme_ch.md">简体中文</a> | <a href="./readme_tw.md">繁體中文</a> | <a href="./readme_jp.md">日本語</a> | <a href="./readme_ko.md">한국어</a> | <strong>Español</strong> | <a href="./readme_pt.md">Português</a> | <a href="https://www.hivemind.com" target="_blank">Sitio oficial</a> | <a href="https://twitter.com/HiveMind" target="_blank">Twitter</a>
 </p>
 
 <p align="center">
@@ -43,8 +43,8 @@
 
 <p align="center">
 
-[✨ ¿Qué puede hacer AionUi?](#qué-puede-hacer-aionui) ·
-[🤔 ¿Por qué elegir AionUi?](#por-qué-elegir-aionui) ·
+[✨ ¿Qué puede hacer HiveMind?](#qué-puede-hacer-hivemind) ·
+[🤔 ¿Por qué elegir HiveMind?](#por-qué-elegir-hivemind) ·
 [🚀 Inicio rápido](#inicio-rápido) ·
 [💬 Comunidad](#comunidad-y-soporte)
 
@@ -52,15 +52,15 @@
 
 ---
 
-## ✨ ¿Qué puede hacer AionUi?
+## ✨ ¿Qué puede hacer HiveMind?
 
 <p align="center">
-  <img src="./resources/offica-ai%20BANNER-function.png" alt="AionUi - Cowork with Your CLI AI Agent" width="800">
+  <img src="./resources/offica-ai%20BANNER-function.png" alt="HiveMind - Cowork with Your CLI AI Agent" width="800">
 </p>
 
 ### 🤖 **Modo multiagente - Cowork para tus herramientas de IA en línea de comandos, interfaz gráfica unificada**
 
-_AionUi incluye Gemini CLI de forma integrada, listo para usar desde la instalación sin extras. Si ya tienes herramientas de línea de comandos como Gemini CLI, Claude Code, CodeX, Qwen Code, Goose AI o Augment Code, AionUi las detecta automáticamente y ofrece una interfaz gráfica unificada para una experiencia más completa_
+_HiveMind incluye Gemini CLI de forma integrada, listo para usar desde la instalación sin extras. Si ya tienes herramientas de línea de comandos como Gemini CLI, Claude Code, CodeX, Qwen Code, Goose AI o Augment Code, HiveMind las detecta automáticamente y ofrece una interfaz gráfica unificada para una experiencia más completa_
 
 - ✅ **Detección automática + interfaz unificada** - Reconoce automáticamente las herramientas CLI locales y proporciona una interfaz gráfica unificada, despídete de la línea de comandos
 - ✅ **Almacenamiento local + multi-sesión** - Conversaciones guardadas localmente, admite múltiples sesiones en paralelo, cada una con contexto independiente
@@ -69,33 +69,33 @@ _AionUi incluye Gemini CLI de forma integrada, listo para usar desde la instalac
   <img src="./resources/acp%20home%20page.gif" alt="Multi-Agent Mode Demo" width="800"></p>
 
 <p align="center">
-  <img src="./resources/openclawvia.png" alt="OpenClaw Integration in AionUi" width="800">
+  <img src="./resources/openclawvia.png" alt="OpenClaw Integration in HiveMind" width="800">
 </p>
 
 ---
 
-### 🌐 **Acceso a tu AionUi desde cualquier lugar**
+### 🌐 **Acceso a tu HiveMind desde cualquier lugar**
 
-_Tu asistente de IA 7×24 horas - Accede a AionUi desde cualquier dispositivo, en cualquier lugar. En viajes de negocios, en casa, en la oficina, usa tus herramientas de IA en cualquier momento y lugar a través de WebUI o varias plataformas de chat_
+_Tu asistente de IA 7×24 horas - Accede a HiveMind desde cualquier dispositivo, en cualquier lugar. En viajes de negocios, en casa, en la oficina, usa tus herramientas de IA en cualquier momento y lugar a través de WebUI o varias plataformas de chat_
 
-AionUi proporciona múltiples métodos de acceso remoto：
+HiveMind proporciona múltiples métodos de acceso remoto：
 
 - **🌐 Modo WebUI**
 
-  Accede a AionUi desde cualquier dispositivo a través del navegador - teléfono, tableta, computadora. Soporta LAN, red cruzada y despliegue en servidor. Puedes iniciar sesión escaneando un código QR o usando contraseña de cuenta, haciéndolo simple y conveniente.
+  Accede a HiveMind desde cualquier dispositivo a través del navegador - teléfono, tableta, computadora. Soporta LAN, red cruzada y despliegue en servidor. Puedes iniciar sesión escaneando un código QR o usando contraseña de cuenta, haciéndolo simple y conveniente.
 
-  > 💡 **¿Necesitas una guía de configuración detallada?** Consulta la [Guía de acceso remoto a Internet](https://github.com/iOfficeAI/AionUi/wiki/Remote-Internet-Access-Guide)
+  > 💡 **¿Necesitas una guía de configuración detallada?** Consulta la [Guía de acceso remoto a Internet](https://github.com/iOfficeAI/HiveMind/wiki/Remote-Internet-Access-Guide)
 
 - **📱 Integración de plataformas de chat**
   - **Telegram** - Chatea con tu asistente de IA en cualquier dispositivo
   - **Lark (Feishu)** - Colaboración empresarial mediante bots de Feishu
   - **Slack** y más plataformas próximamente 🚧
 
-  > 💡 **Cómo configurar:** Ve a Configuración de AionUi → Configuración de WebUI → Channel, configura el Bot Token correspondiente para comenzar!
+  > 💡 **Cómo configurar:** Ve a Configuración de HiveMind → Configuración de WebUI → Channel, configura el Bot Token correspondiente para comenzar!
 
   Chatea directamente con tu asistente de IA desde Telegram en cualquier dispositivo. Sistema de código de emparejamiento simple para acceso seguro.
 
-  > 💡 **Cómo configurar:** Ve a Configuración de AionUi → Configuración de WebUI → Channel, obtén tu Bot Token de [@BotFather](https://t.me/BotFather) y comienza a chatear!
+  > 💡 **Cómo configurar:** Ve a Configuración de HiveMind → Configuración de WebUI → Channel, obtén tu Bot Token de [@BotFather](https://t.me/BotFather) y comienza a chatear!
 
 <p align="center">
   <img src="./resources/remote-telegram.png" alt="Acceso desde cualquier lugar - WebUI y plataformas de chat" width="800">
@@ -103,7 +103,7 @@ AionUi proporciona múltiples métodos de acceso remoto：
 
 ---
 
-### ⏰ **Tareas programadas - Deja que AionUi automatice tu trabajo**
+### ⏰ **Tareas programadas - Deja que HiveMind automatice tu trabajo**
 
 _Después de configurar las tareas programadas, el asistente de IA se ejecutará automáticamente según el tiempo que establezcas, logrando verdaderamente una operación 7×24 horas sin supervisión_
 
@@ -127,7 +127,7 @@ _Renombrado por lotes, organización automática, clasificación inteligente, fu
 - **Lotes eficientes**: Renombra y fusiona archivos con un clic, adiós a tareas manuales tediosas.
 
 <p align="center">
-  <img src="./resources/aionui%20sort%20file.gif" alt="Smart File Management Demo" width="800">
+  <img src="./resources/hivemind%20sort%20file.gif" alt="Smart File Management Demo" width="800">
 </p>
 
 ---
@@ -191,13 +191,13 @@ _Abrir varias conversaciones, tareas sin mezclarse, memoria independiente, efici
 
 ---
 
-## 🤔 ¿Por qué elegir AionUi? | Tan bueno como Claudebot
+## 🤔 ¿Por qué elegir HiveMind? | Tan bueno como Claudebot
 
-**Al igual que Claude Cowork hace que Claude Code sea más fácil de usar, AionUi es la plataforma Cowork para todas tus herramientas de IA en línea de comandos**
+**Al igual que Claude Cowork hace que Claude Code sea más fácil de usar, HiveMind es la plataforma Cowork para todas tus herramientas de IA en línea de comandos**
 
 Gemini CLI, Claude Code, Codex, Qwen Code son potentes, pero comparten puntos de dolor comunes: las conversaciones no se pueden guardar, limitaciones de sesión única, operaciones de archivos engorrosas y solo admiten un modelo.
 
-AionUi ofrece capacidades **Cowork unificadas** para estas herramientas de línea de comandos:
+HiveMind ofrece capacidades **Cowork unificadas** para estas herramientas de línea de comandos:
 
 - 🎯 **Plataforma unificada** - Una interfaz para gestionar todas las herramientas de IA de línea de comandos, sin cambios; incluye Gemini CLI, listo para usar desde la instalación y completamente gratis
 - 🚀 **Soporte multi-herramienta** - No solo admite Claude Code, también Gemini CLI, Codex, Qwen Code y más
@@ -212,10 +212,10 @@ AionUi ofrece capacidades **Cowork unificadas** para estas herramientas de líne
 ### ❓ Preguntas rápidas
 
 <details>
-<summary><strong>Q: ¿Por qué AionUi es un gran reemplazo de Claude Cowork?</strong></summary>
-A: AionUi es un **Multi-AI Agent Desktop** **gratuito y de código abierto**. En comparación con el Cowork oficial que solo funciona en macOS y está bloqueado a Claude, AionUi es su **versión mejorada multi-modelo y multiplataforma**, con cobertura profunda de **escenarios de automatización de oficina con IA**.
+<summary><strong>Q: ¿Por qué HiveMind es un gran reemplazo de Claude Cowork?</strong></summary>
+A: HiveMind es un **Multi-AI Agent Desktop** **gratuito y de código abierto**. En comparación con el Cowork oficial que solo funciona en macOS y está bloqueado a Claude, HiveMind es su **versión mejorada multi-modelo y multiplataforma**, con cobertura profunda de **escenarios de automatización de oficina con IA**.
 
-| Dimensión   | Claude Cowork        | AionUi (este proyecto)                      |
+| Dimensión   | Claude Cowork        | HiveMind (este proyecto)                      |
 | :---------- | :------------------- | :------------------------------------------ |
 | SO          | Solo macOS           | 🍏 macOS / 🪟 Windows / 🐧 Linux            |
 | Modelos     | Solo Claude          | 🤖 Gemini, Claude, DeepSeek, OpenAI, Ollama |
@@ -231,18 +231,18 @@ A: AionUi es un **Multi-AI Agent Desktop** **gratuito y de código abierto**. En
 </details>
 
 <details>
-<summary><strong>Q: ¿Qué puedo hacer con AionUi?</strong></summary>
+<summary><strong>Q: ¿Qué puedo hacer con HiveMind?</strong></summary>
 A: Puede ser tu **espacio de trabajo Cowork privado**. Te ayuda a organizar carpetas por lotes, embellecer Excel en profundidad y previsualizar código web en tiempo real. Es la mejor opción gráfica para explorar flujos de automatización de oficina y mejorar tu experiencia con Claude Code o Gemini CLI.
 </details>
 
 <details>
-<summary><strong>Q: ¿AionUi está listo para usar desde el primer momento?</strong></summary>
-A: ¡Sí! AionUi está listo justo después de la instalación con Gemini CLI integrado, sin instalaciones adicionales. Si ya tienes Gemini CLI u otras herramientas de línea de comandos, AionUi las detecta automáticamente para ofrecer una experiencia más rica.
+<summary><strong>Q: ¿HiveMind está listo para usar desde el primer momento?</strong></summary>
+A: ¡Sí! HiveMind está listo justo después de la instalación con Gemini CLI integrado, sin instalaciones adicionales. Si ya tienes Gemini CLI u otras herramientas de línea de comandos, HiveMind las detecta automáticamente para ofrecer una experiencia más rica.
 </details>
 
 <details>
 <summary><strong>Q: ¿Es gratis?</strong></summary>
-A: AionUi es completamente gratuito y de código abierto, pero el uso de modelos de IA requiere las API Keys correspondientes.
+A: HiveMind es completamente gratuito y de código abierto, pero el uso de modelos de IA requiere las API Keys correspondientes.
 </details>
 
 <details>
@@ -260,9 +260,9 @@ A: Todos los datos de conversación se almacenan en una base de datos SQLite loc
 
 ---
 
-## 🎬 Mira cómo la gente usa AionUi
+## 🎬 Mira cómo la gente usa HiveMind
 
-_Mira cómo los creadores de contenido reseñan y usan AionUi_
+_Mira cómo los creadores de contenido reseñan y usan HiveMind_
 
 <p align="center">
   <a href="https://www.youtube.com/watch?v=yUU5E-U5B3M" target="_blank">
@@ -277,7 +277,7 @@ _Mira cómo los creadores de contenido reseñan y usan AionUi_
   <em>🎬 WorldofAI (200K suscriptores)</em> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <em>🎬 Julian Goldie SEO (318K suscriptores)</em>
 </p>
 
-> 💡 **¿Has hecho un video sobre AionUi?** [Cuéntanos en X](https://x.com/AionUi) y lo destacaremos aquí. Valoramos tus comentarios y seguiremos mejorando.
+> 💡 **¿Has hecho un video sobre HiveMind?** [Cuéntanos en X](https://x.com/HiveMind) y lo destacaremos aquí. Valoramos tus comentarios y seguiremos mejorando.
 
 ---
 
@@ -288,26 +288,26 @@ _Mira cómo los creadores de contenido reseñan y usan AionUi_
 
 ### 🚀 Inicio rápido
 
-- [📖 Guía completa de instalación](https://github.com/iOfficeAI/AionUi/wiki/Getting-Started) - Pasos detallados desde la descarga hasta la configuración
-- [⚙️ Guía de configuración de LLM](https://github.com/iOfficeAI/AionUi/wiki/LLM-Configuration) - Configuración de modelos de IA en múltiples plataformas
-- [🤖 Configuración del modo multiagente](https://github.com/iOfficeAI/AionUi/wiki/ACP-Setup) - Integración de agentes IA de terminal
-- [🔌 Configuración de herramientas MCP](https://github.com/iOfficeAI/AionUi/wiki/MCP-Configuration-Guide) - Configuración del servidor del protocolo de contexto de modelos
-- [🎨 Configuración de generación de imágenes](https://github.com/iOfficeAI/AionUi/wiki/AionUi-Image-Generation-Tool-Model-Configuration-Guide) - Tutorial de configuración de generación de imágenes con IA
-- [🌐 Guía de configuración de WebUI](https://github.com/iOfficeAI/AionUi/wiki/WebUI-Configuration-Guide) - Tutorial completo de configuración de WebUI
+- [📖 Guía completa de instalación](https://github.com/iOfficeAI/HiveMind/wiki/Getting-Started) - Pasos detallados desde la descarga hasta la configuración
+- [⚙️ Guía de configuración de LLM](https://github.com/iOfficeAI/HiveMind/wiki/LLM-Configuration) - Configuración de modelos de IA en múltiples plataformas
+- [🤖 Configuración del modo multiagente](https://github.com/iOfficeAI/HiveMind/wiki/ACP-Setup) - Integración de agentes IA de terminal
+- [🔌 Configuración de herramientas MCP](https://github.com/iOfficeAI/HiveMind/wiki/MCP-Configuration-Guide) - Configuración del servidor del protocolo de contexto de modelos
+- [🎨 Configuración de generación de imágenes](https://github.com/iOfficeAI/HiveMind/wiki/HiveMind-Image-Generation-Tool-Model-Configuration-Guide) - Tutorial de configuración de generación de imágenes con IA
+- [🌐 Guía de configuración de WebUI](https://github.com/iOfficeAI/HiveMind/wiki/WebUI-Configuration-Guide) - Tutorial completo de configuración de WebUI
 
 ### 🎯 Casos de uso
 
-- [📁 Gestión de archivos](https://github.com/iOfficeAI/AionUi/wiki/file-management) - Organización inteligente de archivos
-- [📊 Procesamiento de Excel](https://github.com/iOfficeAI/AionUi/wiki/excel-processing) - Procesamiento de datos impulsado por IA
-- [🎨 Generación de imágenes](https://github.com/iOfficeAI/AionUi/wiki/AionUi-Image-Generation-Tool-Model-Configuration-Guide) - Creación de imágenes con IA
-- [📚 Más casos de uso](https://github.com/iOfficeAI/AionUi/wiki/Use-Cases-Overview)
+- [📁 Gestión de archivos](https://github.com/iOfficeAI/HiveMind/wiki/file-management) - Organización inteligente de archivos
+- [📊 Procesamiento de Excel](https://github.com/iOfficeAI/HiveMind/wiki/excel-processing) - Procesamiento de datos impulsado por IA
+- [🎨 Generación de imágenes](https://github.com/iOfficeAI/HiveMind/wiki/HiveMind-Image-Generation-Tool-Model-Configuration-Guide) - Creación de imágenes con IA
+- [📚 Más casos de uso](https://github.com/iOfficeAI/HiveMind/wiki/Use-Cases-Overview)
   - [🎬 WorldofAI](https://www.youtube.com/watch?v=yUU5E-U5B3M) - Reseña en YouTube
   - [🎬 Julian Goldie SEO](https://www.youtube.com/watch?v=enQnkKfth10) - Reseña en YouTube
 
 ### ❓ Soporte y ayuda
 
-- [❓ FAQ](https://github.com/iOfficeAI/AionUi/wiki/FAQ) - Preguntas y solución de problemas
-- [🔧 Tutoriales de configuración y uso](https://github.com/iOfficeAI/AionUi/wiki/Configuration-Guides) - Documentación completa de configuración
+- [❓ FAQ](https://github.com/iOfficeAI/HiveMind/wiki/FAQ) - Preguntas y solución de problemas
+- [🔧 Tutoriales de configuración y uso](https://github.com/iOfficeAI/HiveMind/wiki/Configuration-Guides) - Documentación completa de configuración
 
 </details>
 
@@ -326,7 +326,7 @@ _Mira cómo los creadores de contenido reseñan y usan AionUi_
 ### 📥 Descargar
 
 <p>
-  <a href="https://github.com/iOfficeAI/AionUi/releases">
+  <a href="https://github.com/iOfficeAI/HiveMind/releases">
     <img src="https://img.shields.io/badge/Descargar-Última%20versión-32CD32?style=for-the-badge&logo=github&logoColor=white" alt="Download Latest Release" height="50">
   </a>
 </p>
@@ -334,16 +334,16 @@ _Mira cómo los creadores de contenido reseñan y usan AionUi_
 ### 🍺 Instalar vía Homebrew (macOS)
 
 ```bash
-brew install aionui
+brew install hivemind
 ```
 
 ### 🔧 Instalación simple
 
-1. **Descargar e instalar** la aplicación AionUi
+1. **Descargar e instalar** la aplicación HiveMind
 2. **Configurar el servicio de IA** - Compatible con inicio de sesión de Google o autenticación por API Key
 3. **Empezar a usar** - Experimenta de inmediato una interfaz moderna de chat con IA
 
-> 💡 **¿Necesitas una guía de configuración detallada?** Consulta nuestro [Tutorial completo de instalación](https://github.com/iOfficeAI/AionUi/wiki/Getting-Started)
+> 💡 **¿Necesitas una guía de configuración detallada?** Consulta nuestro [Tutorial completo de instalación](https://github.com/iOfficeAI/HiveMind/wiki/Getting-Started)
 
 ---
 
@@ -354,14 +354,14 @@ brew install aionui
 **💡 ¡Tus ideas importan!** Valoramos las sugerencias y comentarios de cada usuario. Ya sea sobre ideas de funciones, experiencia de uso o problemas que encuentres, ¡contáctanos cuando quieras!
 
 <p align="center">
-  <a href="https://x.com/AionUi" target="_blank">
+  <a href="https://x.com/HiveMind" target="_blank">
     <img src="./resources/contactus-x.png" alt="Contact Us on X" width="600">
   </a>
 </p>
 
-- [💬 GitHub Discussions](https://github.com/iOfficeAI/AionUi/discussions) - **Comparte ideas, sugiere mejoras, intercambia consejos de uso**
-- [🐛 Reportar problemas](https://github.com/iOfficeAI/AionUi/issues) - Informar errores o solicitar funciones
-- [📦 Actualizaciones de versiones](https://github.com/iOfficeAI/AionUi/releases) - Obtener la última versión
+- [💬 GitHub Discussions](https://github.com/iOfficeAI/HiveMind/discussions) - **Comparte ideas, sugiere mejoras, intercambia consejos de uso**
+- [🐛 Reportar problemas](https://github.com/iOfficeAI/HiveMind/issues) - Informar errores o solicitar funciones
+- [📦 Actualizaciones de versiones](https://github.com/iOfficeAI/HiveMind/releases) - Obtener la última versión
 - [💬 Discord Community](https://discord.gg/2QAwJn7Egx) - **Únete a nuestra comunidad en inglés**
 - [💬 WeChat (中文)](./resources/wx.png) - **Haz clic para ver el QR**
 
@@ -385,19 +385,19 @@ Este proyecto está licenciado bajo [Apache-2.0](LICENSE).
 
 ## 👥 Contribuidores
 
-¡Gracias a todos los desarrolladores que han contribuido a AionUi!
+¡Gracias a todos los desarrolladores que han contribuido a HiveMind!
 
 <p align="center">
-  <a href="https://github.com/iOfficeAI/AionUi/graphs/contributors">
-    <img src="https://contrib.rocks/image?repo=iOfficeAI/AionUi&max=50" alt="Contributors" />
+  <a href="https://github.com/iOfficeAI/HiveMind/graphs/contributors">
+    <img src="https://contrib.rocks/image?repo=iOfficeAI/HiveMind&max=50" alt="Contributors" />
   </a>
 </p>
 
 ## 📊 Historial de estrellas
 
 <p align="center">
-  <a href="https://www.star-history.com/#iOfficeAI/aionui&Date" target="_blank">
-    <img src="https://api.star-history.com/svg?repos=iOfficeAI/aionui&type=Date" alt="GitHub Star Trends" width="600">
+  <a href="https://www.star-history.com/#iOfficeAI/hivemind&Date" target="_blank">
+    <img src="https://api.star-history.com/svg?repos=iOfficeAI/hivemind&type=Date" alt="GitHub Star Trends" width="600">
   </a>
 </p>
 
@@ -405,6 +405,6 @@ Este proyecto está licenciado bajo [Apache-2.0](LICENSE).
 
 **⭐ Si te gusta, danos una estrella**
 
-[Reportar bug](https://github.com/iOfficeAI/AionUi/issues) · [Solicitar función](https://github.com/iOfficeAI/AionUi/issues)
+[Reportar bug](https://github.com/iOfficeAI/HiveMind/issues) · [Solicitar función](https://github.com/iOfficeAI/HiveMind/issues)
 
 </div>

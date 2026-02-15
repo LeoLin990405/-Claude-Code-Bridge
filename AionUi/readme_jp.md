@@ -1,9 +1,9 @@
 <p align="center">
-  <img src="./resources/aionui-banner-1.png" alt="AionUi - Cowork with Your CLI AI Agent" width="100%">
+  <img src="./resources/hivemind-banner-1.png" alt="HiveMind - Cowork with Your CLI AI Agent" width="100%">
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/github/v/release/iOfficeAI/AionUi?style=flat-square&color=32CD32" alt="Version">
+  <img src="https://img.shields.io/github/v/release/iOfficeAI/HiveMind?style=flat-square&color=32CD32" alt="Version">
   &nbsp;
   <img src="https://img.shields.io/badge/license-Apache--2.0-32CD32?style=flat-square&logo=apache&logoColor=white" alt="License">
   &nbsp;
@@ -24,13 +24,13 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/iOfficeAI/AionUi/releases">
+  <a href="https://github.com/iOfficeAI/HiveMind/releases">
     <img src="https://img.shields.io/badge/⬇️%20今すぐダウンロード-最新版-32CD32?style=for-the-badge&logo=github&logoColor=white" alt="最新版をダウンロード" height="50">
   </a>
 </p>
 
 <p align="center">
-  <a href="./readme.md">English</a> | <a href="./readme_ch.md">简体中文</a> | <a href="./readme_tw.md">繁體中文</a> | <strong>日本語</strong> | <a href="./readme_ko.md">한국어</a> | <a href="./readme_es.md">Español</a> | <a href="./readme_pt.md">Português</a> | <a href="https://www.aionui.com" target="_blank">公式サイト</a> | <a href="https://twitter.com/AionUI" target="_blank">Twitter</a>
+  <a href="./readme.md">English</a> | <a href="./readme_ch.md">简体中文</a> | <a href="./readme_tw.md">繁體中文</a> | <strong>日本語</strong> | <a href="./readme_ko.md">한국어</a> | <a href="./readme_es.md">Español</a> | <a href="./readme_pt.md">Português</a> | <a href="https://www.hivemind.com" target="_blank">公式サイト</a> | <a href="https://twitter.com/HiveMind" target="_blank">Twitter</a>
 </p>
 
 <p align="center">
@@ -43,8 +43,8 @@
 
 <p align="center">
 
-[✨ AionUiでできること](#aionuiでできること) ·
-[🤔 なぜAionUiを選ぶのか](#なぜaionuiを選ぶのか) ·
+[✨ HiveMindでできること](#hivemindでできること) ·
+[🤔 なぜHiveMindを選ぶのか](#なぜhivemindを選ぶのか) ·
 [🚀 クイックスタート](#クイックスタート) ·
 [💬 コミュニティ](#コミュニティとサポート)
 
@@ -52,15 +52,15 @@
 
 ---
 
-## ✨ AionUiでできること？
+## ✨ HiveMindでできること？
 
 <p align="center">
-  <img src="./resources/offica-ai%20BANNER-function.png" alt="AionUi - Cowork with Your CLI AI Agent" width="800">
+  <img src="./resources/offica-ai%20BANNER-function.png" alt="HiveMind - Cowork with Your CLI AI Agent" width="800">
 </p>
 
 ### 🤖 **マルチエージェントモード - あなたのコマンドラインAIツールのためのCowork、統一グラフィカルインターフェース**
 
-_AionUi には Gemini CLI を内蔵しており、ダウンロードしてすぐ使えます。追加インストール不要です。すでに Gemini CLI、Claude Code、CodeX、Qwen Code、Goose AI、Augment Code などのコマンドラインツールをインストールしている場合、AionUi が自動検出して統一されたグラフィカルインターフェースを提供し、体験がさらに豊かになります_
+_HiveMind には Gemini CLI を内蔵しており、ダウンロードしてすぐ使えます。追加インストール不要です。すでに Gemini CLI、Claude Code、CodeX、Qwen Code、Goose AI、Augment Code などのコマンドラインツールをインストールしている場合、HiveMind が自動検出して統一されたグラフィカルインターフェースを提供し、体験がさらに豊かになります_
 
 - ✅ **自動検出 + 統一インターフェース** - ローカルCLIツールを自動認識し、統一されたグラフィカルインターフェースを提供、コマンドラインに別れを告げる
 - ✅ **ローカル保存 + マルチセッション** - 会話をローカルに保存、マルチセッション並列をサポート、各セッションは独立したコンテキスト
@@ -69,33 +69,33 @@ _AionUi には Gemini CLI を内蔵しており、ダウンロードしてすぐ
   <img src="./resources/acp%20home%20page.gif" alt="マルチエージェントモードデモ" width="800"></p>
 
 <p align="center">
-  <img src="./resources/openclawvia.png" alt="OpenClaw Integration in AionUi" width="800">
+  <img src="./resources/openclawvia.png" alt="OpenClaw Integration in HiveMind" width="800">
 </p>
 
 ---
 
-### 🌐 **どこからでもアクセスできるAionUi**
+### 🌐 **どこからでもアクセスできるHiveMind**
 
-_あなたの 7×24 時間 AI アシスタント - 任意のデバイス、どこからでもAionUiにアクセス！出張中、自宅、オフィス、いつでもどこでもWebUIまたはTelegramを通じてAIツールを使用_
+_あなたの 7×24 時間 AI アシスタント - 任意のデバイス、どこからでもHiveMindにアクセス！出張中、自宅、オフィス、いつでもどこでもWebUIまたはTelegramを通じてAIツールを使用_
 
-AionUiは複数のリモートアクセス方法を提供します：
+HiveMindは複数のリモートアクセス方法を提供します：
 
 - **🌐 WebUIモード**
 
-  ブラウザから任意のデバイスでAionUiにアクセス - スマートフォン、タブレット、コンピューター。LAN、クロスネットワーク、サーバー展開をサポート。QRコードをスキャンするか、アカウントパスワードでログインでき、操作が簡単で便利です。
+  ブラウザから任意のデバイスでHiveMindにアクセス - スマートフォン、タブレット、コンピューター。LAN、クロスネットワーク、サーバー展開をサポート。QRコードをスキャンするか、アカウントパスワードでログインでき、操作が簡単で便利です。
 
-  > 💡 **詳細な設定ガイドが必要ですか？** [リモートインターネットアクセスガイド](https://github.com/iOfficeAI/AionUi/wiki/Remote-Internet-Access-Guide) を確認
+  > 💡 **詳細な設定ガイドが必要ですか？** [リモートインターネットアクセスガイド](https://github.com/iOfficeAI/HiveMind/wiki/Remote-Internet-Access-Guide) を確認
 
 - **📱 チャットプラットフォーム統合**
   - **Telegram** - 任意のデバイスでAIアシスタントとチャット
   - **Lark (Feishu)** - Feishuボットによる企業コラボレーション
   - **Slack** その他、さらに多くのプラットフォームが近日公開予定 🚧
 
-  > 💡 **セットアップ方法:** AionUi設定 → WebUI設定 → Channelに移動し、対応するBot Tokenを設定して開始!
+  > 💡 **セットアップ方法:** HiveMind設定 → WebUI設定 → Channelに移動し、対応するBot Tokenを設定して開始!
 
   任意のデバイスからTelegramを通じてAIアシスタントと直接チャット。シンプルなペアリングコードシステムで安全なアクセスを確保。
 
-  > 💡 **設定方法：** AionUi設定 → WebUI設定 → Channel に移動し、[@BotFather](https://t.me/BotFather) からBot Tokenを取得して、チャットを開始！
+  > 💡 **設定方法：** HiveMind設定 → WebUI設定 → Channel に移動し、[@BotFather](https://t.me/BotFather) からBot Tokenを取得して、チャットを開始！
 
 <p align="center">
   <img src="./resources/remote-telegram.png" alt="どこからでもアクセス - WebUIとチャットプラットフォーム" width="800">
@@ -103,7 +103,7 @@ AionUiは複数のリモートアクセス方法を提供します：
 
 ---
 
-### ⏰ **スケジュールタスク - AionUiが自動的にタスクを完了**
+### ⏰ **スケジュールタスク - HiveMindが自動的にタスクを完了**
 
 _スケジュールタスクを設定すると、AIアシスタントが設定した時間に自動的に実行され、真の7×24時間無人運用を実現_
 
@@ -127,7 +127,7 @@ _一括リネーム、自動整理、スマート分類、ファイルマージ_
 - **効率的な一括処理**：ワンクリックでリネームや結合を行い、煩雑な手作業から解放されます。
 
 <p align="center">
-  <img src="./resources/aionui%20sort%20file.gif" alt="スマートファイル管理デモ" width="800">
+  <img src="./resources/hivemind%20sort%20file.gif" alt="スマートファイル管理デモ" width="800">
 </p>
 
 ---
@@ -153,7 +153,7 @@ _インテリジェントな画像生成、編集、認識、Geminiが駆動_
   <img src="./resources/Image_Generation.gif" alt="AI画像生成デモ" width="800">
 </p>
 
-> 💡 **無料画像生成の設定にヘルプが必要ですか？** [チュートリアルに従って画像生成モデルを設定](https://github.com/iOfficeAI/AionUi/wiki/AionUi-Image-Generation-Tool-Model-Configuration-Guide)
+> 💡 **無料画像生成の設定にヘルプが必要ですか？** [チュートリアルに従って画像生成モデルを設定](https://github.com/iOfficeAI/HiveMind/wiki/HiveMind-Image-Generation-Tool-Model-Configuration-Guide)
 
 ---
 
@@ -193,13 +193,13 @@ _複数の会話を開く、タスクが混乱しない、記憶が独立、効�
 
 ---
 
-## 🤔 なぜAionUiを選ぶのか？ | Claudebotと同じくらい便利
+## 🤔 なぜHiveMindを選ぶのか？ | Claudebotと同じくらい便利
 
-**Claude CoworkがClaude Codeをより使いやすくするように、AionUiはすべてのコマンドラインAIツールのためのCoworkプラットフォームです**
+**Claude CoworkがClaude Codeをより使いやすくするように、HiveMindはすべてのコマンドラインAIツールのためのCoworkプラットフォームです**
 
 Gemini CLI、Claude Code、Codex、Qwen Codeなどのコマンドラインツールは強力ですが、共通の痛みがあります：会話が保存できない、単一セッション制限、ファイル操作が煩雑、単一モデルのみ使用可能。
 
-AionUiはこれらのコマンドラインツールに統一された **Cowork機能** を提供します：
+HiveMindはこれらのコマンドラインツールに統一された **Cowork機能** を提供します：
 
 - 🎯 **統一プラットフォーム** - すべてのコマンドラインAIツールを1つのインターフェースで管理、切り替え不要。Gemini CLI を内蔵、ダウンロードしてすぐ使えて完全無料
 - 🚀 **マルチツール対応** - Claude Codeだけでなく、Gemini CLI、Codex、Qwen Codeなどもサポート
@@ -212,10 +212,10 @@ AionUiはこれらのコマンドラインツールに統一された **Cowork�
 ### ❓ クイックQ&A
 
 <details>
-<summary><strong>Q: AionUiはClaude Coworkの代替としてなぜ優れているのですか？</strong></summary>
-A: AionUiは**無料かつオープンソース**の **マルチAIエージェントデスクトップ**です。macOS限定でClaudeに縛られている公式のCoworkと比較して、AionUiは**マルチモデル・マルチプラットフォーム対応の強化版**であり、**AIオフィスオートメーション**シナリオを深くカバーしています。
+<summary><strong>Q: HiveMindはClaude Coworkの代替としてなぜ優れているのですか？</strong></summary>
+A: HiveMindは**無料かつオープンソース**の **マルチAIエージェントデスクトップ**です。macOS限定でClaudeに縛られている公式のCoworkと比較して、HiveMindは**マルチモデル・マルチプラットフォーム対応の強化版**であり、**AIオフィスオートメーション**シナリオを深くカバーしています。
 
-| 次元           | Claude Cowork                | AionUi (本プロジェクト)                     |
+| 次元           | Claude Cowork                | HiveMind (本プロジェクト)                     |
 | :------------- | :--------------------------- | :------------------------------------------ |
 | OS             | macOSのみ                    | 🍏 macOS / 🪟 Windows / 🐧 Linux            |
 | モデルサポート | Claudeのみ                   | 🤖 Gemini, Claude, DeepSeek, OpenAI, Ollama |
@@ -231,18 +231,18 @@ A: AionUiは**無料かつオープンソース**の **マルチAIエージェ�
 </details>
 
 <details>
-<summary><strong>Q: AionUiで何ができますか？</strong></summary>
-A: AionUiはあなたの**プライベートなCoworkワークスペース**になります。フォルダの自動整理、Excelの美化、ウェブコードのリアルタイムプレビューなどをAIに任せることができます。オフィスオートメーションのワークフローを探索し、Claude CodeやGemini CLIの体験を向上させるための最適なグラフィカルな選択肢です。
+<summary><strong>Q: HiveMindで何ができますか？</strong></summary>
+A: HiveMindはあなたの**プライベートなCoworkワークスペース**になります。フォルダの自動整理、Excelの美化、ウェブコードのリアルタイムプレビューなどをAIに任せることができます。オフィスオートメーションのワークフローを探索し、Claude CodeやGemini CLIの体験を向上させるための最適なグラフィカルな選択肢です。
 </details>
 
 <details>
-<summary><strong>Q: AionUiはすぐに使えますか？</strong></summary>
-A: はい！インストール後すぐに使えます。Gemini CLI を内蔵しているため追加インストールは不要です。すでに Gemini CLI などのコマンドラインツールを使っている場合は、AionUi が自動認識してより豊かな体験を提供します。
+<summary><strong>Q: HiveMindはすぐに使えますか？</strong></summary>
+A: はい！インストール後すぐに使えます。Gemini CLI を内蔵しているため追加インストールは不要です。すでに Gemini CLI などのコマンドラインツールを使っている場合は、HiveMind が自動認識してより豊かな体験を提供します。
 </details>
 
 <details>
 <summary><strong>Q: 有料ですか？</strong></summary>
-A: AionUiは完全に無料でオープンソースですが、AIモデルを使用するには対応するAPIキーが必要です。
+A: HiveMindは完全に無料でオープンソースですが、AIモデルを使用するには対応するAPIキーが必要です。
 </details>
 
 <details>
@@ -260,9 +260,9 @@ A: すべての会話データはローカルのSQLiteデータベースに保�
 
 ---
 
-## 🎬 みんながAionUiをどう使っているか見てみよう
+## 🎬 みんながHiveMindをどう使っているか見てみよう
 
-_クリエイターたちがAionUiをレビュー・使用する様子をご覧ください_
+_クリエイターたちがHiveMindをレビュー・使用する様子をご覧ください_
 
 <p align="center">
   <a href="https://www.youtube.com/watch?v=yUU5E-U5B3M" target="_blank">
@@ -277,7 +277,7 @@ _クリエイターたちがAionUiをレビュー・使用する様子をご覧�
   <em>🎬 WorldofAI (20万人登録)</em> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <em>🎬 Julian Goldie SEO (31.8万人登録)</em>
 </p>
 
-> 💡 **AionUiについての動画を作りましたか？** [Xでお知らせください](https://x.com/AionUi)、ここで紹介します！皆様のフィードバックを参考に、継続的に改善していきます。
+> 💡 **HiveMindについての動画を作りましたか？** [Xでお知らせください](https://x.com/HiveMind)、ここで紹介します！皆様のフィードバックを参考に、継続的に改善していきます。
 
 ---
 
@@ -288,26 +288,26 @@ _クリエイターたちがAionUiをレビュー・使用する様子をご覧�
 
 ### 🚀 クイックスタート
 
-- [📖 完全インストールガイド](https://github.com/iOfficeAI/AionUi/wiki/Getting-Started) - ダウンロードから設定までの詳細な手順
-- [⚙️ LLM設定ガイド](https://github.com/iOfficeAI/AionUi/wiki/LLM-Configuration) - マルチプラットフォームAIモデル設定
-- [🤖 マルチエージェントモード設定](https://github.com/iOfficeAI/AionUi/wiki/ACP-Setup) - ターミナルAIエージェントの統合
-- [🔌 MCPツール設定](https://github.com/iOfficeAI/AionUi/wiki/MCP-Configuration-Guide) - モデルコンテキストプロトコルサーバー設定
-- [🎨 画像生成設定](https://github.com/iOfficeAI/AionUi/wiki/AionUi-Image-Generation-Tool-Model-Configuration-Guide) - AI画像生成設定チュートリアル
-- [🌐 WebUI設定ガイド](https://github.com/iOfficeAI/AionUi/wiki/WebUI-Configuration-Guide) - 完全なWebUIセットアップと設定チュートリアル
+- [📖 完全インストールガイド](https://github.com/iOfficeAI/HiveMind/wiki/Getting-Started) - ダウンロードから設定までの詳細な手順
+- [⚙️ LLM設定ガイド](https://github.com/iOfficeAI/HiveMind/wiki/LLM-Configuration) - マルチプラットフォームAIモデル設定
+- [🤖 マルチエージェントモード設定](https://github.com/iOfficeAI/HiveMind/wiki/ACP-Setup) - ターミナルAIエージェントの統合
+- [🔌 MCPツール設定](https://github.com/iOfficeAI/HiveMind/wiki/MCP-Configuration-Guide) - モデルコンテキストプロトコルサーバー設定
+- [🎨 画像生成設定](https://github.com/iOfficeAI/HiveMind/wiki/HiveMind-Image-Generation-Tool-Model-Configuration-Guide) - AI画像生成設定チュートリアル
+- [🌐 WebUI設定ガイド](https://github.com/iOfficeAI/HiveMind/wiki/WebUI-Configuration-Guide) - 完全なWebUIセットアップと設定チュートリアル
 
 ### 🎯 ユースケース
 
-- [📁 ファイル管理](https://github.com/iOfficeAI/AionUi/wiki/file-management) - スマートファイル整理
-- [📊 Excel処理](https://github.com/iOfficeAI/AionUi/wiki/excel-processing) - AI駆動のデータ処理
-- [🎨 画像生成](https://github.com/iOfficeAI/AionUi/wiki/AionUi-Image-Generation-Tool-Model-Configuration-Guide) - AI画像作成
-- [📚 その他のユースケース](https://github.com/iOfficeAI/AionUi/wiki/Use-Cases-Overview)
+- [📁 ファイル管理](https://github.com/iOfficeAI/HiveMind/wiki/file-management) - スマートファイル整理
+- [📊 Excel処理](https://github.com/iOfficeAI/HiveMind/wiki/excel-processing) - AI駆動のデータ処理
+- [🎨 画像生成](https://github.com/iOfficeAI/HiveMind/wiki/HiveMind-Image-Generation-Tool-Model-Configuration-Guide) - AI画像作成
+- [📚 その他のユースケース](https://github.com/iOfficeAI/HiveMind/wiki/Use-Cases-Overview)
   - [🎬 WorldofAI](https://www.youtube.com/watch?v=yUU5E-U5B3M) - YouTube 動画レビュー
   - [🎬 Julian Goldie SEO](https://www.youtube.com/watch?v=enQnkKfth10) - YouTube 動画レビュー
 
 ### ❓ サポートとヘルプ
 
-- [❓ よくある質問](https://github.com/iOfficeAI/AionUi/wiki/FAQ) - 質問とトラブルシューティング
-- [🔧 設定と使用チュートリアル](https://github.com/iOfficeAI/AionUi/wiki/Configuration-Guides) - 完全な設定ドキュメント
+- [❓ よくある質問](https://github.com/iOfficeAI/HiveMind/wiki/FAQ) - 質問とトラブルシューティング
+- [🔧 設定と使用チュートリアル](https://github.com/iOfficeAI/HiveMind/wiki/Configuration-Guides) - 完全な設定ドキュメント
 
 </details>
 
@@ -326,7 +326,7 @@ _クリエイターたちがAionUiをレビュー・使用する様子をご覧�
 ### 📥 ダウンロード
 
 <p>
-  <a href="https://github.com/iOfficeAI/AionUi/releases">
+  <a href="https://github.com/iOfficeAI/HiveMind/releases">
     <img src="https://img.shields.io/badge/ダウンロード-最新版-32CD32?style=for-the-badge&logo=github&logoColor=white" alt="最新版をダウンロード" height="50">
   </a>
 </p>
@@ -334,16 +334,16 @@ _クリエイターたちがAionUiをレビュー・使用する様子をご覧�
 ### 🍺 Homebrewでインストール (macOS)
 
 ```bash
-brew install aionui
+brew install hivemind
 ```
 
 ### 🔧 簡単インストール
 
-1. **ダウンロードしてインストール** AionUiアプリケーション
+1. **ダウンロードしてインストール** HiveMindアプリケーション
 2. **AIサービスを設定** - GoogleアカウントログインまたはAPIキー認証をサポート
 3. **使用開始** - モダンなAIチャットインターフェースをすぐに体験
 
-> 💡 **詳細な設定ガイドが必要ですか？** [完全インストールチュートリアル](https://github.com/iOfficeAI/AionUi/wiki/Getting-Started)を確認
+> 💡 **詳細な設定ガイドが必要ですか？** [完全インストールチュートリアル](https://github.com/iOfficeAI/HiveMind/wiki/Getting-Started)を確認
 
 ---
 
@@ -354,14 +354,14 @@ brew install aionui
 **💡 あなたのアイデアが重要です！** すべてのユーザーの提案とフィードバックを非常に重視しています。機能のアイデア、使用体験、または遭遇した問題について、いつでもお気軽にお問い合わせください！
 
 <p align="center">
-  <a href="https://x.com/AionUi" target="_blank">
+  <a href="https://x.com/HiveMind" target="_blank">
     <img src="./resources/contactus-x.png" alt="Xでお問い合わせ" width="600">
   </a>
 </p>
 
-- [💬 GitHub Discussions](https://github.com/iOfficeAI/AionUi/discussions) - **アイデアを共有、提案、使用のヒントを交換**
-- [🐛 問題を報告](https://github.com/iOfficeAI/AionUi/issues) - バグや機能リクエストを報告
-- [📦 リリース更新](https://github.com/iOfficeAI/AionUi/releases) - 最新版を取得
+- [💬 GitHub Discussions](https://github.com/iOfficeAI/HiveMind/discussions) - **アイデアを共有、提案、使用のヒントを交換**
+- [🐛 問題を報告](https://github.com/iOfficeAI/HiveMind/issues) - バグや機能リクエストを報告
+- [📦 リリース更新](https://github.com/iOfficeAI/HiveMind/releases) - 最新版を取得
 - [💬 Discord Community](https://discord.gg/2QAwJn7Egx) - **Discord の英語コミュニティに参加**
 - [💬 微信 (中文群)](./resources/wx.png) - **QRコードを表示するにはクリック**
 
@@ -385,19 +385,19 @@ IssueとPull Requestの提出を歓迎します！
 
 ## 👥 貢献者
 
-AionUiに貢献してくれたすべての開発者に感謝します！
+HiveMindに貢献してくれたすべての開発者に感謝します！
 
 <p align="center">
-  <a href="https://github.com/iOfficeAI/AionUi/graphs/contributors">
-    <img src="https://contrib.rocks/image?repo=iOfficeAI/AionUi&max=50" alt="貢献者" />
+  <a href="https://github.com/iOfficeAI/HiveMind/graphs/contributors">
+    <img src="https://contrib.rocks/image?repo=iOfficeAI/HiveMind&max=50" alt="貢献者" />
   </a>
 </p>
 
 ## 📊 スター履歴
 
 <p align="center">
-  <a href="https://www.star-history.com/#iOfficeAI/aionui&Date" target="_blank">
-    <img src="https://api.star-history.com/svg?repos=iOfficeAI/aionui&type=Date" alt="GitHubスター傾向" width="600">
+  <a href="https://www.star-history.com/#iOfficeAI/hivemind&Date" target="_blank">
+    <img src="https://api.star-history.com/svg?repos=iOfficeAI/hivemind&type=Date" alt="GitHubスター傾向" width="600">
   </a>
 </p>
 
@@ -405,6 +405,6 @@ AionUiに貢献してくれたすべての開発者に感謝します！
 
 **⭐ 気に入ったらスターをお願いします**
 
-[バグを報告](https://github.com/iOfficeAI/AionUi/issues) · [機能をリクエスト](https://github.com/iOfficeAI/AionUi/issues)
+[バグを報告](https://github.com/iOfficeAI/HiveMind/issues) · [機能をリクエスト](https://github.com/iOfficeAI/HiveMind/issues)
 
 </div>

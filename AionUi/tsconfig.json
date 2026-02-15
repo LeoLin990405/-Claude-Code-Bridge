@@ -10,6 +10,7 @@
     "baseUrl": ".",
     "outDir": "dist",
     "resolveJsonModule": true,
+    "types": ["node", "jest", "@testing-library/jest-dom"],
     "jsx": "react",
     "paths": {
       "@/*": ["./src/*"],
@@ -18,5 +19,5 @@
       "@worker/*": ["./src/worker/*"]
     }
   },
-  "include": ["src/**/*", "uno.config.ts", "src/renderer/types.d.ts"]
+  "include": ["src/**/*", "tests/**/*", "uno.config.ts", "src/renderer/types.d.ts"]
 }

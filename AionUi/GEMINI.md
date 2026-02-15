@@ -5,7 +5,7 @@
 **项目名称**: HiveMind
 **当前版本**: v1.9.0
 **下一版本**: v2.0.0 (Phoenix 前端重构)
-**项目路径**: `/Users/leo/.local/share/codex-dual/AionUi`
+**项目路径**: `/Users/leo/.local/share/codex-dual/HiveMind`
 **技术栈**: Electron + React + TypeScript
 
 ## 项目概述
@@ -21,7 +21,7 @@ HiveMind 是一个统一的多 AI 协作平台，支持 Claude、Gemini、Codex�
 ## 目录结构
 
 ```
-/Users/leo/.local/share/codex-dual/AionUi/
+/Users/leo/.local/share/codex-dual/HiveMind/
 ├── src/
 │   ├── renderer/           # 前端代码（你主要负责的部分）
 │   │   ├── components/     # UI 组件
@@ -74,7 +74,7 @@ HiveMind 是一个统一的多 AI 协作平台，支持 Claude、Gemini、Codex�
 
 **重构目标**:
 - 完全重新设计 UI/UX
-- 摆脱 AionUI 原始设计
+- 摆脱 HiveMind 原始设计
 - 采用现代化设计系统
 - 性能提升 40%+
 
@@ -133,7 +133,7 @@ refactor(theme): migrate to new color system
 
 ### 开发
 ```bash
-cd /Users/leo/.local/share/codex-dual/AionUi
+cd /Users/leo/.local/share/codex-dual/HiveMind
 npm start                # 启动开发环境
 npm run webui           # 启动 WebUI 服务器
 ```
@@ -225,7 +225,7 @@ npm run dist:mac        # macOS 构建
 ccb-cli gemini 3f "问题描述"
 
 # 带项目上下文
-ccb-cli gemini 3f "基于 /Users/leo/.local/share/codex-dual/AionUi 项目，问题描述"
+ccb-cli gemini 3f "基于 /Users/leo/.local/share/codex-dual/HiveMind 项目，问题描述"
 
 # 异步任务
 ccb-submit gemini -a frontend "任务描述"

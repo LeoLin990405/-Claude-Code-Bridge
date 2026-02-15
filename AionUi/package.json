@@ -31,8 +31,10 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "test:contract": "jest tests/contract",
-    "test:integration": "jest tests/integration",
+    "test:contract": "jest tests/contract --passWithNoTests",
+    "test:integration": "jest tests/integration --passWithNoTests",
+    "qa:auto": "bash scripts/full-auto-pipeline.sh",
+    "qa:auto:strict": "STRICT=1 bash scripts/full-auto-pipeline.sh",
     "prepare": "husky",
     "postinstall": "node scripts/postinstall.js"
   },

@@ -1,9 +1,9 @@
 <p align="center">
-  <img src="./resources/aionui-banner-1.png" alt="AionUi - CLI Yapay Zeka Ajanınızla Birlikte Çalışın" width="100%">
+  <img src="./resources/hivemind-banner-1.png" alt="HiveMind - CLI Yapay Zeka Ajanınızla Birlikte Çalışın" width="100%">
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/github/v/release/iOfficeAI/AionUi?style=flat-square&color=32CD32" alt="Sürüm">
+  <img src="https://img.shields.io/github/v/release/iOfficeAI/HiveMind?style=flat-square&color=32CD32" alt="Sürüm">
   &nbsp;
   <img src="https://img.shields.io/badge/license-Apache--2.0-32CD32?style=flat-square&logo=apache&logoColor=white" alt="Lisans">
   &nbsp;
@@ -24,13 +24,13 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/iOfficeAI/AionUi/releases">
+  <a href="https://github.com/iOfficeAI/HiveMind/releases">
     <img src="https://img.shields.io/badge/⬇️%20Hemen%20İndir-Son%20Sürüm-32CD32?style=for-the-badge&logo=github&logoColor=white" alt="Son Sürümü İndir" height="50">
   </a>
 </p>
 
 <p align="center">
-  <a href="./readme.md">English</a> | <a href="./readme_ch.md">简体中文</a> | <a href="./readme_tw.md">繁體中文</a> | <a href="./readme_jp.md">日本語</a> | <a href="./readme_ko.md">한국어</a> | <a href="./readme_es.md">Español</a> | <a href="./readme_pt.md">Português</a> | <strong>Türkçe</strong> | <a href="https://www.aionui.com" target="_blank">Resmi Web Sitesi</a> | <a href="https://twitter.com/AionUI" target="_blank">Twitter</a>
+  <a href="./readme.md">English</a> | <a href="./readme_ch.md">简体中文</a> | <a href="./readme_tw.md">繁體中文</a> | <a href="./readme_jp.md">日本語</a> | <a href="./readme_ko.md">한국어</a> | <a href="./readme_es.md">Español</a> | <a href="./readme_pt.md">Português</a> | <strong>Türkçe</strong> | <a href="https://www.hivemind.com" target="_blank">Resmi Web Sitesi</a> | <a href="https://twitter.com/HiveMind" target="_blank">Twitter</a>
 </p>
 
 <p align="center">
@@ -43,8 +43,8 @@
 
 <p align="center">
 
-[✨ AionUi Neler Yapabilir?](#✨-aionui-neler-yapabilir) ·
-[🤔 Neden AionUi'yi Seçmelisiniz?](#🤔-neden-aionuiyi-seçmelisiniz) ·
+[✨ HiveMind Neler Yapabilir?](#✨-hivemind-neler-yapabilir) ·
+[🤔 Neden HiveMind'yi Seçmelisiniz?](#🤔-neden-hivemindyi-seçmelisiniz) ·
 [🚀 Hızlı Başlangıç](#🚀-hızlı-başlangıç) ·
 [💬 Topluluk](#🤝-topluluk-ve-destek)
 
@@ -52,15 +52,15 @@
 
 ---
 
-## ✨ AionUi Neler Yapabilir?
+## ✨ HiveMind Neler Yapabilir?
 
 <p align="center">
-  <img src="./resources/offica-ai%20BANNER-function.png" alt="AionUi - CLI Yapay Zeka Ajanınızla Birlikte Çalışın" width="800">
+  <img src="./resources/offica-ai%20BANNER-function.png" alt="HiveMind - CLI Yapay Zeka Ajanınızla Birlikte Çalışın" width="800">
 </p>
 
 ### 🤖 **Çoklu Ajan Modu - Komut Satırı Yapay Zeka Araçlarınız İçin Ortak Çalışma, Birleşik Grafik Arayüz**
 
-_Eğer Gemini CLI, Claude Code, CodeX, Qwen Code, Goose AI, Augment Code gibi komut satırı araçları yüklü ise, AionUi bunları otomatik olarak algılar ve birleşik bir grafik arayüz sunar_
+_Eğer Gemini CLI, Claude Code, CodeX, Qwen Code, Goose AI, Augment Code gibi komut satırı araçları yüklü ise, HiveMind bunları otomatik olarak algılar ve birleşik bir grafik arayüz sunar_
 
 - ✅ **Otomatik Algılama + Birleşik Arayüz** - Yerel CLI araçlarını otomatik tanır, tek bir grafik arayüz sunar, komut satırına elveda deyin
 - ✅ **Yerel Depolama + Çoklu Oturum** - Konuşmalar yerel olarak kaydedilir, birden fazla paralel oturumu destekler, her oturum bağımsız bağlama sahiptir
@@ -69,20 +69,20 @@ _Eğer Gemini CLI, Claude Code, CodeX, Qwen Code, Goose AI, Augment Code gibi ko
   <img src="./resources/acp%20home%20page.gif" alt="Çoklu Ajan Modu Demo" width="800"></p>
 
 <p align="center">
-  <img src="./resources/openclawvia.png" alt="OpenClaw Integration in AionUi" width="800">
+  <img src="./resources/openclawvia.png" alt="OpenClaw Integration in HiveMind" width="800">
 </p>
 
 ---
 
 ### 🌐 **Her Yerden Erişim - WebUI ve sohbet platformları Kanalı**
 
-_7/24 Yapay Zeka Asistanınız - AionUi'ye herhangi bir cihazdan, her yerden erişin! İş gezisinde, evde, ofiste; yapay zeka araçlarınızı WebUI veya Telegram üzerinden her an kullanın_
+_7/24 Yapay Zeka Asistanınız - HiveMind'ye herhangi bir cihazdan, her yerden erişin! İş gezisinde, evde, ofiste; yapay zeka araçlarınızı WebUI veya Telegram üzerinden her an kullanın_
 
 #### 🌐 **WebUI Modu**
 
-AionUi'ye telefon, tablet veya bilgisayar üzerinden tarayıcı ile erişin. LAN, çapraz ağ ve sunucu kurulumunu destekler.
+HiveMind'ye telefon, tablet veya bilgisayar üzerinden tarayıcı ile erişin. LAN, çapraz ağ ve sunucu kurulumunu destekler.
 
-> 💡 **Detaylı yapılandırma rehberine mi ihtiyacınız var?** [WebUI Yapılandırma Eğitimi](https://github.com/iOfficeAI/AionUi/wiki/WebUI-Configuration-Guide) ve [Uzaktan İnternet Erişim Rehberi](https://github.com/iOfficeAI/AionUi/wiki/Remote-Internet-Access-Guide) sayfalarına göz atın
+> 💡 **Detaylı yapılandırma rehberine mi ihtiyacınız var?** [WebUI Yapılandırma Eğitimi](https://github.com/iOfficeAI/HiveMind/wiki/WebUI-Configuration-Guide) ve [Uzaktan İnternet Erişim Rehberi](https://github.com/iOfficeAI/HiveMind/wiki/Remote-Internet-Access-Guide) sayfalarına göz atın
 
 #### 📱 **Telegram Kanalı**
 
@@ -104,7 +104,7 @@ _Toplu yeniden adlandırma, otomatik düzenleme, akıllı sınıflandırma, dosy
 - **Verimli Toplu İşlem**: Tek tıkla yeniden adlandırın, dosyaları birleştirin, sıkıcı manuel işlere veda edin.
 
 <p align="center">
-  <img src="./resources/aionui%20sort%20file.gif" alt="Akıllı Dosya Yönetimi Demo" width="800">
+  <img src="./resources/hivemind%20sort%20file.gif" alt="Akıllı Dosya Yönetimi Demo" width="800">
 </p>
 
 ---
@@ -130,7 +130,7 @@ _Gemini tarafından desteklenen akıllı görüntü oluşturma, düzenleme ve ta
   <img src="./resources/Image_Generation.gif" alt="AI Görüntü Oluşturma Demo" width="800">
 </p>
 
-> 💡 **Ücretsiz görüntü oluşturmayı kurmak için yardıma mı ihtiyacınız var?** [Görüntü oluşturma modellerini yapılandırma eğitimini takip edin](https://github.com/iOfficeAI/AionUi/wiki/AionUi-Image-Generation-Tool-Model-Configuration-Guide)
+> 💡 **Ücretsiz görüntü oluşturmayı kurmak için yardıma mı ihtiyacınız var?** [Görüntü oluşturma modellerini yapılandırma eğitimini takip edin](https://github.com/iOfficeAI/HiveMind/wiki/HiveMind-Image-Generation-Tool-Model-Configuration-Guide)
 
 ---
 
@@ -170,13 +170,13 @@ _Birden fazla sohbet açın, görevler karışmasın, bağımsız hafıza, iki k
 
 ---
 
-## 🤔 Neden AionUi'yi Seçmelisiniz? | Claudebot Kadar İyi
+## 🤔 Neden HiveMind'yi Seçmelisiniz? | Claudebot Kadar İyi
 
-**Claude Cowork'ün Claude Code'u kullanımını kolaylaştırması gibi, AionUi de tüm komut satırı yapay zeka araçlarınız için Cowork platformudur**
+**Claude Cowork'ün Claude Code'u kullanımını kolaylaştırması gibi, HiveMind de tüm komut satırı yapay zeka araçlarınız için Cowork platformudur**
 
 Gemini CLI, Claude Code, Codex, Qwen Code gibi komut satırı araçları güçlü olsalar da ortak sıkıntıları vardır: konuşmalar kaydedilemez, tek oturum sınırlaması, zahmetli dosya işlemleri ve sadece tek bir modeli desteklemeleri.
 
-AionUi, bu komut satırı araçları için birleşik **Ortak Çalışma (Cowork) yetenekleri** sağlar:
+HiveMind, bu komut satırı araçları için birleşik **Ortak Çalışma (Cowork) yetenekleri** sağlar:
 
 - 🎯 **Birleşik Platform** - Tüm komut satırı AI araçlarını yönetmek için tek arayüz, geçiş yapmaya gerek yok
 - 🚀 **Çoklu Araç Desteği** - Sadece Claude Code değil, aynı zamanda Gemini CLI, Codex, Qwen Code ve daha fazlasını destekler
@@ -188,10 +188,10 @@ AionUi, bu komut satırı araçları için birleşik **Ortak Çalışma (Cowork)
 ### ❓ Hızlı Soru-Cevap
 
 <details>
-<summary><strong>S: AionUi neden Claude Cowork için harika bir alternatiftir?</strong></summary>
-C: AionUi **ücretsiz ve açık kaynaklı** bir **Çoklu AI Ajan Masaüstü** uygulamasıdır. Sadece macOS'ta çalışan ve Claude'a kilitli olan resmi Cowork ile karşılaştırıldığında, AionUi onun **tam model, çapraz platform geliştirilmiş versiyonudur** ve **AI Ofis Otomasyonu** senaryolarını derinlemesine kapsar.
+<summary><strong>S: HiveMind neden Claude Cowork için harika bir alternatiftir?</strong></summary>
+C: HiveMind **ücretsiz ve açık kaynaklı** bir **Çoklu AI Ajan Masaüstü** uygulamasıdır. Sadece macOS'ta çalışan ve Claude'a kilitli olan resmi Cowork ile karşılaştırıldığında, HiveMind onun **tam model, çapraz platform geliştirilmiş versiyonudur** ve **AI Ofis Otomasyonu** senaryolarını derinlemesine kapsar.
 
-| Boyut         | Claude Cowork    | AionUi (Bu Proje)                           |
+| Boyut         | Claude Cowork    | HiveMind (Bu Proje)                           |
 | :------------ | :--------------- | :------------------------------------------ |
 | İşletim Sis.  | Sadece macOS     | 🍏 macOS / 🪟 Windows / 🐧 Linux            |
 | Model Desteği | Sadece Claude    | 🤖 Gemini, Claude, DeepSeek, OpenAI, Ollama |
@@ -207,18 +207,18 @@ C: AionUi **ücretsiz ve açık kaynaklı** bir **Çoklu AI Ajan Masaüstü** uy
 </details>
 
 <details>
-<summary><strong>S: AionUi ile neler yapabilirim?</strong></summary>
+<summary><strong>S: HiveMind ile neler yapabilirim?</strong></summary>
 C: Kişisel **Cowork çalışma alanınız** olabilir. Klasörleri toplu düzenlemenize yardım etmesini sağlayabilir, Excel'i derinlemesine güzelleştirebilir ve web kodunu gerçek zamanlı önizleyebilirsiniz. Ofis otomasyonu iş akışlarını keşfetmek ve Claude Code veya Gemini CLI deneyiminizi geliştirmek için en iyi grafiksel seçimdir.
 </details>
 
 <details>
-<summary><strong>S: AionUi kutudan çıktığı gibi kullanıma hazır mı?</strong></summary>
-C: Evet! Kurulumdan sonra doğrudan Google hesabı ile giriş yapabilirsiniz, AionUi otomatik olarak Gemini CLI ile ilişkilendirilir, kullanmaya başlamak için ek yapılandırma gerekmez.
+<summary><strong>S: HiveMind kutudan çıktığı gibi kullanıma hazır mı?</strong></summary>
+C: Evet! Kurulumdan sonra doğrudan Google hesabı ile giriş yapabilirsiniz, HiveMind otomatik olarak Gemini CLI ile ilişkilendirilir, kullanmaya başlamak için ek yapılandırma gerekmez.
 </details>
 
 <details>
 <summary><strong>S: Ücretsiz mi?</strong></summary>
-C: AionUi tamamen ücretsiz ve açık kaynaklıdır, ancak AI modellerini kullanmak ilgili API Anahtarlarını gerektirir.
+C: HiveMind tamamen ücretsiz ve açık kaynaklıdır, ancak AI modellerini kullanmak ilgili API Anahtarlarını gerektirir.
 </details>
 
 <details>
@@ -236,9 +236,9 @@ C: Tüm konuşma verileri yerel bir SQLite veritabanında saklanır ve herhangi 
 
 ---
 
-## 🎬 İnsanların AionUi'yi Nasıl Kullandığını Görün
+## 🎬 İnsanların HiveMind'yi Nasıl Kullandığını Görün
 
-_İçerik üreticilerinin AionUi'yi incelemesini ve gerçek dünya senaryolarında kullanımını izleyin_
+_İçerik üreticilerinin HiveMind'yi incelemesini ve gerçek dünya senaryolarında kullanımını izleyin_
 
 <p align="center">
   <a href="https://www.youtube.com/watch?v=yUU5E-U5B3M" target="_blank">
@@ -253,7 +253,7 @@ _İçerik üreticilerinin AionUi'yi incelemesini ve gerçek dünya senaryoların
   <em>🎬 WorldofAI (200K abone)</em> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <em>🎬 Julian Goldie SEO (318K abone)</em>
 </p>
 
-> 💡 **AionUi hakkında bir video mu çektiniz?** [X (Twitter) üzerinden bize bildirin](https://x.com/AionUi), burada yayınlayalım! Geri bildirimlerinize değer veriyoruz ve önerilerinize göre geliştirmeye devam edeceğiz.
+> 💡 **HiveMind hakkında bir video mu çektiniz?** [X (Twitter) üzerinden bize bildirin](https://x.com/HiveMind), burada yayınlayalım! Geri bildirimlerinize değer veriyoruz ve önerilerinize göre geliştirmeye devam edeceğiz.
 
 ---
 
@@ -264,24 +264,24 @@ _İçerik üreticilerinin AionUi'yi incelemesini ve gerçek dünya senaryoların
 
 ### 🚀 Hızlı Başlangıç
 
-- [📖 Tam Kurulum Rehberi](https://github.com/iOfficeAI/AionUi/wiki/Getting-Started) - İndirmeden yapılandırmaya detaylı adımlar
-- [⚙️ LLM Yapılandırma Rehberi](https://github.com/iOfficeAI/AionUi/wiki/LLM-Configuration) - Çoklu platform AI model yapılandırması
-- [🤖 Çoklu Ajan Modu Kurulumu](https://github.com/iOfficeAI/AionUi/wiki/ACP-Setup) - Terminal AI ajanlarını entegre edin
-- [🔌 MCP Araç Yapılandırması](https://github.com/iOfficeAI/AionUi/wiki/MCP-Configuration-Guide) - Model Bağlam Protokolü sunucu kurulumu
-- [🎨 Görüntü Oluşturma Yapılandırması](https://github.com/iOfficeAI/AionUi/wiki/AionUi-Image-Generation-Tool-Model-Configuration-Guide) - AI görüntü oluşturma kurulum eğitimi
-- [🌐 WebUI Yapılandırma Rehberi](https://github.com/iOfficeAI/AionUi/wiki/WebUI-Configuration-Guide) - Tam WebUI kurulum ve yapılandırma eğitimi
+- [📖 Tam Kurulum Rehberi](https://github.com/iOfficeAI/HiveMind/wiki/Getting-Started) - İndirmeden yapılandırmaya detaylı adımlar
+- [⚙️ LLM Yapılandırma Rehberi](https://github.com/iOfficeAI/HiveMind/wiki/LLM-Configuration) - Çoklu platform AI model yapılandırması
+- [🤖 Çoklu Ajan Modu Kurulumu](https://github.com/iOfficeAI/HiveMind/wiki/ACP-Setup) - Terminal AI ajanlarını entegre edin
+- [🔌 MCP Araç Yapılandırması](https://github.com/iOfficeAI/HiveMind/wiki/MCP-Configuration-Guide) - Model Bağlam Protokolü sunucu kurulumu
+- [🎨 Görüntü Oluşturma Yapılandırması](https://github.com/iOfficeAI/HiveMind/wiki/HiveMind-Image-Generation-Tool-Model-Configuration-Guide) - AI görüntü oluşturma kurulum eğitimi
+- [🌐 WebUI Yapılandırma Rehberi](https://github.com/iOfficeAI/HiveMind/wiki/WebUI-Configuration-Guide) - Tam WebUI kurulum ve yapılandırma eğitimi
 
 ### 🎯 Kullanım Durumları
 
-- [📁 Dosya Yönetimi](https://github.com/iOfficeAI/AionUi/wiki/file-management) - Akıllı dosya düzenleme
-- [📊 Excel İşleme](https://github.com/iOfficeAI/AionUi/wiki/excel-processing) - AI destekli veri işleme
-- [🎨 Görüntü Oluşturma](https://github.com/iOfficeAI/AionUi/wiki/AionUi-Image-Generation-Tool-Model-Configuration-Guide) - AI görüntü oluşturma
-- [📚 Daha Fazla Kullanım Durumu](https://github.com/iOfficeAI/AionUi/wiki/Use-Cases-Overview)
+- [📁 Dosya Yönetimi](https://github.com/iOfficeAI/HiveMind/wiki/file-management) - Akıllı dosya düzenleme
+- [📊 Excel İşleme](https://github.com/iOfficeAI/HiveMind/wiki/excel-processing) - AI destekli veri işleme
+- [🎨 Görüntü Oluşturma](https://github.com/iOfficeAI/HiveMind/wiki/HiveMind-Image-Generation-Tool-Model-Configuration-Guide) - AI görüntü oluşturma
+- [📚 Daha Fazla Kullanım Durumu](https://github.com/iOfficeAI/HiveMind/wiki/Use-Cases-Overview)
 
 ### ❓ Destek & Yardım
 
-- [❓ SSS](https://github.com/iOfficeAI/AionUi/wiki/FAQ) - Sorular ve sorun giderme
-- [🔧 Yapılandırma & Kullanım Eğitimleri](https://github.com/iOfficeAI/AionUi/wiki/Configuration-Guides) - Tam yapılandırma dökümantasyonu
+- [❓ SSS](https://github.com/iOfficeAI/HiveMind/wiki/FAQ) - Sorular ve sorun giderme
+- [🔧 Yapılandırma & Kullanım Eğitimleri](https://github.com/iOfficeAI/HiveMind/wiki/Configuration-Guides) - Tam yapılandırma dökümantasyonu
 
 </details>
 
@@ -300,18 +300,18 @@ _İçerik üreticilerinin AionUi'yi incelemesini ve gerçek dünya senaryoların
 ### 📥 İndir
 
 <p>
-  <a href="https://github.com/iOfficeAI/AionUi/releases">
+  <a href="https://github.com/iOfficeAI/HiveMind/releases">
     <img src="https://img.shields.io/badge/İndir-Son%20Sürüm-32CD32?style=for-the-badge&logo=github&logoColor=white" alt="Son Sürümü İndir" height="50">
   </a>
 </p>
 
 ### 🔧 Basit Kurulum
 
-1. **İndirin ve yükleyin**: AionUi uygulaması
+1. **İndirin ve yükleyin**: HiveMind uygulaması
 2. **AI servisini yapılandırın**: Google hesabı ile girişi veya API Anahtarı doğrulamasını destekler
 3. **Kullanmaya başlayın**: Modern AI sohbet arayüzünü hemen deneyimleyin
 
-> 💡 **Detaylı yapılandırma rehberine mi ihtiyacınız var?** [Tam Kurulum Eğitimimize](https://github.com/iOfficeAI/AionUi/wiki/Getting-Started) göz atın
+> 💡 **Detaylı yapılandırma rehberine mi ihtiyacınız var?** [Tam Kurulum Eğitimimize](https://github.com/iOfficeAI/HiveMind/wiki/Getting-Started) göz atın
 
 ---
 
@@ -322,14 +322,14 @@ _İçerik üreticilerinin AionUi'yi incelemesini ve gerçek dünya senaryoların
 **💡 Fikirleriniz önemli!** Her kullanıcının önerilerine ve geri bildirimlerine çok değer veriyoruz. Özellik fikirleri, kullanıcı deneyimi veya karşılaştığınız sorunlar olsun, istediğiniz zaman bize ulaşın!
 
 <p align="center">
-  <a href="https://x.com/AionUi" target="_blank">
+  <a href="https://x.com/HiveMind" target="_blank">
     <img src="./resources/contactus-x.png" alt="X üzerinden Bize Ulaşın" width="600">
   </a>
 </p>
 
-- [💬 GitHub Tartışmaları](https://github.com/iOfficeAI/AionUi/discussions) - **Fikir paylaşın, öneride bulunun, kullanım ipuçlarını değiş tokuş edin**
-- [🐛 Sorun Bildirin](https://github.com/iOfficeAI/AionUi/issues) - Hataları veya özellik isteklerini bildirin
-- [📦 Sürüm Güncellemeleri](https://github.com/iOfficeAI/AionUi/releases) - En son sürümü alın
+- [💬 GitHub Tartışmaları](https://github.com/iOfficeAI/HiveMind/discussions) - **Fikir paylaşın, öneride bulunun, kullanım ipuçlarını değiş tokuş edin**
+- [🐛 Sorun Bildirin](https://github.com/iOfficeAI/HiveMind/issues) - Hataları veya özellik isteklerini bildirin
+- [📦 Sürüm Güncellemeleri](https://github.com/iOfficeAI/HiveMind/releases) - En son sürümü alın
 
 ### 🤝 Katkıda Bulunma
 
@@ -351,19 +351,19 @@ Bu proje [Apache-2.0](LICENSE) altında lisanslanmıştır.
 
 ## 👥 Katkıda Bulunanlar
 
-AionUi'ye katkıda bulunan tüm geliştiricilere teşekkürler!
+HiveMind'ye katkıda bulunan tüm geliştiricilere teşekkürler!
 
 <p align="center">
-  <a href="https://github.com/iOfficeAI/AionUi/graphs/contributors">
-    <img src="https://contrib.rocks/image?repo=iOfficeAI/AionUi&max=50" alt="Katkıda Bulunanlar" />
+  <a href="https://github.com/iOfficeAI/HiveMind/graphs/contributors">
+    <img src="https://contrib.rocks/image?repo=iOfficeAI/HiveMind&max=50" alt="Katkıda Bulunanlar" />
   </a>
 </p>
 
 ## 📊 Yıldız Geçmişi
 
 <p align="center">
-  <a href="https://www.star-history.com/#iOfficeAI/aionui&Date" target="_blank">
-    <img src="https://api.star-history.com/svg?repos=iOfficeAI/aionui&type=Date" alt="GitHub Yıldız Trendleri" width="600">
+  <a href="https://www.star-history.com/#iOfficeAI/hivemind&Date" target="_blank">
+    <img src="https://api.star-history.com/svg?repos=iOfficeAI/hivemind&type=Date" alt="GitHub Yıldız Trendleri" width="600">
   </a>
 </p>
 
@@ -371,6 +371,6 @@ AionUi'ye katkıda bulunan tüm geliştiricilere teşekkürler!
 
 **⭐ Eğer beğendiyseniz, bize bir yıldız verin**
 
-[Hata Bildir](https://github.com/iOfficeAI/AionUi/issues) · [Özellik İste](https://github.com/iOfficeAI/AionUi/issues)
+[Hata Bildir](https://github.com/iOfficeAI/HiveMind/issues) · [Özellik İste](https://github.com/iOfficeAI/HiveMind/issues)
 
 </div>

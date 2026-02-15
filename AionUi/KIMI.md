@@ -8,7 +8,7 @@
 4. 测试覆盖
 
 ## 项目路径
-/Users/leo/.local/share/codex-dual/AionUi
+/Users/leo/.local/share/codex-dual/HiveMind
 
 ## 主要工作目录
 - src/renderer/ - 前端代码

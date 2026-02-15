@@ -4,11 +4,11 @@ import { MakerWix } from '@electron-forge/maker-wix';
 // Import MakerSquirrel conditionally to avoid issues on non-Windows
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const MakerSquirrel = process.platform === 'win32' ? require('@electron-forge/maker-squirrel').MakerSquirrel : null;
-import { AutoUnpackNativesPlugin } from '@electron-forge/plugin-auto-unpack-natives';
 import { FusesPlugin } from '@electron-forge/plugin-fuses';
 import { WebpackPlugin } from '@electron-forge/plugin-webpack';
 import { FuseV1Options, FuseVersion } from '@electron/fuses';
 import path from 'path';
+import fs from 'fs';
 import { mainConfig } from './config/webpack/webpack.config';
 import { rendererConfig } from './config/webpack/webpack.renderer.config';
 import packageJson from './package.json';
@@ -17,8 +17,8 @@ import packageJson from './package.json';
 // 允许开发者通过环境变量修改 dev server / 日志端口，无需改代码
 const DEFAULT_DEV_SERVER_PORT = 3000;
 const DEFAULT_LOGGER_PORT = 9000;
-const DEV_PORT_ENV_KEYS = ['AIONUI_DEV_PORT', 'DEV_SERVER_PORT', 'PORT'] as const;
-const LOGGER_PORT_ENV_KEYS = ['AIONUI_LOGGER_PORT', 'DEV_LOGGER_PORT', 'LOGGER_PORT'] as const;
+const DEV_PORT_ENV_KEYS = ['HIVEMIND_DEV_PORT', 'DEV_SERVER_PORT', 'PORT'] as const;
+const LOGGER_PORT_ENV_KEYS = ['HIVEMIND_LOGGER_PORT', 'DEV_LOGGER_PORT', 'LOGGER_PORT'] as const;
 
 const parsePort = (value?: string | null): number | null => {
   if (!value) return null;
@@ -83,12 +83,43 @@ const targetArch = process.env.ELECTRON_BUILDER_ARCH || process.env.npm_config_t
 module.exports = {
   packagerConfig: {
     asar: {
-      unpack: '**/node_modules/{node-pty,better-sqlite3,@mapbox,detect-libc,prebuild-install,node-gyp-build,bindings,web-tree-sitter,tree-sitter-bash}/**/*',
-    }, // Enable asar with native modules and their dependencies unpacking
+      unpack: '**/node_modules/{better-sqlite3,node-pty}/**/*',
+    },
     executableName: 'HiveMind',
     out: path.resolve(__dirname, 'out'),
     tmpdir: path.resolve(__dirname, '../HiveMind-tmp'),
-    extraResource: [path.resolve(__dirname, 'public')],
+    extraResource: [path.resolve(__dirname, 'public'), path.resolve(__dirname, 'resources/native')],
+    afterCopy: [
+      (buildPath, electronVersion, platform, arch, callback) => {
+        // Copy native modules directly to Resources/node_modules
+        const nativeModules = ['better-sqlite3', 'bindings', 'file-uri-to-path', 'prebuild-install', 'detect-libc', 'node-gyp-build', '@mapbox', 'node-pty', 'web-tree-sitter', 'tree-sitter-bash', 'tree-sitter'];
+        const nodeModulesPath = path.resolve(__dirname, 'node_modules');
+
+        // Target is buildPath (which is the .app/Contents/Resources/)
+        const targetPath = path.join(buildPath, 'node_modules');
+
+        try {
+          if (!fs.existsSync(targetPath)) {
+            fs.mkdirSync(targetPath, { recursive: true });
+          }
+
+          nativeModules.forEach((module) => {
+            const src = path.join(nodeModulesPath, module);
+            const dest = path.join(targetPath, module);
+
+            if (fs.existsSync(src)) {
+              console.log(`[afterCopy] Copying ${module} to Resources/node_modules...`);
+              fs.cpSync(src, dest, { recursive: true });
+            }
+          });
+
+          callback();
+        } catch (err) {
+          console.error('[afterCopy] Error:', err);
+          callback(err);
+        }
+      },
+    ],
     win32metadata: {
       CompanyName: 'HiveMind',
       FileDescription: 'HiveMind Gateway 桌面客户端',
@@ -106,18 +137,9 @@ module.exports = {
     arch: targetArch,
   },
   rebuildConfig: {
-    // 在 CI 环境下，跳过所有原生模块的重建，使用预编译的二进制以获得更好的兼容性
-    // Skip rebuilding native modules in CI to use prebuilt binaries for better compatibility
-    ...(process.env.CI === 'true'
-      ? {
-          onlyModules: [], // 空数组意味着"不要重建任何模块" / Empty array means "don't rebuild any modules"
-        }
-      : {}),
-    ...(skipNativeRebuild
-      ? {
-          onlyModules: [], // 开发启动时跳过原生模块重建，避免环境检查
-        }
-      : {}),
+    // Force skip all native module rebuilding during packaging
+    // We've already rebuilt them correctly with electron-rebuild
+    onlyModules: [],
   },
   makers: [
     // Windows-specific makers (only on Windows)
@@ -198,10 +220,6 @@ module.exports = {
     },
   ],
   plugins: [
-    new AutoUnpackNativesPlugin({
-      // 配置需要处理的 native 依赖
-      include: ['node-pty', 'better-sqlite3'],
-    }),
     new WebpackPlugin({
       port: devServerPort,
       loggerPort,
@@ -243,7 +261,31 @@ module.exports = {
       [FuseV1Options.EnableNodeOptionsEnvironmentVariable]: false,
       [FuseV1Options.EnableNodeCliInspectArguments]: false,
       [FuseV1Options.EnableEmbeddedAsarIntegrityValidation]: true,
-      [FuseV1Options.OnlyLoadAppFromAsar]: true,
+      [FuseV1Options.OnlyLoadAppFromAsar]: false, // Allow loading from app.asar.unpacked
     }),
   ],
+  hooks: {
+    postPackage: async (config, options) => {
+      // Copy native modules and their dependencies after packaging
+      const appPath = path.join(options.outputPaths[0], 'HiveMind.app');
+      const resourcesPath = path.join(appPath, 'Contents', 'Resources');
+      const targetPath = path.join(resourcesPath, 'node_modules');
+      const nativeModules = ['better-sqlite3', 'node-pty', 'web-tree-sitter', 'tree-sitter-bash', 'tree-sitter', 'bindings', 'node-gyp-build', 'file-uri-to-path', '@mapbox', 'detect-libc', 'prebuild-install'];
+      const nodeModulesPath = path.resolve(__dirname, 'node_modules');
+
+      if (!fs.existsSync(targetPath)) {
+        fs.mkdirSync(targetPath, { recursive: true });
+      }
+
+      nativeModules.forEach((module) => {
+        const src = path.join(nodeModulesPath, module);
+        const dest = path.join(targetPath, module);
+
+        if (fs.existsSync(src)) {
+          console.log(`[postPackage] Copying ${module}...`);
+          fs.cpSync(src, dest, { recursive: true });
+        }
+      });
+    },
+  },
 };

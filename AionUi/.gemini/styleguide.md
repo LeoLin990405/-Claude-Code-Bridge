@@ -1,8 +1,8 @@
-# AionUI Code Review Style Guide
+# HiveMind Code Review Style Guide
 
 ## Overview
 
-This document defines the coding standards and best practices for the AionUI project. The AI code reviewer should use these guidelines when reviewing pull requests.
+This document defines the coding standards and best practices for the HiveMind project. The AI code reviewer should use these guidelines when reviewing pull requests.
 
 ## Technology Stack
 
