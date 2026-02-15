@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2025 HiveMind (hivemind.com)
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -28,7 +28,7 @@ export interface CreateCronJobParams {
 }
 
 /**
- * CronService - Core scheduling service for AionUI
+ * CronService - Core scheduling service for HiveMind
  *
  * Manages scheduled tasks that send messages to conversations at specified times.
  * Handles conflicts when conversation is busy.

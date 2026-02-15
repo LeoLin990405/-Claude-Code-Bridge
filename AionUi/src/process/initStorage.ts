@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2025 HiveMind (hivemind.com)
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -23,10 +23,10 @@ type ArchitectureType = 'x64' | 'arm64' | 'ia32' | 'arm';
 const nodePath = path;
 
 const STORAGE_PATH = {
-  config: 'aionui-config.txt',
-  chatMessage: 'aionui-chat-message.txt',
-  chat: 'aionui-chat.txt',
-  env: '.aionui-env',
+  config: 'hivemind-config.txt',
+  chatMessage: 'hivemind-chat-message.txt',
+  chat: 'hivemind-chat.txt',
+  env: '.hivemind-env',
   assistants: 'assistants',
   skills: 'skills',
 };
@@ -52,7 +52,7 @@ const migrateLegacyData = async () => {
         try {
           return existsSync(newDir) && readdirSync(newDir).length === 0;
         } catch (error) {
-          console.warn('[AionUi] Warning: Could not read new directory during migration check:', error);
+          console.warn('[HiveMind] Warning: Could not read new directory during migration check:', error);
           return false; // 假设非空以避免迁移覆盖
         }
       })();
@@ -73,7 +73,7 @@ const migrateLegacyData = async () => {
           try {
             await fs.rm(oldDir, { recursive: true });
           } catch (cleanupError) {
-            console.warn('[AionUi] 原目录清理失败，请手动删除:', oldDir, cleanupError);
+            console.warn('[HiveMind] 原目录清理失败，请手动删除:', oldDir, cleanupError);
           }
         }
       }
@@ -81,7 +81,7 @@ const migrateLegacyData = async () => {
       return true;
     }
   } catch (error) {
-    console.error('[AionUi] 数据迁移失败:', error);
+    console.error('[HiveMind] 数据迁移失败:', error);
   }
 
   return false;
@@ -247,7 +247,7 @@ const JsonFileBuilder = <S extends object = Record<string, unknown>>(path: strin
 
 const envFile = JsonFileBuilder<IEnvStorageRefer>(path.join(getHomePage(), STORAGE_PATH.env));
 
-const dirConfig = envFile.getSync('aionui.dir');
+const dirConfig = envFile.getSync('hivemind.dir');
 
 const cacheDir = dirConfig?.cacheDir || getHomePage();
 
@@ -293,11 +293,11 @@ const chatFile = {
 };
 
 const buildMessageListStorage = (conversation_id: string, dir: string) => {
-  const fullName = path.join(dir, 'aionui-chat-history', conversation_id + '.txt');
+  const fullName = path.join(dir, 'hivemind-chat-history', conversation_id + '.txt');
   if (!existsSync(fullName)) {
-    mkdirSync(path.join(dir, 'aionui-chat-history'));
+    mkdirSync(path.join(dir, 'hivemind-chat-history'));
   }
-  return JsonFileBuilder<TMessage[]>(path.join(dir, 'aionui-chat-history', conversation_id + '.txt'));
+  return JsonFileBuilder<TMessage[]>(path.join(dir, 'hivemind-chat-history', conversation_id + '.txt'));
 };
 
 const conversationHistoryProxy = (options: typeof _chatMessageFile, dir: string) => {
@@ -317,7 +317,7 @@ const conversationHistoryProxy = (options: typeof _chatMessageFile, dir: string)
     },
     backup(conversation_id: string) {
       const storage = buildMessageListStorage(conversation_id, dir);
-      return storage.backup(path.join(dir, 'aionui-chat-history', 'backup', conversation_id + '_' + Date.now() + '.txt'));
+      return storage.backup(path.join(dir, 'hivemind-chat-history', 'backup', conversation_id + '_' + Date.now() + '.txt'));
     },
   };
 };
@@ -381,7 +381,7 @@ const initBuiltinAssistantRules = async (): Promise<void> => {
       }
     }
 
-    console.warn(`[AionUi] Could not find builtin ${dirPath} directory, tried:`, candidates);
+    console.warn(`[HiveMind] Could not find builtin ${dirPath} directory, tried:`, candidates);
     return candidates[0];
   };
 
@@ -400,7 +400,7 @@ const initBuiltinAssistantRules = async (): Promise<void> => {
       // 复制内置技能到用户目录（不覆盖已存在的文件）
       await copyDirectoryRecursively(builtinSkillsDir, userSkillsDir, { overwrite: false });
     } catch (error) {
-      console.warn(`[AionUi] Failed to copy skills directory:`, error);
+      console.warn(`[HiveMind] Failed to copy skills directory:`, error);
     }
   }
 
@@ -430,7 +430,7 @@ const initBuiltinAssistantRules = async (): Promise<void> => {
 
           // 检查源文件是否存在 / Check if source file exists
           if (!existsSync(sourceRulesPath)) {
-            console.warn(`[AionUi] Source rule file not found: ${sourceRulesPath}`);
+            console.warn(`[HiveMind] Source rule file not found: ${sourceRulesPath}`);
             continue;
           }
 
@@ -443,7 +443,7 @@ const initBuiltinAssistantRules = async (): Promise<void> => {
           await fs.writeFile(targetPath, content, 'utf-8');
         } catch (error) {
           // 忽略缺失的语言文件 / Ignore missing locale files
-          console.warn(`[AionUi] Failed to copy rule file ${ruleFile}:`, error);
+          console.warn(`[HiveMind] Failed to copy rule file ${ruleFile}:`, error);
         }
       }
     } else {
@@ -475,7 +475,7 @@ const initBuiltinAssistantRules = async (): Promise<void> => {
 
           // 检查源文件是否存在 / Check if source file exists
           if (!existsSync(sourceSkillsPath)) {
-            console.warn(`[AionUi] Source skill file not found: ${sourceSkillsPath}`);
+            console.warn(`[HiveMind] Source skill file not found: ${sourceSkillsPath}`);
             continue;
           }
 
@@ -488,7 +488,7 @@ const initBuiltinAssistantRules = async (): Promise<void> => {
           await fs.writeFile(targetPath, content, 'utf-8');
         } catch (error) {
           // 忽略缺失的技能文件 / Ignore missing skill files
-          console.warn(`[AionUi] Failed to copy skill file ${skillFile}:`, error);
+          console.warn(`[HiveMind] Failed to copy skill file ${skillFile}:`, error);
         }
       }
     } else {
@@ -578,7 +578,7 @@ const getDefaultMcpServers = (): IMcpServer[] => {
 };
 
 const initStorage = async () => {
-  console.log('[AionUi] Starting storage initialization...');
+  console.log('[HiveMind] Starting storage initialization...');
 
   // 1. 先执行数据迁移（在任何目录创建之前）
   await migrateLegacyData();
@@ -605,10 +605,10 @@ const initStorage = async () => {
     if (!existingMcpConfig || !Array.isArray(existingMcpConfig) || existingMcpConfig.length === 0) {
       const defaultServers = getDefaultMcpServers();
       await configFile.set('mcp.config', defaultServers);
-      console.log('[AionUi] Default MCP servers initialized');
+      console.log('[HiveMind] Default MCP servers initialized');
     }
   } catch (error) {
-    console.error('[AionUi] Failed to initialize default MCP servers:', error);
+    console.error('[HiveMind] Failed to initialize default MCP servers:', error);
   }
   // 5. 初始化内置助手（Assistants）
   try {
@@ -698,7 +698,7 @@ const initStorage = async () => {
       await configFile.set(BUILTIN_SKILLS_MIGRATION_KEY, true);
     }
   } catch (error) {
-    console.error('[AionUi] Failed to initialize builtin assistants:', error);
+    console.error('[HiveMind] Failed to initialize builtin assistants:', error);
   }
 
   // 6. 初始化数据库（better-sqlite3）
@@ -793,7 +793,7 @@ export const loadSkillsContent = async (enabledSkills: string[]): Promise<string
         skillContents.push(`## Skill: ${skillName}\n${content}`);
       }
     } catch (error) {
-      console.warn(`[AionUi] Failed to load skill ${skillName}:`, error);
+      console.warn(`[HiveMind] Failed to load skill ${skillName}:`, error);
     }
   }
 

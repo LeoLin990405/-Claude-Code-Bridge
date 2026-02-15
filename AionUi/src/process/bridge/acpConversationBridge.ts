@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2025 HiveMind (hivemind.com)
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -71,7 +71,7 @@ export function initAcpConversationBridge(): void {
 
     // Ollama uses direct HTTP API, no ACP CLI health check needed
     if (backend === 'ollama') {
-      const baseUrl = (process.env.AIONUI_OLLAMA_BASE_URL || process.env.OLLAMA_BASE_URL || 'http://127.0.0.1:11434').replace(/\/+$/, '');
+      const baseUrl = (process.env.HIVEMIND_OLLAMA_BASE_URL || process.env.OLLAMA_BASE_URL || 'http://127.0.0.1:11434').replace(/\/+$/, '');
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 5000);
 

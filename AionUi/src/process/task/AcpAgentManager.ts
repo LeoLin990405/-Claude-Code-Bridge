@@ -2,7 +2,7 @@ import { AcpAgent } from '@/agent/acp';
 import { ipcBridge } from '@/common';
 import type { TMessage } from '@/common/chatLib';
 import { transformMessage } from '@/common/chatLib';
-import { AIONUI_FILES_MARKER } from '@/common/constants';
+import { HIVEMIND_FILES_MARKER } from '@/common/constants';
 import type { IResponseMessage } from '@/common/ipcBridge';
 import { parseError, uuid } from '@/common/utils';
 import type { AcpBackend, AcpPermissionOption, AcpPermissionRequest } from '@/types/acpTypes';
@@ -48,6 +48,7 @@ class AcpAgentManager extends BaseAgentManager<AcpAgentManagerData, AcpPermissio
   private ollamaAbortController: AbortController | null = null;
   private ollamaModel: string | null = null;
   private ollamaBaseUrl: string | null = null;
+  private requestedOllamaModel: string | null = null;
 
   constructor(data: AcpAgentManagerData) {
     super('acp', data);
@@ -290,17 +291,22 @@ class AcpAgentManager extends BaseAgentManager<AcpAgentManagerData, AcpPermissio
 
     const config = (await ProcessConfig.get('acp.config')) as Record<string, { baseUrl?: string }> | undefined;
     const configuredBaseUrl = config?.ollama?.baseUrl;
-    const envBaseUrl = process.env.AIONUI_OLLAMA_BASE_URL || process.env.OLLAMA_BASE_URL;
+    const envBaseUrl = process.env.HIVEMIND_OLLAMA_BASE_URL || process.env.OLLAMA_BASE_URL;
     this.ollamaBaseUrl = (configuredBaseUrl || envBaseUrl || 'http://127.0.0.1:11434').replace(/\/+$/, '');
     return this.ollamaBaseUrl;
   }
 
-  private async resolveOllamaModel(baseUrl: string): Promise<string> {
+  private async resolveOllamaModel(baseUrl: string, preferredModel?: string | null): Promise<string> {
+    if (preferredModel && preferredModel.trim()) {
+      this.ollamaModel = preferredModel.trim();
+      return this.ollamaModel;
+    }
+
     if (this.ollamaModel) {
       return this.ollamaModel;
     }
 
-    const envModel = process.env.AIONUI_OLLAMA_MODEL || process.env.OLLAMA_MODEL;
+    const envModel = process.env.HIVEMIND_OLLAMA_MODEL || process.env.OLLAMA_MODEL;
     if (envModel && envModel.trim()) {
       this.ollamaModel = envModel.trim();
       return this.ollamaModel;
@@ -355,7 +361,7 @@ class AcpAgentManager extends BaseAgentManager<AcpAgentManagerData, AcpPermissio
     const conversationId = this.conversation_id;
     const assistantMsgId = uuid();
     const baseUrl = await this.resolveOllamaBaseUrl();
-    const model = await this.resolveOllamaModel(baseUrl);
+    const model = await this.resolveOllamaModel(baseUrl, this.requestedOllamaModel);
     const messages = this.buildOllamaChatHistory();
 
     this.emitOllamaMessage({
@@ -471,20 +477,23 @@ class AcpAgentManager extends BaseAgentManager<AcpAgentManagerData, AcpPermissio
     }
   }
 
-  async sendMessage(data: { content: string; files?: string[]; msg_id?: string }): Promise<{
+  async sendMessage(data: { content: string; files?: string[]; msg_id?: string; model?: string | null }): Promise<{
     success: boolean;
     msg?: string;
     message?: string;
   }> {
     // Mark conversation as busy to prevent cron jobs from running
     cronBusyGuard.setProcessing(this.conversation_id, true);
+    if (this.options.backend === 'ollama') {
+      this.requestedOllamaModel = data.model?.trim() || null;
+    }
     try {
       await this.initAgent(this.options);
       // Save user message to chat history ONLY after successful sending
       if (data.msg_id && data.content) {
         let contentToSend = data.content;
-        if (contentToSend.includes(AIONUI_FILES_MARKER)) {
-          contentToSend = contentToSend.split(AIONUI_FILES_MARKER)[0].trimEnd();
+        if (contentToSend.includes(HIVEMIND_FILES_MARKER)) {
+          contentToSend = contentToSend.split(HIVEMIND_FILES_MARKER)[0].trimEnd();
         }
 
         // 首条消息时注入预设规则和 skills 索引（来自智能助手配置）
@@ -516,7 +525,7 @@ class AcpAgentManager extends BaseAgentManager<AcpAgentManagerData, AcpPermissio
         };
         ipcBridge.acpConversation.responseStream.emit(userResponseMessage);
 
-        const result = await this.agent.sendMessage({ ...data, content: contentToSend });
+        const result = await this.agent.sendMessage({ content: contentToSend, files: data.files, msg_id: data.msg_id });
         // 首条消息发送后标记，无论是否有 presetContext
         if (this.isFirstMessage) {
           this.isFirstMessage = false;
@@ -526,7 +535,7 @@ class AcpAgentManager extends BaseAgentManager<AcpAgentManagerData, AcpPermissio
         // It will be cleared when the conversation ends or on error.
         return result;
       }
-      return await this.agent.sendMessage(data);
+      return await this.agent.sendMessage({ content: data.content, files: data.files, msg_id: data.msg_id });
     } catch (e) {
       cronBusyGuard.setProcessing(this.conversation_id, false);
       const message: IResponseMessage = {

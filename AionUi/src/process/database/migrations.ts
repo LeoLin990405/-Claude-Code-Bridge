@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2025 HiveMind (hivemind.com)
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -260,7 +260,7 @@ const migration_v8: IMigration = {
   up: (db) => {
     // Add source column to conversations table
     db.exec(`
-      ALTER TABLE conversations ADD COLUMN source TEXT CHECK(source IN ('aionui', 'telegram'));
+      ALTER TABLE conversations ADD COLUMN source TEXT CHECK(source IN ('hivemind', 'telegram'));
     `);
 
     // Create index for efficient source-based queries
@@ -428,7 +428,7 @@ const migration_v11: IMigration = {
 
     // Clean up any invalid source values before copying
     db.exec(`
-      UPDATE conversations SET source = NULL WHERE source IS NOT NULL AND source NOT IN ('aionui', 'telegram');
+      UPDATE conversations SET source = NULL WHERE source IS NOT NULL AND source NOT IN ('hivemind', 'telegram');
     `);
 
     db.exec(`
@@ -440,7 +440,7 @@ const migration_v11: IMigration = {
         extra TEXT NOT NULL,
         model TEXT,
         status TEXT CHECK(status IN ('pending', 'running', 'finished')),
-        source TEXT CHECK(source IS NULL OR source IN ('aionui', 'telegram')),
+        source TEXT CHECK(source IS NULL OR source IN ('hivemind', 'telegram')),
         created_at INTEGER NOT NULL,
         updated_at INTEGER NOT NULL,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -478,7 +478,7 @@ const migration_v11: IMigration = {
         extra TEXT NOT NULL,
         model TEXT,
         status TEXT CHECK(status IN ('pending', 'running', 'finished')),
-        source TEXT CHECK(source IS NULL OR source IN ('aionui', 'telegram')),
+        source TEXT CHECK(source IS NULL OR source IN ('hivemind', 'telegram')),
         created_at INTEGER NOT NULL,
         updated_at INTEGER NOT NULL,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -516,7 +516,7 @@ const migration_v12: IMigration = {
 
     // Clean up any invalid source values before copying
     db.exec(`
-      UPDATE conversations SET source = NULL WHERE source IS NOT NULL AND source NOT IN ('aionui', 'telegram', 'lark');
+      UPDATE conversations SET source = NULL WHERE source IS NOT NULL AND source NOT IN ('hivemind', 'telegram', 'lark');
     `);
 
     db.exec(`
@@ -528,7 +528,7 @@ const migration_v12: IMigration = {
         extra TEXT NOT NULL,
         model TEXT,
         status TEXT CHECK(status IN ('pending', 'running', 'finished')),
-        source TEXT CHECK(source IS NULL OR source IN ('aionui', 'telegram', 'lark')),
+        source TEXT CHECK(source IS NULL OR source IN ('hivemind', 'telegram', 'lark')),
         created_at INTEGER NOT NULL,
         updated_at INTEGER NOT NULL,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -571,7 +571,7 @@ const migration_v12: IMigration = {
         extra TEXT NOT NULL,
         model TEXT,
         status TEXT CHECK(status IN ('pending', 'running', 'finished')),
-        source TEXT CHECK(source IS NULL OR source IN ('aionui', 'telegram')),
+        source TEXT CHECK(source IS NULL OR source IN ('hivemind', 'telegram')),
         created_at INTEGER NOT NULL,
         updated_at INTEGER NOT NULL,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -611,7 +611,7 @@ const migration_v13: IMigration = {
         extra TEXT NOT NULL,
         model TEXT,
         status TEXT CHECK(status IN ('pending', 'running', 'finished')),
-        source TEXT CHECK(source IS NULL OR source IN ('aionui', 'telegram', 'lark')),
+        source TEXT CHECK(source IS NULL OR source IN ('hivemind', 'telegram', 'lark')),
         created_at INTEGER NOT NULL,
         updated_at INTEGER NOT NULL,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -643,7 +643,7 @@ const migration_v13: IMigration = {
         extra TEXT NOT NULL,
         model TEXT,
         status TEXT CHECK(status IN ('pending', 'running', 'finished')),
-        source TEXT CHECK(source IS NULL OR source IN ('aionui', 'telegram', 'lark')),
+        source TEXT CHECK(source IS NULL OR source IN ('hivemind', 'telegram', 'lark')),
         created_at INTEGER NOT NULL,
         updated_at INTEGER NOT NULL,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE

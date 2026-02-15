@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2025 HiveMind (hivemind.com)
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -74,7 +74,7 @@ export interface IConversationRow {
   extra: string; // JSON string of extra data
   model?: string; // JSON string of TProviderWithModel (gemini type has this)
   status?: 'pending' | 'running' | 'finished';
-  source?: 'aionui' | 'telegram' | 'lark'; // 会话来源 / Conversation source
+  source?: 'hivemind' | 'telegram' | 'lark'; // 会话来源 / Conversation source
   created_at: number;
   updated_at: number;
 }

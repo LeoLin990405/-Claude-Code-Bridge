@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2025 HiveMind (hivemind.com)
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -16,7 +16,7 @@ import { transformMessage } from '@/common/chatLib';
 import type { CodexAgentManagerData, FileChange } from '@/common/codex/types';
 import { PERMISSION_DECISION_MAP } from '@/common/codex/types/permissionTypes';
 import { mapPermissionDecision } from '@/common/codex/utils';
-import { AIONUI_FILES_MARKER } from '@/common/constants';
+import { HIVEMIND_FILES_MARKER } from '@/common/constants';
 import type { IResponseMessage } from '@/common/ipcBridge';
 import { uuid } from '@/common/utils';
 import { addMessage, addOrUpdateMessage } from '@process/message';
@@ -167,11 +167,11 @@ class CodexAgentManager extends BaseAgentManager<CodexAgentManagerData> implemen
     }
   }
 
-  async sendMessage(data: { content: string; files?: string[]; msg_id?: string }) {
+  async sendMessage(data: { content: string; files?: string[]; msg_id?: string; model?: string | null }) {
     cronBusyGuard.setProcessing(this.conversation_id, true);
     try {
       await this.bootstrap;
-      const contentToSend = data.content?.includes(AIONUI_FILES_MARKER) ? data.content.split(AIONUI_FILES_MARKER)[0].trimEnd() : data.content;
+      const contentToSend = data.content?.includes(HIVEMIND_FILES_MARKER) ? data.content.split(HIVEMIND_FILES_MARKER)[0].trimEnd() : data.content;
 
       // Save user message to chat history only (renderer already inserts right-hand bubble)
       if (data.msg_id && data.content) {

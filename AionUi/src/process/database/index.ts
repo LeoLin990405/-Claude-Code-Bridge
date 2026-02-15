@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2025 HiveMind (hivemind.com)
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -18,16 +18,16 @@ import { rowToChannelUser, rowToChannelSession, rowToPairingRequest } from '@/ch
 import { encryptCredentials, decryptCredentials } from '@/channels/utils/credentialCrypto';
 
 /**
- * Main database class for AionUi
+ * Main database class for HiveMind
  * Uses better-sqlite3 for fast, synchronous SQLite operations
  */
-export class AionUIDatabase {
+export class HiveMindDatabase {
   private db: Database.Database;
   private readonly defaultUserId = 'system_default_user';
   private readonly systemPasswordPlaceholder = '';
 
   constructor() {
-    const finalPath = path.join(getDataPath(), 'aionui.db');
+    const finalPath = path.join(getDataPath(), 'hivemind.db');
     console.log(`[Database] Initializing database at: ${finalPath}`);
 
     const dir = path.dirname(finalPath);
@@ -431,7 +431,7 @@ export class AionUIDatabase {
    * Get the latest conversation by source type
    * 根据来源类型获取最新的会话
    */
-  getLatestConversationBySource(source: 'aionui' | 'telegram' | 'lark', userId?: string): IQueryResult<TChatConversation | null> {
+  getLatestConversationBySource(source: 'hivemind' | 'telegram' | 'lark', userId?: string): IQueryResult<TChatConversation | null> {
     try {
       const finalUserId = userId || this.defaultUserId;
       const row = this.db
@@ -1163,11 +1163,11 @@ export class AionUIDatabase {
 }
 
 // Export singleton instance
-let dbInstance: AionUIDatabase | null = null;
+let dbInstance: HiveMindDatabase | null = null;
 
-export function getDatabase(): AionUIDatabase {
+export function getDatabase(): HiveMindDatabase {
   if (!dbInstance) {
-    dbInstance = new AionUIDatabase();
+    dbInstance = new HiveMindDatabase();
   }
   return dbInstance;
 }

@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2026 AionUi (aionui.com)
+ * Copyright 2026 HiveMind (hivemind.com)
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -62,13 +62,13 @@ class BrowserAutomationService {
     return path.join(this.stateDir, 'storage-state.json');
   }
 
-  private loadPlaywright(): NotebookLMBrowserModule | null {
+  private async loadPlaywright(): Promise<NotebookLMBrowserModule | null> {
     if (this.playwright) {
       return this.playwright;
     }
 
     try {
-      const loaded = require('playwright') as NotebookLMBrowserModule;
+      const loaded = (await import('playwright')) as NotebookLMBrowserModule;
       this.playwright = loaded;
       return loaded;
     } catch (error) {
@@ -107,9 +107,9 @@ class BrowserAutomationService {
       return;
     }
 
-    const playwright = this.loadPlaywright();
+    const playwright = await this.loadPlaywright();
     if (!playwright) {
-      throw new Error('Playwright is not installed. Run `npm install playwright` in AionUi.');
+      throw new Error('Playwright is not installed. Run `npm install playwright` in HiveMind.');
     }
 
     await this.shutdown();

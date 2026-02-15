@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2026 AionUi (aionui.com)
+ * Copyright 2026 HiveMind (hivemind.com)
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -104,7 +104,7 @@ class HivemindAgentManager extends BaseAgentManager<HivemindAgentManagerData> {
     ipcBridge.conversation.responseStream.emit(msg);
   }
 
-  async sendMessage(data: { content: string; files?: string[]; msg_id?: string; provider?: string | null }): Promise<void> {
+  async sendMessage(data: { content: string; files?: string[]; msg_id?: string; provider?: string | null; model?: string | null }): Promise<void> {
     cronBusyGuard.setProcessing(this.conversation_id, true);
 
     try {
@@ -133,7 +133,7 @@ class HivemindAgentManager extends BaseAgentManager<HivemindAgentManagerData> {
         ipcBridge.conversation.responseStream.emit(userResponse);
       }
 
-      await this.agent.send(data.content, data.provider, data.files);
+      await this.agent.send(data.content, data.provider, data.files, data.model ?? null);
     } catch (error) {
       cronBusyGuard.setProcessing(this.conversation_id, false);
       const normalized = error instanceof Error ? error.message : String(error);
