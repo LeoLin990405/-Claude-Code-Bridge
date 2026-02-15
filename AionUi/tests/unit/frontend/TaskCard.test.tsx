@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2026 AionUi (aionui.com)
+ * Copyright 2026 HiveMind (hivemind.com)
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -11,7 +11,7 @@ import type { IAgentTask } from '@/common/ipcBridge';
 
 // Mock @dnd-kit
 jest.mock('@dnd-kit/sortable', () => ({
-  useSortable: () => ({
+  useSortable: (): any => ({
     attributes: {},
     listeners: {},
     setNodeRef: jest.fn(),
@@ -98,14 +98,14 @@ describe('TaskCard', () => {
   });
 
   it('shows completed status indicator for completed tasks', () => {
-    const completedTask = { ...mockTask, status: 'completed' };
+    const completedTask: IAgentTask = { ...mockTask, status: 'completed' };
     render(<TaskCard task={completedTask} />);
 
     expect(screen.getByText(/已完成/)).toBeInTheDocument();
   });
 
   it('shows failed status indicator for failed tasks', () => {
-    const failedTask = { ...mockTask, status: 'failed' };
+    const failedTask: IAgentTask = { ...mockTask, status: 'failed' };
     render(<TaskCard task={failedTask} />);
 
     expect(screen.getByText(/失败/)).toBeInTheDocument();

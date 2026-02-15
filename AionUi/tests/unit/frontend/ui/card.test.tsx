@@ -1,13 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import {
-  Card,
-  CardHeader,
-  CardFooter,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from '@/renderer/components/ui/card';
+import { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent } from '@/renderer/components/ui/card';
 
 describe('Card Component', () => {
   it('renders Card with content', () => {
@@ -29,7 +22,7 @@ describe('Card Component', () => {
   });
 
   it('applies correct classes to Card', () => {
-    render(<Card data-testid="card">Content</Card>);
+    render(<Card data-testid='card'>Content</Card>);
     const card = screen.getByTestId('card');
     expect(card).toHaveClass('rounded-lg', 'border', 'bg-card', 'shadow-sm');
   });

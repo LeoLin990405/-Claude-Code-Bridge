@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2026 AionUi (aionui.com)
+ * Copyright 2026 HiveMind (hivemind.com)
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -55,4 +55,17 @@ class ResizeObserverMock {
 Object.defineProperty(window, 'ResizeObserver', {
   writable: true,
   value: ResizeObserverMock,
+});
+
+class BroadcastChannelMock {
+  onmessage: ((event: MessageEvent) => void) | null = null;
+  postMessage = jest.fn();
+  close = jest.fn();
+  addEventListener = jest.fn();
+  removeEventListener = jest.fn();
+}
+
+Object.defineProperty(global, 'BroadcastChannel', {
+  writable: true,
+  value: BroadcastChannelMock,
 });

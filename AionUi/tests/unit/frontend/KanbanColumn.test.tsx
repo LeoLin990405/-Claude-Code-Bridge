@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2026 AionUi (aionui.com)
+ * Copyright 2026 HiveMind (hivemind.com)
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -20,6 +20,14 @@ jest.mock('@dnd-kit/core', () => ({
 jest.mock('@dnd-kit/sortable', () => ({
   SortableContext: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   verticalListSortingStrategy: {},
+  useSortable: (): any => ({
+    attributes: {},
+    listeners: {},
+    setNodeRef: jest.fn(),
+    transform: null,
+    transition: null,
+    isDragging: false,
+  }),
 }));
 
 describe('KanbanColumn', () => {
@@ -50,20 +58,20 @@ describe('KanbanColumn', () => {
   ];
 
   it('renders column title', () => {
-    render(<KanbanColumn id="pending" title="pending" tasks={mockTasks} />);
+    render(<KanbanColumn id='pending' title='pending' tasks={mockTasks} />);
 
     // pending 状态应该显示为 "待处理"
     expect(screen.getByText('待处理')).toBeInTheDocument();
   });
 
   it('shows task count', () => {
-    render(<KanbanColumn id="pending" title="pending" tasks={mockTasks} />);
+    render(<KanbanColumn id='pending' title='pending' tasks={mockTasks} />);
 
     expect(screen.getByText('1')).toBeInTheDocument();
   });
 
   it('shows empty state when no tasks', () => {
-    render(<KanbanColumn id="pending" title="pending" tasks={[]} />);
+    render(<KanbanColumn id='pending' title='pending' tasks={[]} />);
 
     expect(screen.getByText(/拖拽任务到此处/)).toBeInTheDocument();
   });
@@ -77,7 +85,7 @@ describe('KanbanColumn', () => {
         subject: '任务 2',
       },
     ];
-    render(<KanbanColumn id="pending" title="pending" tasks={multipleTasks} />);
+    render(<KanbanColumn id='pending' title='pending' tasks={multipleTasks} />);
 
     expect(screen.getByText('任务 1')).toBeInTheDocument();
     expect(screen.getByText('任务 2')).toBeInTheDocument();

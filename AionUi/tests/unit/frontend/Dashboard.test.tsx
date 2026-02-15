@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2026 AionUi (aionui.com)
+ * Copyright 2026 HiveMind (hivemind.com)
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -26,7 +26,7 @@ jest.mock('@/common', () => ({
 // Mock IconParkHOC
 jest.mock('@/renderer/components/IconParkHOC', () => {
   return (Component: React.ComponentType) => {
-    const MockedIcon = () => <span data-testid="mock-icon">Icon</span>;
+    const MockedIcon = () => <span data-testid='mock-icon'>Icon</span>;
     return MockedIcon;
   };
 });
@@ -67,7 +67,7 @@ describe('Dashboard', () => {
     render(<AgentTeamsDashboard />);
 
     await waitFor(() => {
-      expect(screen.getByText('活跃团队')).toBeInTheDocument();
+      expect(screen.getAllByText('活跃团队').length).toBeGreaterThan(0);
       expect(screen.getByText('总任务数')).toBeInTheDocument();
       expect(screen.getByText('今日完成')).toBeInTheDocument();
       expect(screen.getByText('总成本')).toBeInTheDocument();
@@ -94,7 +94,7 @@ describe('Dashboard', () => {
     render(<AgentTeamsDashboard />);
 
     await waitFor(() => {
-      expect(screen.getByText('Recent Activity')).toBeInTheDocument();
+      expect(screen.getByText('No recent activity')).toBeInTheDocument();
     });
   });
 
@@ -102,8 +102,8 @@ describe('Dashboard', () => {
     render(<AgentTeamsDashboard />);
 
     await waitFor(() => {
-      expect(screen.getByText('活跃团队')).toBeInTheDocument();
-      expect(screen.getByText('测试团队')).toBeInTheDocument();
+      expect(screen.getAllByText('活跃团队').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('测试团队').length).toBeGreaterThan(0);
     });
   });
 

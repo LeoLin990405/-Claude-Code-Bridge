@@ -11,25 +11,25 @@ describe('Badge Component', () => {
   });
 
   it('renders with secondary variant', () => {
-    render(<Badge variant="secondary">Secondary</Badge>);
+    render(<Badge variant='secondary'>Secondary</Badge>);
     const badge = screen.getByText('Secondary');
     expect(badge).toHaveClass('bg-secondary', 'text-secondary-foreground');
   });
 
   it('renders with destructive variant', () => {
-    render(<Badge variant="destructive">Destructive</Badge>);
+    render(<Badge variant='destructive'>Destructive</Badge>);
     const badge = screen.getByText('Destructive');
     expect(badge).toHaveClass('bg-destructive', 'text-destructive-foreground');
   });
 
   it('renders with outline variant', () => {
-    render(<Badge variant="outline">Outline</Badge>);
+    render(<Badge variant='outline'>Outline</Badge>);
     const badge = screen.getByText('Outline');
     expect(badge).toHaveClass('text-foreground');
   });
 
   it('applies custom className', () => {
-    render(<Badge className="custom-class">Custom</Badge>);
+    render(<Badge className='custom-class'>Custom</Badge>);
     const badge = screen.getByText('Custom');
     expect(badge).toHaveClass('custom-class');
   });
