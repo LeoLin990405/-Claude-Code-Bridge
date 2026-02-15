@@ -257,29 +257,109 @@ All routes follow consistent patterns:
 | MCP | 7 | ✅ Implemented (mock) |
 | **Total** | **61/105** | **58% complete** |
 
-**Next Session (R002-5/6) TODO**:
+=== SESSION 6 (2026-02-15) - R002-5/6 ===
 
-1. 🔲 Implement Skills routes
-   - GET /api/v1/skills (list skills)
-   - POST /api/v1/skills (install skill)
-   - GET /api/v1/skills/:id (get skill details)
-   - PATCH /api/v1/skills/:id (update skill)
+**Goal**: Implement Skills, Cron, and Channels routes (extension systems)
+
+**Work Completed**:
+
+1. ✅ Implemented Skills routes (7 endpoints)
+   - GET /api/v1/skills (list with filtering by enabled/category)
+   - POST /api/v1/skills (install skill from URL or path)
+   - GET /api/v1/skills/:id (get skill details with execution stats)
+   - PATCH /api/v1/skills/:id (update configuration)
    - DELETE /api/v1/skills/:id (uninstall skill)
-   - POST /api/v1/skills/:id/execute (execute skill)
+   - POST /api/v1/skills/:id/execute (execute skill with input/args)
+   - GET /api/v1/skills/:id/logs (execution logs with pagination)
 
-2. 🔲 Implement Cron routes
-   - GET /api/v1/cron/jobs (list cron jobs)
-   - POST /api/v1/cron/jobs (create job)
+2. ✅ Implemented Cron routes (9 endpoints)
+   - GET /api/v1/cron/jobs (list jobs with filtering)
+   - POST /api/v1/cron/jobs (create job with schedule/action)
    - GET /api/v1/cron/jobs/:id (get job details)
-   - PATCH /api/v1/cron/jobs/:id (update job)
+   - PATCH /api/v1/cron/jobs/:id (update job configuration)
    - DELETE /api/v1/cron/jobs/:id (delete job)
-   - POST /api/v1/cron/jobs/:id/trigger (manual trigger)
+   - POST /api/v1/cron/jobs/:id/trigger (manual execution)
    - GET /api/v1/cron/jobs/:id/history (execution history)
+   - POST /api/v1/cron/jobs/:id/pause (pause job)
+   - POST /api/v1/cron/jobs/:id/resume (resume paused job)
 
-3. 🔲 Implement Channels routes (multi-agent communication)
-   - GET /api/v1/channels (list channels)
-   - POST /api/v1/channels (create channel)
-   - POST /api/v1/channels/:id/message (send message)
+3. ✅ Implemented Channels routes (7 endpoints)
+   - GET /api/v1/channels (list communication channels)
+   - POST /api/v1/channels (create new channel)
+   - GET /api/v1/channels/:id (get channel details)
+   - PATCH /api/v1/channels/:id (update channel configuration)
+   - DELETE /api/v1/channels/:id (delete channel)
+   - POST /api/v1/channels/:id/message (send message to channel)
+   - GET /api/v1/channels/:id/messages (get channel messages)
+
+4. ✅ Mounted all new routes in API index
+
+**Implementation Highlights**:
+
+- **Skills 系统**: 完整的技能生命周期管理（安装、配置、执行、日志）
+- **Cron 调度**: 支持 command/skill/http 三种 action 类型，可暂停/恢复
+- **Channels 通信**: 多 Agent 协作通信，支持 agent/broadcast/direct 三种类型
+- **执行历史**: Skills 和 Cron 都有详细的执行日志和历史记录
+- **灵活配置**: 所有系统都支持元数据和自定义配置
+
+**Route Features Detail**:
+
+**Skills Routes:**
+- 支持从 URL 或本地路径安装
+- 可配置执行超时时间
+- 记录执行次数和最后执行时间
+- 分级日志（info/warn/error）
+
+**Cron Routes:**
+- 标准 cron 表达式调度
+- 三种 action 类型：command、skill、http
+- 重试机制（可配置 maxRetries）
+- 暂停/恢复功能
+- 详细的执行统计（runCount、successCount、failureCount）
+
+**Channels Routes:**
+- 三种 channel 类型：agent（多 Agent）、broadcast（广播）、direct（点对点）
+- 消息优先级（low/normal/high/urgent）
+- 消息状态追踪（delivered、read）
+- 支持元数据和自定义配置
+
+**API Endpoint Summary (Current)**:
+
+| Category | Endpoints | Status |
+|----------|-----------|--------|
+| Auth | 6 | ✅ Implemented |
+| Conversations | 11 | ✅ Implemented (mock) |
+| Messages | 4 | ✅ Implemented (mock) |
+| Files | 8 | ✅ Implemented (mock) |
+| Models | 6 | ✅ Implemented (mock) |
+| Providers | 6 | ✅ Implemented (mock) |
+| Gemini | 4 | ✅ Implemented (mock) |
+| Codex | 4 | ✅ Implemented (mock) |
+| ACP | 5 | ✅ Implemented (mock) |
+| MCP | 7 | ✅ Implemented (mock) |
+| Skills | 7 | ✅ Implemented (mock) |
+| Cron | 9 | ✅ Implemented (mock) |
+| Channels | 7 | ✅ Implemented (mock) |
+| **Total** | **84/105** | **80% complete** |
+
+**Next Session (R002-6/6) TODO**:
+
+1. 🔲 Implement remaining advanced routes
+   - NotebookLM integration (4 endpoints)
+   - Obsidian integration (3 endpoints)
+   - Agent Teams management (8 endpoints)
+   - System routes (4 endpoints)
+   - Update routes (3 endpoints)
+
+2. 🔲 Create comprehensive API documentation
+   - Update OpenAPI spec with all routes
+   - Generate complete API reference
+   - Add request/response examples
+
+3. 🔲 Final integration and testing
+   - Test all routes with mock data
+   - Verify OpenAPI spec accuracy
+   - Update Swagger UI
 
 **Blockers**: None
 

@@ -15,9 +15,10 @@ import geminiRoutes from './routes/gemini.routes';
 import codexRoutes from './routes/codex.routes';
 import acpRoutes from './routes/acp.routes';
 import mcpRoutes from './routes/mcp.routes';
+import skillsRoutes from './routes/skills.routes';
+import cronRoutes from './routes/cron.routes';
+import channelsRoutes from './routes/channels.routes';
 // Import other routes as they are implemented
-// import skillsRoutes from './routes/skills.routes';
-// import cronRoutes from './routes/cron.routes';
 // import systemRoutes from './routes/system.routes';
 
 const router = Router();
@@ -35,8 +36,9 @@ router.use('/gemini', geminiRoutes);
 router.use('/codex', codexRoutes);
 router.use('/acp', acpRoutes);
 router.use('/mcp', mcpRoutes);
-// router.use('/skills', skillsRoutes);
-// router.use('/cron', cronRoutes);
+router.use('/skills', skillsRoutes);
+router.use('/cron', cronRoutes);
+router.use('/channels', channelsRoutes);
 // router.use('/system', systemRoutes);
 
 /**
