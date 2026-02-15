@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2025 HiveMind (hivemind.com)
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -136,7 +136,7 @@ function getConfiguredOrigins(port: number, allowRemote: boolean): Set<string> {
     }
   }
 
-  const extraOrigins = (process.env.AIONUI_ALLOWED_ORIGINS || '')
+  const extraOrigins = (process.env.HIVEMIND_ALLOWED_ORIGINS || '')
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean)

@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2025 HiveMind (hivemind.com)
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -140,7 +140,7 @@ const resolveWebUIPort = (config: WebUIUserConfig): number => {
   const cliPort = parsePortValue(getSwitchValue('port') ?? getSwitchValue('webui-port'), 'CLI (--port)');
   if (cliPort) return cliPort;
 
-  const envPort = parsePortValue(process.env.AIONUI_PORT ?? process.env.PORT, 'environment variable (AIONUI_PORT/PORT)');
+  const envPort = parsePortValue(process.env.HIVEMIND_PORT ?? process.env.PORT, 'environment variable (HIVEMIND_PORT/PORT)');
   if (envPort) return envPort;
 
   const configPort = parsePortValue(config.port, 'webui.config.json');
@@ -163,8 +163,8 @@ const isGeminiOauthUrl = (url: string): boolean => {
 };
 
 const resolveRemoteAccess = (config: WebUIUserConfig): boolean => {
-  const envRemote = parseBooleanEnv(process.env.AIONUI_ALLOW_REMOTE || process.env.AIONUI_REMOTE);
-  const hostHint = process.env.AIONUI_HOST?.trim();
+  const envRemote = parseBooleanEnv(process.env.HIVEMIND_ALLOW_REMOTE || process.env.HIVEMIND_REMOTE);
+  const hostHint = process.env.HIVEMIND_HOST?.trim();
   const hostRequestsRemote = hostHint ? ['0.0.0.0', '::', '::0'].includes(hostHint) : false;
   const configRemote = config.allowRemote === true;
 
@@ -251,7 +251,7 @@ const createWindow = (): void => {
   // 只在开发环境自动打开 DevTools / Only auto-open DevTools in development
   // 使用 app.isPackaged 判断更可靠，打包后的应用不会自动打开 DevTools
   // Using app.isPackaged is more reliable, packaged apps won't auto-open DevTools
-  const shouldAutoOpenDevTools = !app.isPackaged && (hasSwitch('devtools') || parseBooleanEnv(process.env.AIONUI_AUTO_OPEN_DEVTOOLS) === true);
+  const shouldAutoOpenDevTools = !app.isPackaged && (hasSwitch('devtools') || parseBooleanEnv(process.env.HIVEMIND_AUTO_OPEN_DEVTOOLS) === true);
   if (shouldAutoOpenDevTools) {
     mainWindow.webContents.openDevTools();
   }
