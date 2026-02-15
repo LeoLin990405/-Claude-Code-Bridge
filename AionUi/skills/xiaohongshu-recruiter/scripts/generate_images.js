@@ -19,9 +19,9 @@ const COLORS = {
 };
 
 // Font Paths - Try multiple locations with fallback
-// Priority: 1) AIONUI_FONTS_DIR env var, 2) skills/canvas-design relative path, 3) system fonts
+// Priority: 1) HIVEMIND_FONTS_DIR env var, 2) skills/canvas-design relative path, 3) system fonts
 function getFontDir() {
-  const candidates = [process.env.AIONUI_FONTS_DIR, path.join(__dirname, '../../canvas-design/canvas-fonts'), path.join(process.env.HOME || '', 'Library/Application Support/AionUi/config/skills/canvas-design/canvas-fonts'), path.join(process.env.APPDATA || '', 'AionUi/config/skills/canvas-design/canvas-fonts')].filter(Boolean);
+  const candidates = [process.env.HIVEMIND_FONTS_DIR, path.join(__dirname, '../../canvas-design/canvas-fonts'), path.join(process.env.HOME || '', 'Library/Application Support/HiveMind/config/skills/canvas-design/canvas-fonts'), path.join(process.env.APPDATA || '', 'HiveMind/config/skills/canvas-design/canvas-fonts')].filter(Boolean);
 
   for (const dir of candidates) {
     if (fs.existsSync(dir)) return dir;

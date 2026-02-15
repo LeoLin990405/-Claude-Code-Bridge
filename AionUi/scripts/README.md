@@ -1,12 +1,13 @@
 # Build Scripts Documentation
 
-This directory contains scripts for building and packaging AionUi across different platforms and architectures.
+This directory contains scripts for building and packaging HiveMind across different platforms and architectures.
 
 ## Scripts Overview
 
 | Script | Lines | Purpose |
 |--------|-------|---------|
 | `build-with-builder.js` | 116 | Coordinates Electron Forge and electron-builder |
+| `full-auto-pipeline.sh` | - | One-command QA loop (tsc/lint/tests/package/report) |
 | `rebuildNativeModules.js` | 219 | **Unified native module rebuild utility** |
 | `beforeBuild.js` | 38 | Pre-packaging native module rebuild hook |
 | `afterPack.js` | 67 | Post-packaging verification (Linux only) |

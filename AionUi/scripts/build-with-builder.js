@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Simplified build script for AionUi
+ * Simplified build script for HiveMind
  * Coordinates Electron Forge (webpack) and electron-builder (packaging)
  */
 

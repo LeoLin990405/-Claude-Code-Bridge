@@ -4,6 +4,42 @@ const path = require('path');
 const os = require('os');
 const { normalizeArch, rebuildSingleModule, verifyModuleBinary, getModulesToRebuild } = require('./rebuildNativeModules');
 
+const RUNTIME_FALLBACK_MODULES = [
+  'better-sqlite3',
+  'bindings',
+  'file-uri-to-path',
+  'prebuild-install',
+  'detect-libc',
+  'node-gyp-build',
+  '@mapbox',
+  'node-pty',
+  'web-tree-sitter',
+  'tree-sitter-bash',
+  'tree-sitter',
+];
+
+function ensureRuntimeModuleFallback(resourcesDir) {
+  const sourceNodeModules = path.resolve(__dirname, '..', 'node_modules');
+  const targetNodeModules = path.join(resourcesDir, 'node_modules');
+
+  if (!fs.existsSync(targetNodeModules)) {
+    fs.mkdirSync(targetNodeModules, { recursive: true });
+  }
+
+  console.log('\n📦 Ensuring runtime module fallback at Resources/node_modules...');
+
+  for (const moduleName of RUNTIME_FALLBACK_MODULES) {
+    const src = path.join(sourceNodeModules, moduleName);
+    const dest = path.join(targetNodeModules, moduleName);
+    if (!fs.existsSync(src)) {
+      console.warn(`   ⚠️  Missing source module, skipping: ${moduleName}`);
+      continue;
+    }
+    fs.cpSync(src, dest, { recursive: true });
+    console.log(`   ✓ Copied ${moduleName}`);
+  }
+}
+
 /**
  * afterPack hook for electron-builder
  * Rebuilds native modules for cross-architecture builds
@@ -19,8 +55,9 @@ module.exports = async function afterPack(context) {
 
   const isCrossCompile = buildArch !== targetArch;
   const forceRebuild = process.env.FORCE_NATIVE_REBUILD === 'true';
-  const needsSameArchRebuild = electronPlatformName === 'win32'; // 只有 Windows 需要同架构重建以匹配 Electron ABI | Only Windows needs same-arch rebuild to match Electron ABI
-  // Linux 使用预编译二进制，避免 GLIBC 版本依赖 | Linux uses prebuilt binaries which are GLIBC-independent
+  const needsSameArchRebuild = electronPlatformName === 'win32' || electronPlatformName === 'darwin';
+  // macOS + Windows 同架构也需要重建，以确保 Electron ABI 一致
+  // Linux 保持预编译策略，避免 GLIBC 版本依赖
 
   if (!isCrossCompile && !needsSameArchRebuild && !forceRebuild) {
     console.log(`   ✓ Same architecture, rebuild skipped (set FORCE_NATIVE_REBUILD=true to override)\n`);
@@ -50,11 +87,11 @@ module.exports = async function afterPack(context) {
     require('../package.json').devDependencies?.electron?.replace(/^\D*/, '');
 
   // Determine resources directory based on platform
-  // macOS: appOutDir/AionUi.app/Contents/Resources
+  // macOS: appOutDir/HiveMind.app/Contents/Resources
   // Windows/Linux: appOutDir/resources
   let resourcesDir;
   if (electronPlatformName === 'darwin') {
-    const appName = packager?.appInfo?.productFilename || 'AionUi';
+    const appName = packager?.appInfo?.productFilename || 'HiveMind';
     resourcesDir = path.join(appOutDir, `${appName}.app`, 'Contents', 'Resources');
   } else {
     resourcesDir = path.join(appOutDir, 'resources');
@@ -164,10 +201,10 @@ module.exports = async function afterPack(context) {
 
     console.log(`   ✓ Found ${moduleName}, rebuilding for ${targetArch}...`);
 
-    // For Windows cross-compilation (x64 → ARM64), use prebuild-install to download prebuilt binaries
-    // Only force rebuild for same-architecture builds (ensures correct Electron ABI version)
+    // Windows cross-compilation (x64 → ARM64) still prefers prebuild-install.
+    // macOS always forces source rebuild to avoid stale build/Release binaries with wrong ABI.
     const isWindowsCrossCompile = electronPlatformName === 'win32' && isCrossCompile;
-    const forceRebuildFromSource = electronPlatformName === 'win32' && !isWindowsCrossCompile;
+    const forceRebuildFromSource = electronPlatformName === 'darwin' || (electronPlatformName === 'win32' && !isWindowsCrossCompile);
 
     const success = rebuildSingleModule({
       moduleName,
@@ -202,6 +239,8 @@ module.exports = async function afterPack(context) {
   if (failedModules.length > 0) {
     throw new Error(`Failed to rebuild modules for ${electronPlatformName}-${targetArch}: ${failedModules.join(', ')}`);
   }
+
+  ensureRuntimeModuleFallback(resourcesDir);
 
   console.log(`✅ All native modules rebuilt successfully for ${targetArch}\n`);
 };
