@@ -47,6 +47,7 @@
 [🤔 Why Choose HiveMind?](#🤔-why-choose-hivemind) ·
 [✨ Core Features](#✨-core-features) ·
 [🚀 Quick Start](#🚀-quick-start) ·
+[🔄 Development](#🔄-development-harness) ·
 [💬 Community](#🤝-community--support)
 
 </p>
@@ -608,6 +609,45 @@ Welcome to submit Issues and Pull Requests!
 3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
+
+---
+
+## 🔄 Development Harness
+
+HiveMind uses [Anthropic's long-running agent harness pattern](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents) for continuous iteration.
+
+### Quick Start for Developers
+
+```bash
+# Start each development session with:
+.harness/init.sh
+```
+
+This harness system enables:
+- ✅ **Structured feature development** with explicit completion tracking
+- ✅ **Session-to-session continuity** through progress files and git history
+- ✅ **Focused iteration** (one feature per session)
+- ✅ **Clean handoffs** between development sessions
+
+### Documentation
+
+- [**ITERATION_GUIDE.md**](./ITERATION_GUIDE.md) - Quick guide for using the harness system
+- [**.harness/README.md**](./.harness/README.md) - Detailed harness documentation
+- [**.harness/features.json**](./.harness/features.json) - Current feature roadmap
+- [**.harness/claude-progress.txt**](./.harness/claude-progress.txt) - Development progress log
+
+### Current Priorities
+
+🔥 **High Priority**
+- F001: Gateway API circuit breaker pattern
+- F002: Smart routing based on task classification
+- F006: Automated E2E testing with Playwright
+
+📊 **Medium Priority**
+- F003: Persistent agent memory system
+- F004: Agent team workflow templates
+
+For more details, see [ITERATION_GUIDE.md](./ITERATION_GUIDE.md).
 
 ---
 
