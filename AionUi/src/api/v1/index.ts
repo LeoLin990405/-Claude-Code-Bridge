@@ -25,6 +25,11 @@ import systemRoutes from './routes/system.routes';
 import updateRoutes from './routes/update.routes';
 import webuiRoutes from './routes/webui.routes';
 import uploadRoutes from './routes/upload.routes';
+import websocketRoutes from './routes/websocket.routes';
+import twoFactorRoutes from './routes/twoFactor.routes';
+import passwordResetRoutes from './routes/passwordReset.routes';
+import oauthRoutes from './routes/oauth.routes';
+import adminRoutes from './routes/admin';
 
 const router = Router();
 
@@ -51,6 +56,11 @@ router.use('/system', systemRoutes);
 router.use('/update', updateRoutes);
 router.use('/webui', webuiRoutes);
 router.use('/upload', uploadRoutes);
+router.use('/websocket', websocketRoutes);
+router.use('/2fa', twoFactorRoutes);
+router.use('/password-reset', passwordResetRoutes);
+router.use('/auth', oauthRoutes); // OAuth routes (Google, GitHub)
+router.use('/admin', adminRoutes); // Admin routes (user management, etc.)
 
 /**
  * Health check endpoint (no auth required)

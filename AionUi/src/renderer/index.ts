@@ -8,6 +8,8 @@ import './bootstrap/runtimePatches';
 import type { PropsWithChildren } from 'react';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import '../adapter/browser';
 import Main from './main';
 import { AuthProvider } from './context/AuthContext';
@@ -15,6 +17,7 @@ import { ThemeProvider } from './context/ThemeContext';
 import { MemoryProvider } from './context/MemoryContext';
 import { PreviewProvider } from './pages/conversation/preview';
 import { ConversationTabsProvider } from './pages/conversation/context/ConversationTabsContext';
+import { createQueryClient } from './config/queryClient';
 
 import { ConfigProvider } from '@arco-design/web-react';
 // 配置 Arco Design 使用 React 18 的 createRoot，修复 Message 组件的 CopyReactDOM.render 错误
@@ -65,7 +68,35 @@ const arcoLocales: Record<string, typeof enUS> = {
   'en-US': enUS,
 };
 
-const AppProviders: React.FC<PropsWithChildren> = ({ children }) => React.createElement(AuthProvider, null, React.createElement(ThemeProvider, null, React.createElement(MemoryProvider, null, React.createElement(PreviewProvider, null, React.createElement(ConversationTabsProvider, null, children)))));
+// Create QueryClient instance
+const queryClient = createQueryClient();
+
+const AppProviders: React.FC<PropsWithChildren> = ({ children }) =>
+  React.createElement(
+    QueryClientProvider,
+    { client: queryClient },
+    React.createElement(
+      AuthProvider,
+      null,
+      React.createElement(
+        ThemeProvider,
+        null,
+        React.createElement(
+          MemoryProvider,
+          null,
+          React.createElement(
+            PreviewProvider,
+            null,
+            React.createElement(ConversationTabsProvider, null, children)
+          )
+        )
+      )
+    ),
+    // Add React Query DevTools (only in development)
+    process.env.NODE_ENV === 'development'
+      ? React.createElement(ReactQueryDevtools, { initialIsOpen: false })
+      : null
+  );
 
 const Config: React.FC<PropsWithChildren> = ({ children }) => {
   const {

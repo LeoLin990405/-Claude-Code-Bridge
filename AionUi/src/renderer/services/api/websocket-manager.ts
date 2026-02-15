@@ -101,8 +101,32 @@ export class WebSocketManager {
       }
     });
 
+    // Auth expired event - disconnect and notify
+    this.socket.on('auth-expired', (data) => {
+      console.warn('Authentication expired:', data.message);
+      this.updateStatus(ConnectionStatus.ERROR);
+      this.disconnect();
+
+      // Notify listeners about auth expiration
+      const listeners = this.eventListeners.get('auth-expired');
+      if (listeners) {
+        listeners.forEach((callback) => callback(data));
+      }
+    });
+
+    // Ping/Pong for heartbeat
+    this.socket.on('ping', (data) => {
+      // Respond with pong
+      this.socket?.emit('pong', { timestamp: Date.now() });
+    });
+
     // Forward all custom events to registered listeners
     this.socket.onAny((eventName, ...args) => {
+      // Skip internal Socket.IO events
+      if (eventName === 'connect' || eventName === 'disconnect' || eventName === 'connect_error') {
+        return;
+      }
+
       const listeners = this.eventListeners.get(eventName);
       if (listeners) {
         const data = args[0]; // Assume first arg is the data

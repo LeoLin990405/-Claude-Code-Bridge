@@ -8,6 +8,7 @@ import { shell, webui, type IWebUIStatus } from '@/common/ipcBridge';
 import HiveModal from '@/renderer/components/base/HiveModal';
 import HiveScrollArea from '@/renderer/components/base/HiveScrollArea';
 import { isElectronDesktop } from '@/renderer/utils/platform';
+import { api } from '@/renderer/services/api';
 import { Form, Input, Message, Switch, Tooltip } from '@arco-design/web-react';
 import { Copy, Refresh } from '@icon-park/react';
 import { QRCodeSVG } from 'qrcode.react';
@@ -92,10 +93,12 @@ const WebuiModalContent: React.FC = () => {
     try {
       let result: { success: boolean; data?: IWebUIStatus } | null = null;
 
-      // 优先使用直接 IPC（Electron 环境）/ Prefer direct IPC (Electron environment)
-      if (window.electronAPI?.webuiGetStatus) {
-        result = await window.electronAPI.webuiGetStatus();
-      } else {
+      // 优先使用 HTTP API（统一客户端自动检测环境）/ Prefer HTTP API (unified client auto-detects environment)
+      try {
+        const response = await api.http.get<IWebUIStatus>('/webui/status');
+        result = { success: true, data: response };
+      } catch (error) {
+        console.error('[WebuiModal] HTTP API failed, trying fallback:', error);
         // 后备方案：使用 bridge（减少超时）/ Fallback: use bridge (reduced timeout)
         const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 1500));
         result = await Promise.race([webui.getStatus.invoke(), timeoutPromise]);
@@ -324,9 +327,10 @@ const WebuiModalContent: React.FC = () => {
           // 响应为空或失败，但服务器可能已启动，检查状态
           // Response is null or failed, but server might have started, check status
           let statusResult: { success: boolean; data?: IWebUIStatus } | null = null;
-          if (window.electronAPI?.webuiGetStatus) {
-            statusResult = await window.electronAPI.webuiGetStatus();
-          } else {
+          try {
+            const response = await api.http.get<IWebUIStatus>('/webui/status');
+            statusResult = { success: true, data: response };
+          } catch {
             statusResult = await Promise.race([webui.getStatus.invoke(), new Promise<null>((resolve) => setTimeout(() => resolve(null), 1500))]);
           }
 
@@ -357,12 +361,10 @@ const WebuiModalContent: React.FC = () => {
       // 获取 IP 用于显示 / Get IP for display
       let newIP: string | undefined;
       try {
-        if (window.electronAPI?.webuiGetStatus) {
-          const result = await window.electronAPI.webuiGetStatus();
-          if (result?.success && result?.data?.lanIP) {
-            newIP = result.data.lanIP;
-            setCachedIP(newIP);
-          }
+        const result = await api.http.get<IWebUIStatus>('/webui/status');
+        if (result?.lanIP) {
+          newIP = result.lanIP;
+          setCachedIP(newIP);
         }
       } catch {
         // ignore
@@ -413,10 +415,14 @@ const WebuiModalContent: React.FC = () => {
 
       let result: { success: boolean; msg?: string };
 
-      // 优先使用直接 IPC（Electron 环境）/ Prefer direct IPC (Electron environment)
-      if (window.electronAPI?.webuiChangePassword) {
-        result = await window.electronAPI.webuiChangePassword(values.newPassword);
-      } else {
+      // 优先使用 HTTP API（统一客户端自动检测环境）/ Prefer HTTP API (unified client auto-detects environment)
+      try {
+        await api.http.post('/webui/change-password', {
+          newPassword: values.newPassword,
+        });
+        result = { success: true };
+      } catch (error: any) {
+        console.error('[WebuiModal] HTTP API failed, trying fallback:', error);
         // 后备方案：使用 bridge / Fallback: use bridge
         result = await webui.changePassword.invoke({
           newPassword: values.newPassword,
@@ -448,12 +454,14 @@ const WebuiModalContent: React.FC = () => {
 
     setQrLoading(true);
     try {
-      // 优先使用直接 IPC（Electron 环境）/ Prefer direct IPC (Electron environment)
+      // 优先使用 HTTP API（统一客户端自动检测环境）/ Prefer HTTP API (unified client auto-detects environment)
       let result: { success: boolean; data?: { token: string; expiresAt: number; qrUrl: string }; msg?: string } | null = null;
 
-      if (window.electronAPI?.webuiGenerateQRToken) {
-        result = await window.electronAPI.webuiGenerateQRToken();
-      } else {
+      try {
+        const response = await api.http.post<{ token: string; expiresAt: number; qrUrl: string }>('/webui/qr-token');
+        result = { success: true, data: response };
+      } catch (error) {
+        console.error('[WebuiModal] HTTP API failed, trying fallback:', error);
         // 后备方案：使用 bridge / Fallback: use bridge
         result = await webui.generateQRToken.invoke();
       }

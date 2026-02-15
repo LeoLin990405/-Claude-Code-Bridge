@@ -16,8 +16,11 @@ import {
 } from '../schemas/auth';
 import { validateRequest } from '../middleware/validate';
 import { authenticateJWT } from '../middleware/auth';
+import { strictRateLimiter, passwordResetRateLimiter } from '../middleware/rateLimiter';
+import { AuthService } from '../../../database/services/auth.service';
 
 const router = Router();
+const authService = new AuthService();
 
 /**
  * POST /api/v1/auth/register
@@ -25,33 +28,42 @@ const router = Router();
  */
 router.post(
   '/register',
+  strictRateLimiter,
   validateRequest({ body: registerRequestSchema }),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      // TODO: Implement registration logic
       const { username, email, password } = req.body;
 
-      // Mock response
+      const result = await authService.register({
+        username,
+        email,
+        password,
+        displayName: username,
+      });
+
       res.status(201).json({
         success: true,
-        data: {
-          accessToken: 'mock-access-token',
-          refreshToken: 'mock-refresh-token',
-          expiresIn: 900,
-          user: {
-            id: crypto.randomUUID(),
-            username,
-            email,
-            role: 'user' as const,
-            createdAt: new Date().toISOString(),
-          },
-        },
+        data: result,
         meta: {
           timestamp: new Date().toISOString(),
           requestId: crypto.randomUUID(),
         },
       });
-    } catch (error) {
+    } catch (error: any) {
+      // Handle duplicate user error
+      if (error.message?.includes('already exists')) {
+        return res.status(409).json({
+          success: false,
+          error: {
+            code: 'USER_EXISTS',
+            message: error.message,
+          },
+          meta: {
+            timestamp: new Date().toISOString(),
+            requestId: crypto.randomUUID(),
+          },
+        });
+      }
       next(error);
     }
   }
@@ -63,27 +75,52 @@ router.post(
  */
 router.post(
   '/login',
+  strictRateLimiter,
   validateRequest({ body: loginRequestSchema }),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      // TODO: Implement login logic
-      const { username, password } = req.body;
+      const { username, password, twoFactorToken } = req.body;
 
-      // Mock response
+      const result = await authService.login({
+        usernameOrEmail: username,
+        password,
+        twoFactorToken,
+      });
+
+      if (!result) {
+        return res.status(401).json({
+          success: false,
+          error: {
+            code: 'INVALID_CREDENTIALS',
+            message: twoFactorToken
+              ? 'Invalid username, password, or 2FA token'
+              : 'Invalid username or password',
+          },
+          meta: {
+            timestamp: new Date().toISOString(),
+            requestId: crypto.randomUUID(),
+          },
+        });
+      }
+
+      // 检查是否需要 2FA
+      if ('requiresTwoFactor' in result && result.requiresTwoFactor) {
+        return res.status(200).json({
+          success: true,
+          data: {
+            requiresTwoFactor: true,
+            message: 'Please provide your 2FA token',
+          },
+          meta: {
+            timestamp: new Date().toISOString(),
+            requestId: crypto.randomUUID(),
+          },
+        });
+      }
+
       res.json({
         success: true,
-        data: {
-          accessToken: 'mock-access-token',
-          refreshToken: 'mock-refresh-token',
-          expiresIn: 900,
-          user: {
-            id: crypto.randomUUID(),
-            username,
-            email: `${username}@example.com`,
-            role: 'user' as const,
-            createdAt: new Date().toISOString(),
-          },
-        },
+        data: result,
         meta: {
           timestamp: new Date().toISOString(),
           requestId: crypto.randomUUID(),
@@ -101,11 +138,19 @@ router.post(
  */
 router.post('/logout', authenticateJWT, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // TODO: Implement logout logic (token blacklist)
+    const { refreshToken, all } = req.body;
+
+    if (all === true) {
+      // Logout from all devices
+      await authService.logoutAll(req.user!.userId);
+    } else if (refreshToken) {
+      // Logout from current device
+      await authService.logout(refreshToken);
+    }
 
     res.json({
       success: true,
-      data: { message: 'Logged out successfully' },
+      data: { message: all ? 'Logged out from all devices' : 'Logged out successfully' },
       meta: {
         timestamp: new Date().toISOString(),
         requestId: crypto.randomUUID(),
@@ -125,16 +170,27 @@ router.post(
   validateRequest({ body: refreshTokenRequestSchema }),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      // TODO: Implement token refresh logic
       const { refreshToken } = req.body;
+
+      const result = await authService.refreshToken(refreshToken);
+
+      if (!result) {
+        return res.status(401).json({
+          success: false,
+          error: {
+            code: 'INVALID_REFRESH_TOKEN',
+            message: 'Invalid or expired refresh token',
+          },
+          meta: {
+            timestamp: new Date().toISOString(),
+            requestId: crypto.randomUUID(),
+          },
+        });
+      }
 
       res.json({
         success: true,
-        data: {
-          accessToken: 'new-mock-access-token',
-          refreshToken: 'new-mock-refresh-token',
-          expiresIn: 900,
-        },
+        data: result,
         meta: {
           timestamp: new Date().toISOString(),
           requestId: crypto.randomUUID(),
@@ -152,16 +208,36 @@ router.post(
  */
 router.get('/me', authenticateJWT, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // TODO: Get user from database using req.user.id
+    const user = await authService.getUserById(req.user!.userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'USER_NOT_FOUND',
+          message: 'User not found',
+        },
+        meta: {
+          timestamp: new Date().toISOString(),
+          requestId: crypto.randomUUID(),
+        },
+      });
+    }
 
     res.json({
       success: true,
       data: {
-        id: crypto.randomUUID(),
-        username: 'current-user',
-        email: 'user@example.com',
-        role: 'user' as const,
-        createdAt: new Date().toISOString(),
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        displayName: user.displayName,
+        avatar: user.avatar,
+        bio: user.bio,
+        emailVerified: user.emailVerified,
+        twoFactorEnabled: user.twoFactorEnabled,
+        createdAt: user.createdAt.toISOString(),
+        updatedAt: user.updatedAt.toISOString(),
       },
       meta: {
         timestamp: new Date().toISOString(),
@@ -183,17 +259,55 @@ router.patch(
   validateRequest({ body: updateUserRequestSchema }),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      // TODO: Update user in database
-      const updates = req.body;
+      const { email, password } = req.body;
+
+      // Handle password change separately
+      if (password) {
+        // For password change, we need old password for verification
+        // This should be handled by a separate endpoint
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'USE_PASSWORD_CHANGE_ENDPOINT',
+            message: 'Use POST /api/v1/auth/change-password to change password',
+          },
+          meta: {
+            timestamp: new Date().toISOString(),
+            requestId: crypto.randomUUID(),
+          },
+        });
+      }
+
+      const updatedUser = await authService.updateProfile(req.user!.userId, {
+        ...(email && { email }), // Only include if provided
+      });
+
+      if (!updatedUser) {
+        return res.status(404).json({
+          success: false,
+          error: {
+            code: 'USER_NOT_FOUND',
+            message: 'User not found',
+          },
+          meta: {
+            timestamp: new Date().toISOString(),
+            requestId: crypto.randomUUID(),
+          },
+        });
+      }
 
       res.json({
         success: true,
         data: {
-          id: crypto.randomUUID(),
-          username: 'current-user',
-          email: updates.email || 'user@example.com',
-          role: 'user' as const,
-          createdAt: new Date().toISOString(),
+          id: updatedUser.id,
+          username: updatedUser.username,
+          email: updatedUser.email,
+          role: updatedUser.role,
+          displayName: updatedUser.displayName,
+          avatar: updatedUser.avatar,
+          bio: updatedUser.bio,
+          createdAt: updatedUser.createdAt.toISOString(),
+          updatedAt: updatedUser.updatedAt.toISOString(),
         },
         meta: {
           timestamp: new Date().toISOString(),
@@ -201,6 +315,66 @@ router.patch(
         },
       });
     } catch (error) {
+      next(error);
+    }
+  }
+);
+
+/**
+ * POST /api/v1/auth/change-password
+ * Change password (requires old password)
+ */
+router.post(
+  '/change-password',
+  authenticateJWT,
+  validateRequest({
+    body: z.object({
+      oldPassword: z.string(),
+      newPassword: z.string().min(8).max(100),
+    }),
+  }),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { oldPassword, newPassword } = req.body;
+
+      const success = await authService.changePassword(req.user!.userId, oldPassword, newPassword);
+
+      if (!success) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'PASSWORD_CHANGE_FAILED',
+            message: 'Failed to change password',
+          },
+          meta: {
+            timestamp: new Date().toISOString(),
+            requestId: crypto.randomUUID(),
+          },
+        });
+      }
+
+      res.json({
+        success: true,
+        data: { message: 'Password changed successfully' },
+        meta: {
+          timestamp: new Date().toISOString(),
+          requestId: crypto.randomUUID(),
+        },
+      });
+    } catch (error: any) {
+      if (error.message?.includes('Invalid old password')) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'INVALID_OLD_PASSWORD',
+            message: error.message,
+          },
+          meta: {
+            timestamp: new Date().toISOString(),
+            requestId: crypto.randomUUID(),
+          },
+        });
+      }
       next(error);
     }
   }

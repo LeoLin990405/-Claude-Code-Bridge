@@ -47,7 +47,7 @@ export class UserRepository extends BaseRepository<typeof users> {
    */
   async updateProfile(
     userId: string,
-    data: Partial<Pick<User, 'displayName' | 'avatarUrl' | 'bio' | 'preferences'>>
+    data: Partial<Pick<User, 'displayName' | 'avatar' | 'bio' | 'settings'>>
   ): Promise<User | null> {
     return this.updateById(userId, data);
   }
@@ -75,7 +75,6 @@ export class UserRepository extends BaseRepository<typeof users> {
   async verifyEmail(userId: string): Promise<User | null> {
     return this.updateById(userId, {
       emailVerified: true,
-      emailVerifiedAt: new Date(),
     });
   }
 
@@ -113,14 +112,10 @@ export class UserRepository extends BaseRepository<typeof users> {
   }
 
   /**
-   * Revoke refresh token
+   * Revoke refresh token (delete it for token rotation security)
    */
   async revokeRefreshToken(token: string): Promise<boolean> {
-    const results = await db
-      .update(refreshTokens)
-      .set({ revokedAt: new Date() })
-      .where(eq(refreshTokens.token, token))
-      .returning();
+    const results = await db.delete(refreshTokens).where(eq(refreshTokens.token, token)).returning();
     return results.length > 0;
   }
 

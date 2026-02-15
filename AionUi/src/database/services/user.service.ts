@@ -10,6 +10,9 @@ import bcrypt from 'bcrypt';
 import { UserRepository } from '../repositories';
 import type { User, NewUser } from '../schema';
 
+// Security constants
+const BCRYPT_SALT_ROUNDS = 12; // Increased from 10 for better security
+
 export class UserService {
   private userRepo: UserRepository;
 
@@ -32,8 +35,8 @@ export class UserService {
       throw new Error('Username or email already exists');
     }
 
-    // Hash password
-    const passwordHash = await bcrypt.hash(data.password, 10);
+    // Hash password with 12 salt rounds
+    const passwordHash = await bcrypt.hash(data.password, BCRYPT_SALT_ROUNDS);
 
     // Create user
     const newUser: NewUser = {
@@ -82,6 +85,13 @@ export class UserService {
   }
 
   /**
+   * Get user by email
+   */
+  async getUserByEmail(email: string): Promise<User | null> {
+    return this.userRepo.findByEmail(email);
+  }
+
+  /**
    * Update user profile
    */
   async updateProfile(
@@ -111,8 +121,8 @@ export class UserService {
       throw new Error('Invalid old password');
     }
 
-    // Hash new password
-    const passwordHash = await bcrypt.hash(newPassword, 10);
+    // Hash new password with 12 salt rounds
+    const passwordHash = await bcrypt.hash(newPassword, BCRYPT_SALT_ROUNDS);
 
     // Update password
     await this.userRepo.updatePassword(userId, passwordHash);

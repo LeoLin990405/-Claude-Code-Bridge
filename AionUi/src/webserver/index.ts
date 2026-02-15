@@ -12,7 +12,7 @@ import { networkInterfaces } from 'os';
 import { AuthService } from '@/webserver/auth/service/AuthService';
 import { UserRepository } from '@/webserver/auth/repository/UserRepository';
 import { AUTH_CONFIG, SERVER_CONFIG } from './config/constants';
-import { initWebAdapter } from './adapter';
+import { initWebAdapter, initSocketIOAdapter } from './adapter';
 import { setupBasicMiddleware, setupCors, setupErrorHandler } from './setup';
 import { registerAuthRoutes } from './routes/authRoutes';
 import { registerApiRoutes } from './routes/apiRoutes';
@@ -249,7 +249,14 @@ export async function startWebServerWithInstance(port: number, allowRemote = fal
   // 创建 Express 应用和服务器 / Create Express app and server
   const app = express();
   const server = createServer(app);
-  const wss = new WebSocketServer({ server });
+
+  // 检查是否使用 Socket.IO (默认使用 Socket.IO)
+  // Check if using Socket.IO (default to Socket.IO)
+  const useSocketIO = process.env.USE_SOCKET_IO !== 'false';
+
+  // 仅在使用原生 ws 时创建 WebSocketServer
+  // Only create WebSocketServer when using native ws
+  const wss = useSocketIO ? null : new WebSocketServer({ server });
 
   // 初始化默认管理员账户 / Initialize default admin account
   const initialCredentials = await initializeDefaultAdmin();
@@ -289,7 +296,13 @@ export async function startWebServerWithInstance(port: number, allowRemote = fal
       }
 
       // 初始化 WebSocket 适配器 / Initialize WebSocket adapter
-      initWebAdapter(wss);
+      if (useSocketIO) {
+        initSocketIOAdapter(server);
+        console.log('   ✨ Using Socket.IO for real-time communication');
+      } else {
+        initWebAdapter(wss!);
+        console.log('   ✨ Using native WebSocket (ws) for real-time communication');
+      }
 
       resolve({
         server,

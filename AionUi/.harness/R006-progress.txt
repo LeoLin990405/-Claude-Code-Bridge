@@ -1,0 +1,127 @@
+=== R006: Frontend State Management Refactor ===
+
+**Priority**: High
+**Estimated Sessions**: 3
+**Dependencies**: R001 ✅
+
+**Goal**: Implement proper state management with React Query and Zustand
+
+**Current State**:
+From R001 Frontend Architecture Refactor:
+- ✅ React SPA with Vite
+- ✅ HTTP client with API abstraction
+- ✅ Environment detection (Electron vs Browser)
+- ✅ Basic state management with React Context
+- ❌ No query caching
+- ❌ No optimistic updates
+- ❌ No client state separation
+- ❌ Manual refetch logic scattered
+
+**Target State**:
+- Install and configure React Query (TanStack Query)
+- Install and configure Zustand for client state
+- Migrate all server state to React Query hooks
+- Implement proper caching strategies
+- Add optimistic updates for better UX
+- Create custom hooks for common queries
+- Add error boundaries
+- Set up React Query DevTools
+- Document state management patterns
+
+**Session Plan**:
+- Session 1: React Query setup and basic hooks migration ✅
+- Session 2: Zustand client state and optimistic updates
+- Session 3: Error boundaries, DevTools, and documentation
+
+===
+
+=== SESSION 1 (2026-02-15) - R006-1/3 ===
+
+**Goal**: React Query Setup and Basic Hooks Migration
+
+**Work Completed**:
+
+1. ✅ Installed React Query dependencies
+   - @tanstack/react-query@latest
+   - @tanstack/react-query-devtools@latest
+   - Used --legacy-peer-deps due to zod version conflicts
+
+2. ✅ Created Query Client configuration
+   - src/renderer/config/queryClient.ts (170+ lines)
+   - Global error handlers for queries and mutations
+   - Comprehensive query keys structure (auth, users, conversations, messages, skills, etc.)
+   - Configured caching (5min stale, 30min gc)
+   - Configured retry strategy (exponential backoff, skip 4xx errors)
+   - Refetch policies (no window focus, yes reconnect)
+
+3. ✅ Integrated QueryClientProvider into app
+   - Modified src/renderer/index.ts
+   - Added QueryClientProvider wrapper
+   - Added React Query DevTools (development only)
+   - Wrapped before all other providers for proper context
+
+4. ✅ Created React Query hooks for Auth
+   - src/renderer/hooks/queries/useAuth.ts (150+ lines)
+   - useCurrentUser() - fetch and cache current user
+   - useLogin() - login mutation with cache update
+   - useLogout() - logout mutation with cache clear
+   - useChangePassword() - change password mutation
+   - useAuthState() - combined hook (compatible with legacy useAuth)
+
+5. ✅ Created React Query hooks for Conversations
+   - src/renderer/hooks/queries/useConversations.ts (220+ lines)
+   - useConversations() - list with filters
+   - useConversation() - get by ID
+   - useConversationMessages() - get messages
+   - useCreateConversation() - create with cache update
+   - useUpdateConversation() - update with cache update
+   - useDeleteConversation() - delete with cache removal
+
+6. ✅ Created centralized exports
+   - src/renderer/hooks/queries/index.ts
+   - Exported all hooks and query keys
+
+**Files Created** (4 files, ~560 lines):
+1. src/renderer/config/queryClient.ts (170 lines)
+2. src/renderer/hooks/queries/useAuth.ts (150 lines)
+3. src/renderer/hooks/queries/useConversations.ts (220 lines)
+4. src/renderer/hooks/queries/index.ts (20 lines)
+
+**Files Modified** (1 file):
+1. src/renderer/index.ts (added QueryClientProvider and DevTools)
+
+**Technical Decisions**:
+- Query keys follow hierarchical structure (feature.type.params)
+- Stale time 5min for most queries (can be overridden per query)
+- GC time 30min to keep data in memory for quick navigation
+- No refetch on window focus for better performance
+- Automatic retry with exponential backoff (except 4xx errors)
+- Global error handlers show user-friendly Arco Message notifications
+- DevTools only in development to avoid bundle bloat
+
+**Next Steps for Session 2**:
+1. Configure Zustand stores for client-only state
+2. Add optimistic updates for mutations
+3. Migrate existing Context providers to use React Query
+4. Add more query hooks (users, skills, settings, etc.)
+
+**阻塞问题**: 无
+
+**下一 session 的上下文**:
+
+Session 1 完成了 React Query 的基础设置和核心 hooks。系统现在：
+1. 有完整的 QueryClient 配置（错误处理、缓存、重试）
+2. 有 DevTools 用于调试（开发环境）
+3. 有 Auth 和 Conversations 的 React Query hooks
+4. 集成到应用根组件
+
+还需要完成：
+1. 配置 Zustand 管理客户端状态（UI状态、临时数据）
+2. 添加乐观更新提升用户体验
+3. 迁移更多现有功能到 React Query
+4. 创建更多领域的 query hooks
+
+===
+
+**R006 进度**: 1/3 sessions complete (33%)
+

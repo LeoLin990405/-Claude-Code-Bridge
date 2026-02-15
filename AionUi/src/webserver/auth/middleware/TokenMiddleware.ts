@@ -249,4 +249,17 @@ export const TokenMiddleware = {
   validateWebSocketToken(token: string | null): boolean {
     return Boolean(token && AuthService.verifyWebSocketToken(token));
   },
+
+  /** 解码 token 获取 payload（不验证有效性） / Decode token to get payload (without validation) */
+  decodeToken(token: string): { userId: string; username: string; role: 'admin' | 'user' } {
+    const decoded = AuthService.verifyToken(token);
+    if (!decoded) {
+      throw new Error('Invalid token');
+    }
+    return {
+      userId: decoded.userId,
+      username: decoded.username,
+      role: decoded.role,
+    };
+  },
 };

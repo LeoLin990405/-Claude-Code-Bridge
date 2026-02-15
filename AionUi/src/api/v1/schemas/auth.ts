@@ -23,6 +23,7 @@ export type RegisterRequest = z.infer<typeof registerRequestSchema>;
 export const loginRequestSchema = z.object({
   username: z.string(),
   password: z.string(),
+  twoFactorToken: z.string().length(6).optional(), // 可选的 2FA 验证码
 });
 
 export type LoginRequest = z.infer<typeof loginRequestSchema>;
