@@ -5,13 +5,14 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
+import { verifyAccessToken } from '../../../database/utils/jwt.util';
 
 // Extend Express Request type
 declare global {
   namespace Express {
     interface Request {
       user?: {
-        id: string;
+        userId: string;
         username: string;
         role: 'admin' | 'user';
       };
@@ -41,15 +42,31 @@ export function authenticateJWT(req: Request, res: Response, next: NextFunction)
 
   const token = authHeader.substring(7);
 
-  // TODO: Verify JWT token
-  // For now, mock implementation
-  req.user = {
-    id: crypto.randomUUID(),
-    username: 'mock-user',
-    role: 'user',
-  };
+  try {
+    // Verify JWT token
+    const payload = verifyAccessToken(token);
 
-  next();
+    // Attach user info to request
+    req.user = {
+      userId: payload.userId,
+      username: payload.username,
+      role: payload.role as 'admin' | 'user',
+    };
+
+    next();
+  } catch (error) {
+    return res.status(401).json({
+      success: false,
+      error: {
+        code: 'INVALID_TOKEN',
+        message: 'Invalid or expired token',
+      },
+      meta: {
+        timestamp: new Date().toISOString(),
+        requestId: crypto.randomUUID(),
+      },
+    });
+  }
 }
 
 /**
